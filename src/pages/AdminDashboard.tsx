@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -8,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Search, MessageCircle, Users, Bot } from 'lucide-react';
+import { LogOut, Search, MessageCircle, Users, Bot, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import RobotManagementModal from '@/components/admin/RobotManagementModal';
 
 interface User {
   id: string;
@@ -31,12 +31,27 @@ interface Message {
   read: boolean;
 }
 
+interface Robot {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  type: 'MT5' | 'Binary';
+  category: 'free' | 'paid';
+  features: string[];
+  imageUrl: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [robots, setRobots] = useState<Robot[]>([]);
+  const [isRobotModalOpen, setIsRobotModalOpen] = useState(false);
+  const [currentRobot, setCurrentRobot] = useState<Robot | null>(null);
 
   useEffect(() => {
     // Check if user is logged in and is admin
@@ -125,6 +140,45 @@ const AdminDashboard = () => {
     
     setUsers(sampleUsers);
     setMessages(sampleMessages);
+    
+    // Sample robots data
+    const sampleRobots: Robot[] = [
+      {
+        id: '1',
+        name: 'MT5 Pro Scalper',
+        description: 'Advanced scalping robot for MT5 platform with smart entry and exit algorithms.',
+        price: 199,
+        currency: 'USD',
+        type: 'MT5',
+        category: 'paid',
+        features: ['Multi-timeframe analysis', 'Smart risk management', 'Compatible with all major currency pairs'],
+        imageUrl: '/placeholder.svg'
+      },
+      {
+        id: '2',
+        name: 'Binary Options Signal Bot',
+        description: 'Get reliable signals for binary options trading with high win rate.',
+        price: 149,
+        currency: 'USD',
+        type: 'Binary',
+        category: 'paid',
+        features: ['Real-time signals', '75%+ win rate', 'Works with multiple assets'],
+        imageUrl: '/placeholder.svg'
+      },
+      {
+        id: '3',
+        name: 'Forex Trend Finder',
+        description: 'Free MT5 robot that helps identify strong market trends.',
+        price: 0,
+        currency: 'USD',
+        type: 'MT5',
+        category: 'free',
+        features: ['Trend detection indicators', 'Email alerts', 'Visual dashboard'],
+        imageUrl: '/placeholder.svg'
+      }
+    ];
+    
+    setRobots(sampleRobots);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -152,6 +206,48 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleAddRobot = () => {
+    setCurrentRobot(null);
+    setIsRobotModalOpen(true);
+  };
+
+  const handleEditRobot = (robot: Robot) => {
+    setCurrentRobot(robot);
+    setIsRobotModalOpen(true);
+  };
+
+  const handleDeleteRobot = (robotId: string) => {
+    // In a real app, this would call an API to delete the robot
+    setRobots(prev => prev.filter(robot => robot.id !== robotId));
+    toast({
+      title: "Robot Deleted",
+      description: "The robot has been removed from the marketplace",
+    });
+  };
+
+  const handleSaveRobot = (robot: Robot) => {
+    if (currentRobot) {
+      // Update existing robot
+      setRobots(prev => prev.map(r => r.id === robot.id ? robot : r));
+      toast({
+        title: "Robot Updated",
+        description: `${robot.name} has been updated`,
+      });
+    } else {
+      // Add new robot
+      const newRobot = {
+        ...robot,
+        id: Date.now().toString(), // Generate a simple ID
+      };
+      setRobots(prev => [...prev, newRobot]);
+      toast({
+        title: "Robot Added",
+        description: `${robot.name} has been added to the marketplace`,
+      });
+    }
+    setIsRobotModalOpen(false);
+  };
+
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -161,6 +257,13 @@ const AdminDashboard = () => {
   const filteredMessages = messages.filter(message => 
     message.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.text.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredRobots = robots.filter(robot => 
+    robot.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    robot.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    robot.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    robot.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (!user) {
@@ -178,7 +281,7 @@ const AdminDashboard = () => {
             <div className="bg-trading-blue p-4 flex justify-between items-center text-white">
               <div>
                 <h2 className="text-xl font-semibold">Admin Dashboard</h2>
-                <p className="text-sm opacity-80">Manage users and messages</p>
+                <p className="text-sm opacity-80">Manage users, messages, and robots</p>
               </div>
               <Button 
                 variant="ghost" 
@@ -198,7 +301,7 @@ const AdminDashboard = () => {
                 <Input
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search users, messages, or services..."
+                  placeholder="Search users, messages, robots, or services..."
                   className="pl-10"
                 />
               </div>
@@ -207,7 +310,7 @@ const AdminDashboard = () => {
             {/* Dashboard content */}
             <div className="p-4">
               <Tabs defaultValue="users">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger value="users" className="flex items-center">
                     <Users className="h-5 w-5 mr-2" />
                     Users
@@ -215,6 +318,10 @@ const AdminDashboard = () => {
                   <TabsTrigger value="messages" className="flex items-center">
                     <MessageCircle className="h-5 w-5 mr-2" />
                     Messages
+                  </TabsTrigger>
+                  <TabsTrigger value="robots" className="flex items-center">
+                    <Bot className="h-5 w-5 mr-2" />
+                    Robots
                   </TabsTrigger>
                 </TabsList>
                 
@@ -326,6 +433,80 @@ const AdminDashboard = () => {
                     </Table>
                   </div>
                 </TabsContent>
+                
+                <TabsContent value="robots" className="mt-0">
+                  <div className="flex justify-end mb-4">
+                    <Button onClick={handleAddRobot} className="bg-trading-blue hover:bg-trading-darkBlue">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Robot
+                    </Button>
+                  </div>
+                  
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRobots.length > 0 ? (
+                          filteredRobots.map((robot) => (
+                            <TableRow key={robot.id}>
+                              <TableCell className="font-medium">{robot.name}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{robot.type}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={robot.category === 'free' ? 'secondary' : 'default'}
+                                  className={robot.category === 'free' ? 'bg-green-500' : ''}
+                                >
+                                  {robot.category === 'free' ? 'Free' : 'Paid'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {robot.category === 'free' 
+                                  ? 'Free' 
+                                  : `${robot.currency} ${robot.price.toFixed(2)}`}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleEditRobot(robot)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => handleDeleteRobot(robot.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete</span>
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-4">
+                              No robots found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
               </Tabs>
             </div>
           </div>
@@ -333,6 +514,15 @@ const AdminDashboard = () => {
       </main>
       
       <Footer />
+      
+      {isRobotModalOpen && (
+        <RobotManagementModal
+          isOpen={isRobotModalOpen}
+          onClose={() => setIsRobotModalOpen(false)}
+          onSave={handleSaveRobot}
+          robot={currentRobot}
+        />
+      )}
     </div>
   );
 };
