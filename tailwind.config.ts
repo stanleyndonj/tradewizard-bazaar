@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,15 +53,15 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				// Trading platform specific colors
+				trading: {
+					blue: '#0A84FF',
+					darkBlue: '#0066CC',
+					green: '#30D158',
+					red: '#FF453A',
+					gray: '#8E8E93',
+					charcoal: '#1C1C1E',
+					lightGray: '#F2F2F7'
 				}
 			},
 			borderRadius: {
@@ -68,27 +69,63 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			fontFamily: {
+				sans: ['-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+				mono: ['SF Mono', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace']
+			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
+				},
+				'fade-in': {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
+				},
+				'fade-up': {
+					from: { opacity: '0', transform: 'translateY(20px)' },
+					to: { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-down': {
+					from: { opacity: '0', transform: 'translateY(-20px)' },
+					to: { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-left': {
+					from: { opacity: '0', transform: 'translateX(20px)' },
+					to: { opacity: '1', transform: 'translateX(0)' }
+				},
+				'fade-right': {
+					from: { opacity: '0', transform: 'translateX(-20px)' },
+					to: { opacity: '1', transform: 'translateX(0)' }
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
+				},
+				float: {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.7s ease-out',
+				'fade-up': 'fade-up 0.7s ease-out',
+				'fade-down': 'fade-down 0.7s ease-out',
+				'fade-left': 'fade-left 0.7s ease-out',
+				'fade-right': 'fade-right 0.7s ease-out',
+				'pulse-subtle': 'pulse-subtle 2s infinite ease-in-out',
+				'float': 'float 6s infinite ease-in-out'
+			},
+			boxShadow: {
+				'subtle': '0 1px 3px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.03)',
+				'elevated': '0 10px 30px rgba(0,0,0,0.08)',
+				'elevated-dark': '0 10px 30px rgba(0,0,0,0.2)'
 			}
 		}
 	},
