@@ -10,6 +10,9 @@ import NotFound from "./pages/NotFound";
 import AboutUs from "./pages/AboutUs";
 import RobotSelection from "./pages/RobotSelection";
 import RobotConfiguration from "./pages/RobotConfiguration";
+import Auth from "./pages/Auth";
+import Messages from "./pages/Messages";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const App = () => {
   // Create a client instance that persists across renders
@@ -26,6 +29,9 @@ const App = () => {
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/robot-selection" element={<RobotSelection />} />
             <Route path="/configure-robot/:type" element={<RobotConfiguration />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

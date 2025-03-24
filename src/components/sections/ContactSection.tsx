@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +9,7 @@ import SectionHeader from '../ui-elements/SectionHeader';
 import { toast } from '@/hooks/use-toast';
 
 const ContactSection = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,7 +29,24 @@ const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('user');
+    
+    if (!storedUser) {
+      // Redirect to auth page with a message
+      localStorage.setItem('redirectAfterAuth', '/messages');
+      localStorage.setItem('contactFormData', JSON.stringify(formData));
+      
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to send messages",
+      });
+      
+      navigate('/auth');
+      return;
+    }
+    
+    // Simulate form submission and redirect to messages
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
@@ -44,6 +63,9 @@ const ContactSection = () => {
         service: '',
         message: ''
       });
+      
+      // Redirect to messages page
+      navigate('/messages');
       
       // Reset success message after 3 seconds
       setTimeout(() => setIsSubmitted(false), 3000);
@@ -75,7 +97,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Email Us</p>
-                  <p className="font-medium">contact@tradewizard.com</p>
+                  <p className="font-medium">ndonjstanley@gmail.com</p>
                 </div>
               </div>
               
@@ -85,7 +107,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Call Us</p>
-                  <p className="font-medium">+1 (555) 123-4567</p>
+                  <p className="font-medium">+254799010442</p>
                 </div>
               </div>
               
@@ -94,8 +116,8 @@ const ContactSection = () => {
                   <MapPin size={20} className="text-trading-blue" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Office</p>
-                  <p className="font-medium">123 Trading Ave, Suite 456<br />New York, NY 10001</p>
+                  <p className="text-sm text-muted-foreground mb-1">Developer</p>
+                  <p className="font-medium">Stanley Paul Ndonj<br />Software Developer and Trader</p>
                 </div>
               </div>
             </div>
