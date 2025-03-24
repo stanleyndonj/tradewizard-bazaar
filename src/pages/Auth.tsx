@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,12 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
-import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from 'lucide-react';
+
+interface LocationState {
+  redirectAfter?: string;
+  message?: string;
+}
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [redirectMessage, setRedirectMessage] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
   
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -33,7 +41,22 @@ const Auth = () => {
   useEffect(() => {
     document.title = 'Sign In / Sign Up | TradeWizard';
     window.scrollTo(0, 0);
-  }, []);
+    
+    // Check for redirectAfterAuth in localStorage
+    const redirectAfterAuth = localStorage.getItem('redirectAfterAuth');
+    if (redirectAfterAuth) {
+      setRedirectPath(redirectAfterAuth);
+      setRedirectMessage("Please sign in to continue");
+      localStorage.removeItem('redirectAfterAuth');
+    }
+    
+    // Check for redirect from location state
+    const state = location.state as LocationState;
+    if (state?.redirectAfter) {
+      setRedirectPath(state.redirectAfter);
+      setRedirectMessage(state.message || "Please sign in to continue");
+    }
+  }, [location]);
 
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -85,7 +108,8 @@ const Auth = () => {
       description: "Logged in successfully",
     });
     
-    navigate('/messages');
+    // Redirect to the saved path or default to messages
+    navigate(redirectPath || '/messages');
   };
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
@@ -122,7 +146,8 @@ const Auth = () => {
       description: "Account created successfully",
     });
     
-    navigate('/messages');
+    // Redirect to the saved path or default to messages
+    navigate(redirectPath || '/messages');
   };
 
   return (
@@ -142,14 +167,24 @@ const Auth = () => {
           />
           
           <div className="max-w-md mx-auto mt-8">
-            <div className="glass-card p-8 rounded-2xl">
+            {redirectMessage && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 animate-fade-in flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">Authentication required</p>
+                  <p className="text-sm">{redirectMessage}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="glass-card p-8 rounded-2xl transition-all duration-300 hover:shadow-lg">
               <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2 mb-8">
                   <TabsTrigger value="login">Sign In</TabsTrigger>
                   <TabsTrigger value="register">Sign Up</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="login">
+                <TabsContent value="login" className="animate-fade-in">
                   <form onSubmit={handleLoginSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
@@ -162,7 +197,7 @@ const Auth = () => {
                           value={loginData.email}
                           onChange={handleLoginChange}
                           placeholder="you@example.com"
-                          className="pl-10"
+                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                       </div>
@@ -179,7 +214,7 @@ const Auth = () => {
                           value={loginData.password}
                           onChange={handleLoginChange}
                           placeholder="••••••••"
-                          className="pl-10 pr-10"
+                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                         <button
@@ -196,7 +231,7 @@ const Auth = () => {
                       </div>
                     </div>
                     
-                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue">
+                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-[1.02]">
                       Sign In
                     </Button>
                     
@@ -215,7 +250,7 @@ const Auth = () => {
                   </form>
                 </TabsContent>
                 
-                <TabsContent value="register">
+                <TabsContent value="register" className="animate-fade-in">
                   <form onSubmit={handleRegisterSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="register-name">Full Name</Label>
@@ -228,7 +263,7 @@ const Auth = () => {
                           value={registerData.name}
                           onChange={handleRegisterChange}
                           placeholder="John Doe"
-                          className="pl-10"
+                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                       </div>
@@ -245,7 +280,7 @@ const Auth = () => {
                           value={registerData.email}
                           onChange={handleRegisterChange}
                           placeholder="you@example.com"
-                          className="pl-10"
+                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                       </div>
@@ -262,7 +297,7 @@ const Auth = () => {
                           value={registerData.password}
                           onChange={handleRegisterChange}
                           placeholder="••••••••"
-                          className="pl-10 pr-10"
+                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                         <button
@@ -290,13 +325,13 @@ const Auth = () => {
                           value={registerData.confirmPassword}
                           onChange={handleRegisterChange}
                           placeholder="••••••••"
-                          className="pl-10 pr-10"
+                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
                           required
                         />
                       </div>
                     </div>
                     
-                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue">
+                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-[1.02]">
                       Create Account
                     </Button>
                     
