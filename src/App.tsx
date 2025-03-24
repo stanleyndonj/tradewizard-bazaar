@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import AboutUs from "./pages/AboutUs";
+import RobotSelection from "./pages/RobotSelection";
+import RobotConfiguration from "./pages/RobotConfiguration";
 
 const App = () => {
   // Create a client instance that persists across renders
@@ -20,6 +23,9 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/robot-selection" element={<RobotSelection />} />
+            <Route path="/configure-robot/:type" element={<RobotConfiguration />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

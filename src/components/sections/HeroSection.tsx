@@ -1,6 +1,7 @@
 
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const HeroSection = () => {
   const scrollToServices = () => {
@@ -31,8 +32,8 @@ const HeroSection = () => {
               Custom-built MT5 and binary robots designed with precision to automate your trading strategy and maximize your returns.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-trading-blue hover:bg-trading-darkBlue text-white">
-                Get Your Custom Robot
+              <Button size="lg" className="bg-trading-blue hover:bg-trading-darkBlue text-white" asChild>
+                <Link to="/robot-selection">Get Your Custom Robot</Link>
               </Button>
               <Button size="lg" variant="outline" onClick={scrollToServices}>
                 Explore Services
