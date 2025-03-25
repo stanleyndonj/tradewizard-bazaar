@@ -1,4 +1,3 @@
-
 import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
@@ -7,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   is_admin: boolean;
+  role?: string; // Added role property
   created_at: string;
   updated_at?: string;
 }
@@ -19,6 +19,9 @@ export interface Robot {
   price: number;
   features: string[];
   image_url?: string;
+  currency: string;   // Added missing properties
+  category: string;   // Added missing properties
+  imageUrl?: string;  // Added missing properties
   created_at: string;
 }
 
@@ -43,6 +46,7 @@ export interface Purchase {
   payment_method: string;
   status: string;
   created_at: string;
+  purchaseDate?: string; // Added this property
 }
 
 // Auth functions

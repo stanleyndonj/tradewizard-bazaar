@@ -12,12 +12,13 @@ import { Bot, Lock, Download, ShoppingCart } from 'lucide-react';
 import RobotProductCard from '@/components/marketplace/RobotProductCard';
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 import { useBackend } from '@/context/BackendContext';
+import { Robot } from '@/lib/backend';
 
 const RobotMarketplace = () => {
   const navigate = useNavigate();
   const { user, robots, purchaseRobot, isLoading } = useBackend();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedRobot, setSelectedRobot] = useState<any | null>(null);
+  const [selectedRobot, setSelectedRobot] = useState<Robot | null>(null);
 
   useEffect(() => {
     // Set page title
@@ -36,7 +37,7 @@ const RobotMarketplace = () => {
     }
   }, [user, isLoading, navigate]);
 
-  const handlePurchaseClick = (robot: any) => {
+  const handlePurchaseClick = (robot: Robot) => {
     if (robot.category === 'free') {
       // Handle free download
       toast({
@@ -114,7 +115,12 @@ const RobotMarketplace = () => {
                     robots.map(robot => (
                       <RobotProductCard
                         key={robot.id}
-                        robot={robot}
+                        robot={{
+                          ...robot,
+                          imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
+                          category: robot.category || 'paid',
+                          currency: robot.currency || 'USD'
+                        }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
                     ))
@@ -132,7 +138,12 @@ const RobotMarketplace = () => {
                     freeRobots.map(robot => (
                       <RobotProductCard
                         key={robot.id}
-                        robot={robot}
+                        robot={{
+                          ...robot,
+                          imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
+                          category: robot.category || 'free',
+                          currency: robot.currency || 'USD'
+                        }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
                     ))
@@ -150,7 +161,12 @@ const RobotMarketplace = () => {
                     paidRobots.map(robot => (
                       <RobotProductCard
                         key={robot.id}
-                        robot={robot}
+                        robot={{
+                          ...robot,
+                          imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
+                          category: robot.category || 'paid',
+                          currency: robot.currency || 'USD'
+                        }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
                     ))

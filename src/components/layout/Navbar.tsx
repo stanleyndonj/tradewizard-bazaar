@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -146,7 +145,7 @@ const Navbar = () => {
                         Messages
                       </Link>
                     </DropdownMenuItem>
-                    {user.role === 'admin' && (
+                    {user.is_admin && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin-dashboard" className="flex items-center">
                           <Settings className="mr-2 h-4 w-4" />
@@ -229,7 +228,7 @@ const Navbar = () => {
                   >
                     Messages
                   </Link>
-                  {user.role === 'admin' && (
+                  {user.is_admin && (
                     <Link 
                       to="/admin-dashboard" 
                       className="text-sm font-medium py-2 hover:text-trading-blue transition-colors"

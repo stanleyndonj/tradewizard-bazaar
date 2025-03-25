@@ -106,7 +106,7 @@ const CustomerDashboard = () => {
                         <CardHeader>
                           <div className="flex justify-between items-start">
                             <div>
-                              <CardTitle className="text-xl">{request.robotType} Trading Robot</CardTitle>
+                              <CardTitle className="text-xl">{request.robot_type} Trading Robot</CardTitle>
                               <CardDescription>Request ID: {request.id}</CardDescription>
                             </div>
                             <Badge className={getStatusColor(request.status)}>
@@ -118,7 +118,7 @@ const CustomerDashboard = () => {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                               <p className="text-sm font-medium text-muted-foreground">Trading Pairs</p>
-                              <p className="font-medium">{request.tradingPairs}</p>
+                              <p className="font-medium">{request.trading_pairs}</p>
                             </div>
                             <div>
                               <p className="text-sm font-medium text-muted-foreground">Timeframe</p>
@@ -126,12 +126,12 @@ const CustomerDashboard = () => {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-muted-foreground">Risk Level</p>
-                              <p className="font-medium">{request.riskLevel}%</p>
+                              <p className="font-medium">{request.risk_level}%</p>
                             </div>
                           </div>
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Requested on</p>
-                            <p className="font-medium">{formatDate(request.createdAt)}</p>
+                            <p className="font-medium">{formatDate(request.created_at)}</p>
                           </div>
                         </CardContent>
                         <CardFooter>
@@ -166,7 +166,7 @@ const CustomerDashboard = () => {
                         <CardHeader>
                           <div className="flex justify-between items-start">
                             <div>
-                              <CardTitle className="text-xl">{getRobotName(purchase.robotId)}</CardTitle>
+                              <CardTitle className="text-xl">{getRobotName(purchase.robot_id)}</CardTitle>
                               <CardDescription>Purchase ID: {purchase.id}</CardDescription>
                             </div>
                             <Badge className={getStatusColor(purchase.status)}>
@@ -182,11 +182,11 @@ const CustomerDashboard = () => {
                             </div>
                             <div>
                               <p className="text-sm font-medium text-muted-foreground">Payment Method</p>
-                              <p className="font-medium">{purchase.paymentMethod}</p>
+                              <p className="font-medium">{purchase.payment_method}</p>
                             </div>
                             <div>
                               <p className="text-sm font-medium text-muted-foreground">Purchase Date</p>
-                              <p className="font-medium">{formatDate(purchase.purchaseDate)}</p>
+                              <p className="font-medium">{formatDate(purchase.purchaseDate || purchase.created_at)}</p>
                             </div>
                           </div>
                         </CardContent>
