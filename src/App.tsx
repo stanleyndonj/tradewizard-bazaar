@@ -12,6 +12,7 @@ import RobotSelection from "./pages/RobotSelection";
 import RobotConfiguration from "./pages/RobotConfiguration";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
+import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RobotMarketplace from "./pages/RobotMarketplace";
 
@@ -32,6 +33,7 @@ const App = () => {
             <Route path="/configure-robot/:type" element={<RobotConfiguration />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/robot-marketplace" element={<RobotMarketplace />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
