@@ -121,7 +121,8 @@ const RobotMarketplace = () => {
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
                           category: (robot.category || 'paid') as 'free' | 'paid',
-                          currency: robot.currency || 'USD'
+                          currency: robot.currency || 'USD',
+                          type: (robot.type || 'MT5') as 'MT5' | 'Binary'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
@@ -144,7 +145,8 @@ const RobotMarketplace = () => {
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
                           category: (robot.category || 'free') as 'free' | 'paid',
-                          currency: robot.currency || 'USD'
+                          currency: robot.currency || 'USD',
+                          type: (robot.type || 'MT5') as 'MT5' | 'Binary'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
@@ -167,7 +169,8 @@ const RobotMarketplace = () => {
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
                           category: (robot.category || 'paid') as 'free' | 'paid',
-                          currency: robot.currency || 'USD'
+                          currency: robot.currency || 'USD',
+                          type: (robot.type || 'MT5') as 'MT5' | 'Binary'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
                       />
