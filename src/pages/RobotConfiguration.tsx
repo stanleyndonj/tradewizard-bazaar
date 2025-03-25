@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { Lock } from 'lucide-react';
+import { useBackend } from '@/context/BackendContext';
 
 const RobotConfiguration = () => {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, submitRequest, isLoading } = useBackend();
   const [activeTab, setActiveTab] = useState('strategy');
-  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   
   // Form state
   const [tradingPairs, setTradingPairs] = useState('EURUSD, GBPUSD');
@@ -34,24 +35,17 @@ const RobotConfiguration = () => {
     window.scrollTo(0, 0);
     
     // Check if user is logged in
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
+    if (!isLoading && !user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to configure a trading robot",
         variant: "destructive",
       });
-      navigate('/auth', { 
-        state: { 
-          redirectAfter: `/configure-robot/${type}`,
-          message: "Please sign in to configure your custom trading robot"
-        } 
-      });
+      // Save current path to redirect back after login
+      localStorage.setItem('redirectAfterAuth', `/configure-robot/${type}`);
+      navigate('/auth');
       return;
     }
-    
-    const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser);
     
     // Validate robot type
     if (type !== 'mt5' && type !== 'binary') {
@@ -59,13 +53,13 @@ const RobotConfiguration = () => {
     }
     
     // Pre-populate name and email if user is logged in
-    if (parsedUser) {
-      setName(parsedUser.name || '');
-      setEmail(parsedUser.email || '');
+    if (user) {
+      setName(user.name || '');
+      setEmail(user.email || '');
     }
-  }, [type, navigate, toast]);
+  }, [type, navigate, toast, user, isLoading]);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -78,19 +72,37 @@ const RobotConfiguration = () => {
       return;
     }
     
-    // Submit form - in a real app, this would connect to a backend
-    toast({
-      title: "Request submitted!",
-      description: "We've received your robot configuration. Our team will contact you shortly.",
-    });
-    
-    // Navigate to messages page after successful submission
-    setTimeout(() => {
-      navigate('/messages');
-    }, 1500);
+    try {
+      // Submit the robot request
+      await submitRequest(
+        type || 'unknown',
+        tradingPairs,
+        timeframe,
+        riskLevel[0]
+      );
+      
+      // Navigate to customer dashboard after successful submission
+      setTimeout(() => {
+        navigate('/customer-dashboard');
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was a problem submitting your request. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   const robotTypeTitle = type === 'mt5' ? 'MT5 Trading Robot' : 'Binary Option Robot';
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null; // Will redirect in useEffect

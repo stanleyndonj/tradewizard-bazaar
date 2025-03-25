@@ -15,6 +15,8 @@ import Messages from "./pages/Messages";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RobotMarketplace from "./pages/RobotMarketplace";
+import CustomerDashboard from "./pages/CustomerDashboard";
+import { BackendProvider } from "./context/BackendContext";
 
 const App = () => {
   // Create a client instance that persists across renders
@@ -26,19 +28,22 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about-us" element={<AboutUs />} />
-            <Route path="/robot-selection" element={<RobotSelection />} />
-            <Route path="/configure-robot/:type" element={<RobotConfiguration />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
-            <Route path="/robot-marketplace" element={<RobotMarketplace />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <BackendProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/robot-selection" element={<RobotSelection />} />
+              <Route path="/configure-robot/:type" element={<RobotConfiguration />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/robot-marketplace" element={<RobotMarketplace />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BackendProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

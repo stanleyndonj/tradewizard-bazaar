@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User } from 'lucide-react';
+import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -12,26 +12,16 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from '@/hooks/use-toast';
+import { useBackend } from '@/context/BackendContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useBackend();
 
   useEffect(() => {
-    // Check if user is logged in
-    const userString = localStorage.getItem('user');
-    if (userString) {
-      try {
-        setUser(JSON.parse(userString));
-      } catch (error) {
-        console.error('Failed to parse user data', error);
-      }
-    }
-
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setIsScrolled(scrollPosition > 10);
@@ -40,20 +30,6 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Re-check for user on location change (to update after login/logout)
-  useEffect(() => {
-    const userString = localStorage.getItem('user');
-    if (userString) {
-      try {
-        setUser(JSON.parse(userString));
-      } catch (error) {
-        console.error('Failed to parse user data', error);
-      }
-    } else {
-      setUser(null);
-    }
-  }, [location.pathname]);
 
   // Close mobile menu when navigating to a new page
   useEffect(() => {
@@ -76,14 +52,8 @@ const Navbar = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    toast({
-      title: "Success",
-      description: "Logged out successfully",
-    });
-    navigate('/');
+  const handleLogout = async () => {
+    await logout();
   };
 
   // Get initials for avatar
@@ -141,7 +111,7 @@ const Navbar = () => {
             </Link>
             {user ? (
               <div className="flex items-center space-x-4">
-                <Link to="/dashboard" className="text-sm font-medium hover:text-trading-blue transition-colors">
+                <Link to="/customer-dashboard" className="text-sm font-medium hover:text-trading-blue transition-colors">
                   Dashboard
                 </Link>
                 <DropdownMenu>
@@ -159,16 +129,31 @@ const Navbar = () => {
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="flex items-center">
+                      <Link to="/customer-dashboard" className="flex items-center">
                         <User className="mr-2 h-4 w-4" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link to="/robot-marketplace" className="flex items-center">
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Marketplace
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link to="/messages" className="flex items-center">
+                        <MessageSquare className="mr-2 h-4 w-4" />
                         Messages
                       </Link>
                     </DropdownMenuItem>
+                    {user.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin-dashboard" className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-500">
                       <LogOut className="mr-2 h-4 w-4" />
@@ -233,7 +218,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link 
-                    to="/dashboard" 
+                    to="/customer-dashboard" 
                     className="text-sm font-medium py-2 hover:text-trading-blue transition-colors"
                   >
                     Dashboard
@@ -244,6 +229,14 @@ const Navbar = () => {
                   >
                     Messages
                   </Link>
+                  {user.role === 'admin' && (
+                    <Link 
+                      to="/admin-dashboard" 
+                      className="text-sm font-medium py-2 hover:text-trading-blue transition-colors"
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
                   <Button 
                     onClick={handleLogout}
                     variant="ghost" 

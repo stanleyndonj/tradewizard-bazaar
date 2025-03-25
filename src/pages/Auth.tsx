@@ -1,356 +1,272 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
-import SectionHeader from '@/components/ui-elements/SectionHeader';
-import { Eye, EyeOff, Lock, Mail, User, AlertCircle } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useBackend } from '@/context/BackendContext';
 
-interface LocationState {
-  redirectAfter?: string;
-  message?: string;
-}
+// Login form validation schema
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+});
+
+// Registration form validation schema
+const registerSchema = z.object({
+  name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [redirectMessage, setRedirectMessage] = useState<string | null>(null);
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('login');
+  const { user, login, register, isLoading } = useBackend();
   
-  // Login form state
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
+  // Login form
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
-  // Register form state
-  const [registerData, setRegisterData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+  // Registration form
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
   });
 
   useEffect(() => {
-    document.title = 'Sign In / Sign Up | TradeWizard';
-    window.scrollTo(0, 0);
-    
-    // Check for redirectAfterAuth in localStorage
-    const redirectAfterAuth = localStorage.getItem('redirectAfterAuth');
-    if (redirectAfterAuth) {
-      setRedirectPath(redirectAfterAuth);
-      setRedirectMessage("Please sign in to continue");
-      localStorage.removeItem('redirectAfterAuth');
-    }
-    
-    // Check for redirect from location state
-    const state = location.state as LocationState;
-    if (state?.redirectAfter) {
-      setRedirectPath(state.redirectAfter);
-      setRedirectMessage(state.message || "Please sign in to continue");
-    }
-  }, [location]);
+    // Set page title
+    document.title = 'Sign In | TradeWizard';
 
-  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setLoginData(prev => ({ ...prev, [name]: value }));
+    // Redirect if already logged in
+    if (user) {
+      navigate('/customer-dashboard');
+    }
+  }, [user, navigate]);
+
+  // Handle login form submission
+  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
+    await login(values.email, values.password);
   };
 
-  const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setRegisterData(prev => ({ ...prev, [name]: value }));
+  // Handle registration form submission
+  const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
+    await register(values.name, values.email, values.password);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simple validation
-    if (!loginData.email || !loginData.password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Demo login - in a real app, you would authenticate with a backend
-    if (loginData.email === 'admin@tradewizard.com' && loginData.password === 'admin123') {
-      localStorage.setItem('user', JSON.stringify({ 
-        email: loginData.email, 
-        name: 'Admin User',
-        role: 'admin' 
-      }));
-      toast({
-        title: "Success",
-        description: "Logged in as admin successfully",
-      });
-      navigate('/admin-dashboard');
-      return;
-    }
-
-    // Mock login for demo purposes
-    localStorage.setItem('user', JSON.stringify({ 
-      email: loginData.email, 
-      name: loginData.email.split('@')[0],
-      role: 'user' 
-    }));
-    
-    toast({
-      title: "Success",
-      description: "Logged in successfully",
-    });
-    
-    // Redirect to the saved path or default to messages
-    navigate(redirectPath || '/messages');
-  };
-
-  const handleRegisterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simple validation
-    if (!registerData.name || !registerData.email || !registerData.password || !registerData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (registerData.password !== registerData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Mock registration - in a real app, you would register with a backend
-    localStorage.setItem('user', JSON.stringify({ 
-      email: registerData.email, 
-      name: registerData.name,
-      role: 'user' 
-    }));
-    
-    toast({
-      title: "Success",
-      description: "Account created successfully",
-    });
-    
-    // Redirect to the saved path or default to messages
-    navigate(redirectPath || '/messages');
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading...</div>
+      </div>
+    );
+  }
+  
+  if (user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow pt-24">
-        <div className="section-container py-20">
-          <SectionHeader
-            subtitle="Account Access"
-            title={activeTab === "login" ? "Welcome Back" : "Create Your Account"}
-            description={activeTab === "login" 
-              ? "Sign in to your TradeWizard account to access your messages and trading tools."
-              : "Join TradeWizard today to get started with custom trading robots and expert support."
-            }
-            centered
-          />
-          
-          <div className="max-w-md mx-auto mt-8">
-            {redirectMessage && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 animate-fade-in flex items-start">
-                <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">Authentication required</p>
-                  <p className="text-sm">{redirectMessage}</p>
-                </div>
-              </div>
-            )}
+        <div className="section-container py-16">
+          <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-8">
+            <h1 className="text-2xl font-bold text-center mb-6">
+              {activeTab === 'login' ? 'Sign In' : 'Create Account'}
+            </h1>
             
-            <div className="glass-card p-8 rounded-2xl transition-all duration-300 hover:shadow-lg">
-              <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 mb-8">
-                  <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="register">Sign Up</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login" className="animate-fade-in">
-                  <form onSubmit={handleLoginSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="login-email"
-                          name="email"
-                          type="email"
-                          value={loginData.email}
-                          onChange={handleLoginChange}
-                          placeholder="you@example.com"
-                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                      </div>
-                    </div>
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="login">Sign In</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login" className="space-y-4">
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="your@email.com" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="login-password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          value={loginData.password}
-                          onChange={handleLoginChange}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(prev => !prev)}
-                          className="absolute right-3 top-3"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Your password" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-[1.02]">
-                      Sign In
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Signing in...' : 'Sign In'}
                     </Button>
-                    
-                    <div className="text-center text-sm">
-                      <p className="text-muted-foreground">
-                        Don't have an account?{' '}
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('register')}
-                          className="text-trading-blue hover:underline"
-                        >
-                          Sign up
-                        </button>
-                      </p>
-                    </div>
                   </form>
-                </TabsContent>
+                </Form>
                 
-                <TabsContent value="register" className="animate-fade-in">
-                  <form onSubmit={handleRegisterSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-name"
-                          name="name"
-                          type="text"
-                          value={registerData.name}
-                          onChange={handleRegisterChange}
-                          placeholder="John Doe"
-                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                      </div>
-                    </div>
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Don't have an account?{' '}
+                    <button 
+                      onClick={() => setActiveTab('register')}
+                      className="text-trading-blue hover:underline font-medium"
+                    >
+                      Create one
+                    </button>
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="register" className="space-y-4">
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="John Doe" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-email"
-                          name="email"
-                          type="email"
-                          value={registerData.email}
-                          onChange={handleRegisterChange}
-                          placeholder="you@example.com"
-                          className="pl-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="your@email.com" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          value={registerData.password}
-                          onChange={handleRegisterChange}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(prev => !prev)}
-                          className="absolute right-3 top-3"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    <FormField
+                      control={registerForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Your password" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="register-confirm-password">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="register-confirm-password"
-                          name="confirmPassword"
-                          type={showPassword ? "text" : "password"}
-                          value={registerData.confirmPassword}
-                          onChange={handleRegisterChange}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 transition-all duration-300 focus:ring-2 focus:ring-trading-blue"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <FormField
+                      control={registerForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="password" 
+                              placeholder="Confirm your password" 
+                              {...field} 
+                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <Button type="submit" className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-[1.02]">
-                      Create Account
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Creating account...' : 'Create Account'}
                     </Button>
-                    
-                    <div className="text-center text-sm">
-                      <p className="text-muted-foreground">
-                        Already have an account?{' '}
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab('login')}
-                          className="text-trading-blue hover:underline"
-                        >
-                          Sign in
-                        </button>
-                      </p>
-                    </div>
                   </form>
-                </TabsContent>
-              </Tabs>
-            </div>
+                </Form>
+                
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Already have an account?{' '}
+                    <button 
+                      onClick={() => setActiveTab('login')}
+                      className="text-trading-blue hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
