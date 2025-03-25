@@ -38,7 +38,9 @@ const RobotMarketplace = () => {
   }, [user, isLoading, navigate]);
 
   const handlePurchaseClick = (robot: Robot) => {
-    if (robot.category === 'free') {
+    const category = (robot.category || 'paid') as 'free' | 'paid';
+    
+    if (category === 'free') {
       // Handle free download
       toast({
         title: "Download started",
@@ -85,8 +87,8 @@ const RobotMarketplace = () => {
     return null; // Will redirect in useEffect
   }
 
-  const freeRobots = robots.filter(robot => robot.category === 'free');
-  const paidRobots = robots.filter(robot => robot.category === 'paid');
+  const freeRobots = robots.filter(robot => (robot.category || 'paid') === 'free');
+  const paidRobots = robots.filter(robot => (robot.category || 'paid') === 'paid');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -118,7 +120,7 @@ const RobotMarketplace = () => {
                         robot={{
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
-                          category: robot.category || 'paid',
+                          category: (robot.category || 'paid') as 'free' | 'paid',
                           currency: robot.currency || 'USD'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
@@ -141,7 +143,7 @@ const RobotMarketplace = () => {
                         robot={{
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
-                          category: robot.category || 'free',
+                          category: (robot.category || 'free') as 'free' | 'paid',
                           currency: robot.currency || 'USD'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
@@ -164,7 +166,7 @@ const RobotMarketplace = () => {
                         robot={{
                           ...robot,
                           imageUrl: robot.imageUrl || robot.image_url || '/placeholder.svg',
-                          category: robot.category || 'paid',
+                          category: (robot.category || 'paid') as 'free' | 'paid',
                           currency: robot.currency || 'USD'
                         }}
                         onPurchaseClick={() => handlePurchaseClick(robot)}
