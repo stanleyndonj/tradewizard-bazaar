@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AboutUs from "./pages/AboutUs";
@@ -20,7 +20,22 @@ import { BackendProvider } from "./context/BackendContext";
 
 const App = () => {
   // Create a client instance that persists across renders
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
+    },
+  }));
+
+  // Check for API URL environment variable
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_BASE_URL;
+    if (!apiUrl) {
+      console.warn('Warning: VITE_API_BASE_URL environment variable is not set. Using default http://localhost:8000/api');
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

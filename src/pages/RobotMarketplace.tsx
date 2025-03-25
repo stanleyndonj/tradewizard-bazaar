@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
 import { Bot, Lock, Download, ShoppingCart } from 'lucide-react';
 import RobotProductCard from '@/components/marketplace/RobotProductCard';
-import PaymentModal from '@/components/marketplace/PaymentModal';
+import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 import { useBackend } from '@/context/BackendContext';
 
 const RobotMarketplace = () => {
@@ -169,7 +169,7 @@ const RobotMarketplace = () => {
       <Footer />
       
       {isPaymentModalOpen && selectedRobot && (
-        <PaymentModal
+        <EnhancedPaymentModal
           isOpen={isPaymentModalOpen}
           onClose={handleClosePaymentModal}
           robot={selectedRobot}

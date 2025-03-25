@@ -14,7 +14,9 @@ import {
   getRobotRequests,
   submitRobotRequest,
   getUserPurchases,
-  makePurchase
+  makePurchase,
+  initiateMpesaPayment,
+  verifyMpesaPayment
 } from '@/lib/backend';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -33,6 +35,8 @@ interface BackendContextType {
   fetchPurchases: () => Promise<void>;
   submitRequest: (robotType: string, tradingPairs: string, timeframe: string, riskLevel: number) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
+  initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
+  verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
   refetchData: () => Promise<void>;
 }
 
@@ -159,6 +163,11 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       setRobots(fetchedRobots);
     } catch (error) {
       console.error('Error fetching robots:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch robots",
+        variant: "destructive",
+      });
     }
   };
 
@@ -170,6 +179,11 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     } catch (error) {
       console.error('Error fetching robot requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch robot requests",
+        variant: "destructive",
+      });
     }
   };
 
@@ -181,6 +195,11 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     } catch (error) {
       console.error('Error fetching purchases:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch purchases",
+        variant: "destructive",
+      });
     }
   };
 
@@ -238,6 +257,35 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // M-Pesa integration
+  const handleMpesaPayment = async (
+    phone: string,
+    amount: number,
+    robotId: string
+  ) => {
+    try {
+      const response = await initiateMpesaPayment(phone, amount, robotId);
+      return response.checkoutRequestID;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to initiate M-Pesa payment";
+      toast({
+        title: "Payment Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const checkPaymentStatus = async (checkoutRequestId: string) => {
+    try {
+      return await verifyMpesaPayment(checkoutRequestId);
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      return false;
+    }
+  };
+
   const refetchData = async () => {
     await Promise.all([
       fetchRobots(),
@@ -260,6 +308,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     fetchPurchases,
     submitRequest,
     purchaseRobot,
+    initiateMpesaPayment: handleMpesaPayment,
+    verifyPayment: checkPaymentStatus,
     refetchData
   };
 
