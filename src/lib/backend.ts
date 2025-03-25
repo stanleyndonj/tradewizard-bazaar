@@ -1,190 +1,158 @@
 
-// Backend API service
-import { ENDPOINTS, fetchApi } from './apiConfig';
+import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
-export interface Robot {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  type: 'MT5' | 'Binary';
-  category: 'free' | 'paid';
-  features: string[];
-  imageUrl: string;
-}
-
-export interface RobotRequest {
-  id: string;
-  userId: string;
-  robotType: string;
-  tradingPairs: string;
-  timeframe: string;
-  riskLevel: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
-  createdAt: string;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  is_admin: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Robot {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  price: number;
+  features: string[];
+  image_url?: string;
+  created_at: string;
+}
+
+export interface RobotRequest {
+  id: string;
+  user_id: string;
+  robot_type: string;
+  trading_pairs: string;
+  timeframe: string;
+  risk_level: number;
+  status: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface Purchase {
   id: string;
-  userId: string;
-  robotId: string;
+  user_id: string;
+  robot_id: string;
   amount: number;
   currency: string;
-  paymentMethod: string;
-  status: 'completed' | 'pending' | 'failed';
-  purchaseDate: string;
+  payment_method: string;
+  status: string;
+  created_at: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
+// Auth functions
+export const registerUser = async (name: string, email: string, password: string): Promise<User> => {
+  const response = await fetch(API_ENDPOINTS.REGISTER, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name, email, password }),
+  });
 
-export interface MpesaPaymentRequest {
-  phone: string;
-  amount: number;
-  robotId: string;
-}
-
-export interface MpesaPaymentResponse {
-  checkoutRequestID: string;
-  responseDescription: string;
-  responseCode: string;
-}
-
-// User related functions
-export const getCurrentUser = async (): Promise<User | null> => {
-  try {
-    // Use auth token from localStorage if available
-    const token = localStorage.getItem('authToken');
-    if (!token) return null;
-    
-    const user = await fetchApi<User>(ENDPOINTS.AUTH.CURRENT_USER);
-    return user;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
+  const data = await handleApiResponse(response);
+  
+  if (data.access_token) {
+    localStorage.setItem('authToken', data.access_token);
   }
+  
+  return data.user;
 };
 
 export const loginUser = async (email: string, password: string): Promise<User> => {
-  try {
-    const response = await fetchApi<AuthResponse>(ENDPOINTS.AUTH.LOGIN, {
-      method: 'POST',
-      body: { email, password }
-    });
-    
-    // Save auth token
-    localStorage.setItem('authToken', response.token);
-    
-    return response.user;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Login failed';
-    throw new Error(errorMessage);
-  }
-};
+  const response = await fetch(API_ENDPOINTS.LOGIN, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-export const registerUser = async (name: string, email: string, password: string): Promise<User> => {
-  try {
-    const response = await fetchApi<AuthResponse>(ENDPOINTS.AUTH.REGISTER, {
-      method: 'POST',
-      body: { name, email, password }
-    });
-    
-    // Save auth token
-    localStorage.setItem('authToken', response.token);
-    
-    return response.user;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Registration failed';
-    throw new Error(errorMessage);
+  const data = await handleApiResponse(response);
+  
+  if (data.access_token) {
+    localStorage.setItem('authToken', data.access_token);
   }
+  
+  return data.user;
 };
 
 export const logoutUser = async (): Promise<void> => {
+  await fetch(API_ENDPOINTS.LOGOUT, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  localStorage.removeItem('authToken');
+};
+
+export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    // Call logout endpoint to invalidate token on server
-    await fetchApi(ENDPOINTS.AUTH.LOGOUT, { method: 'POST' });
+    if (!getAuthHeaders().Authorization) {
+      return null;
+    }
+    
+    const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      localStorage.removeItem('authToken');
+      return null;
+    }
+    
+    return await response.json();
   } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    // Always remove local token
+    console.error('Error getting current user:', error);
     localStorage.removeItem('authToken');
-  }
-};
-
-// Robot management
-export const getRobots = async (): Promise<Robot[]> => {
-  try {
-    return await fetchApi<Robot[]>(ENDPOINTS.ROBOTS.ALL);
-  } catch (error) {
-    console.error('Error fetching robots:', error);
-    return [];
-  }
-};
-
-export const getRobotById = async (id: string): Promise<Robot | null> => {
-  try {
-    return await fetchApi<Robot>(ENDPOINTS.ROBOTS.DETAIL(id));
-  } catch (error) {
-    console.error(`Error fetching robot ${id}:`, error);
     return null;
   }
 };
 
-export const addRobot = async (robot: Omit<Robot, 'id'>): Promise<Robot> => {
-  try {
-    return await fetchApi<Robot>(ENDPOINTS.ROBOTS.CREATE, {
-      method: 'POST',
-      body: robot
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to add robot';
-    throw new Error(errorMessage);
-  }
+// Robot functions
+export const getRobots = async (): Promise<Robot[]> => {
+  const response = await fetch(API_ENDPOINTS.ROBOTS, {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return handleApiResponse(response);
 };
 
-export const updateRobot = async (id: string, updates: Partial<Robot>): Promise<Robot> => {
-  try {
-    return await fetchApi<Robot>(ENDPOINTS.ROBOTS.UPDATE(id), {
-      method: 'PUT',
-      body: updates
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `Failed to update robot ${id}`;
-    throw new Error(errorMessage);
-  }
+export const getRobotById = async (id: string): Promise<Robot> => {
+  const response = await fetch(API_ENDPOINTS.ROBOT_BY_ID(id), {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return handleApiResponse(response);
 };
 
-export const deleteRobot = async (id: string): Promise<void> => {
-  try {
-    await fetchApi(ENDPOINTS.ROBOTS.DELETE(id), {
-      method: 'DELETE'
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `Failed to delete robot ${id}`;
-    throw new Error(errorMessage);
-  }
-};
-
-// Robot request management
-export const getRobotRequests = async (userId?: string): Promise<RobotRequest[]> => {
-  try {
-    const endpoint = userId ? ENDPOINTS.REQUESTS.USER(userId) : ENDPOINTS.REQUESTS.ALL;
-    return await fetchApi<RobotRequest[]>(endpoint);
-  } catch (error) {
-    console.error('Error fetching robot requests:', error);
-    return [];
-  }
+// Robot requests functions
+export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> => {
+  const response = await fetch(API_ENDPOINTS.USER_ROBOT_REQUESTS(userId), {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return handleApiResponse(response);
 };
 
 export const submitRobotRequest = async (
@@ -194,43 +162,34 @@ export const submitRobotRequest = async (
   timeframe: string,
   riskLevel: number
 ): Promise<RobotRequest> => {
-  try {
-    return await fetchApi<RobotRequest>(ENDPOINTS.REQUESTS.CREATE, {
-      method: 'POST',
-      body: {
-        userId,
-        robotType,
-        tradingPairs,
-        timeframe,
-        riskLevel
-      }
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to submit request';
-    throw new Error(errorMessage);
-  }
+  const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      robot_type: robotType,
+      trading_pairs: tradingPairs,
+      timeframe: timeframe,
+      risk_level: riskLevel,
+    }),
+  });
+  
+  return handleApiResponse(response);
 };
 
-export const updateRobotRequest = async (id: string, updates: Partial<RobotRequest>): Promise<RobotRequest> => {
-  try {
-    return await fetchApi<RobotRequest>(ENDPOINTS.REQUESTS.UPDATE(id), {
-      method: 'PUT',
-      body: updates
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : `Failed to update request ${id}`;
-    throw new Error(errorMessage);
-  }
-};
-
-// Purchase management
+// Purchase functions
 export const getUserPurchases = async (userId: string): Promise<Purchase[]> => {
-  try {
-    return await fetchApi<Purchase[]>(ENDPOINTS.PURCHASES.USER(userId));
-  } catch (error) {
-    console.error('Error fetching user purchases:', error);
-    return [];
-  }
+  const response = await fetch(API_ENDPOINTS.USER_PURCHASES(userId), {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return handleApiResponse(response);
 };
 
 export const makePurchase = async (
@@ -240,62 +199,63 @@ export const makePurchase = async (
   currency: string,
   paymentMethod: string
 ): Promise<Purchase> => {
-  try {
-    return await fetchApi<Purchase>(ENDPOINTS.PURCHASES.CREATE, {
-      method: 'POST',
-      body: {
-        userId,
-        robotId,
-        amount,
-        currency,
-        paymentMethod
-      }
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to complete purchase';
-    throw new Error(errorMessage);
-  }
+  const response = await fetch(API_ENDPOINTS.PURCHASES, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      robot_id: robotId,
+      amount,
+      currency,
+      payment_method: paymentMethod,
+    }),
+  });
+  
+  return handleApiResponse(response);
 };
 
-export const getAllPurchases = async (): Promise<Purchase[]> => {
-  try {
-    return await fetchApi<Purchase[]>(ENDPOINTS.PURCHASES.ALL);
-  } catch (error) {
-    console.error('Error fetching all purchases:', error);
-    return [];
-  }
-};
+// Mpesa functions
+interface MpesaResponse {
+  checkoutRequestID: string;
+  message: string;
+}
 
-// M-Pesa Payment integration
 export const initiateMpesaPayment = async (
   phone: string,
   amount: number,
   robotId: string
-): Promise<MpesaPaymentResponse> => {
-  try {
-    return await fetchApi<MpesaPaymentResponse>(ENDPOINTS.PAYMENT.MPESA, {
-      method: 'POST',
-      body: {
-        phone,
-        amount,
-        robotId
-      }
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to initiate M-Pesa payment';
-    throw new Error(errorMessage);
-  }
+): Promise<MpesaResponse> => {
+  const response = await fetch(API_ENDPOINTS.MPESA_INITIATE, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      phone_number: phone,
+      amount,
+      robot_id: robotId,
+    }),
+  });
+  
+  return handleApiResponse(response);
 };
 
-export const verifyMpesaPayment = async (checkoutRequestID: string): Promise<boolean> => {
-  try {
-    const response = await fetchApi<{success: boolean}>(ENDPOINTS.PAYMENT.VERIFY, {
-      method: 'POST',
-      body: { checkoutRequestID }
-    });
-    return response.success;
-  } catch (error) {
-    console.error('Error verifying M-Pesa payment:', error);
-    return false;
-  }
+export const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boolean> => {
+  const response = await fetch(API_ENDPOINTS.MPESA_VERIFY, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      checkout_request_id: checkoutRequestId,
+    }),
+  });
+  
+  const result = await handleApiResponse(response);
+  return result.success;
 };
