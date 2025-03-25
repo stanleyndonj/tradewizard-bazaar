@@ -17,6 +17,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: str
     is_admin: bool
+    role: Optional[str] = "user"
     created_at: datetime
     updated_at: Optional[datetime] = None
 
