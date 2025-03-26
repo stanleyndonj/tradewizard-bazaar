@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -11,11 +10,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS with production frontend URL
 origins = [
     "http://localhost:5173",  # Development frontend
     "http://localhost:3000",  # Alternative dev port
-    "https://yourfrontend.com",  # Replace with production URL
+    "https://your-production-frontend-url.com"  # Replace with your actual production frontend URL
 ]
 
 app.add_middleware(
