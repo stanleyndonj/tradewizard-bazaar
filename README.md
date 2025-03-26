@@ -1,69 +1,121 @@
+
 # Welcome to your Lovable project
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/18b5dbcf-6b1c-440f-8bc0-2a3133291e8b
 
-## How can I edit this code?
+## Prerequisites
 
-There are several ways of editing your application.
+Before you begin, ensure you have the following installed:
+- Python 3.9+ (for backend)
+- Node.js 18+ 
+- pip (Python package manager)
+- npm or bun
 
-**Use Lovable**
+## Backend Setup
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/18b5dbcf-6b1c-440f-8bc0-2a3133291e8b) and start prompting.
+### 1. Set Up Virtual Environment (Optional but Recommended)
+```bash
+# Navigate to backend directory
+cd backend
 
-Changes made via Lovable will be committed automatically to this repo.
+# Create a virtual environment
+python -m venv venv
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Activate the virtual environment
+# On Windows
+venv\Scripts\activate
+# On macOS/Linux
+source venv/bin/activate
 ```
 
-**Edit a file directly in GitHub**
+### 2. Install Backend Dependencies
+```bash
+# With virtual environment activated
+pip install -r requirements.txt
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 3. Configure Environment Variables
+Create a `.env` file in the `backend` directory with the following variables:
+```
+DATABASE_URL=postgresql://username:password@localhost/tradewizard
+JWT_SECRET_KEY=your_secure_random_secret_key
+M_PESA_API_URL=https://sandbox.safaricom.co.ke  # Update with actual Mpesa API
+M_PESA_CONSUMER_KEY=your_consumer_key
+M_PESA_CONSUMER_SECRET=your_consumer_secret
+M_PESA_SHORTCODE=your_shortcode
+M_PESA_LIPA_NA_MPESA_SHORTCODE=your_lipa_shortcode
+M_PESA_LIPA_NA_MPESA_SHORTCODE_LIPA=your_lipa_shortcode
+M_PESA_LIPA_NA_MPESA_PASSKEY=your_passkey
+```
 
-**Use GitHub Codespaces**
+### 4. Set Up Database
+```bash
+# Run database migrations
+alembic upgrade head
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 5. Start Backend Server
+```bash
+# Run the FastAPI server
+uvicorn app.main:app --reload --port 8000
+```
 
-## What technologies are used for this project?
+The backend will be available at `http://localhost:8000`
+- Swagger Docs: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
-This project is built with .
+## Frontend Setup
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### 1. Install Frontend Dependencies
+```bash
+# From project root
+npm install
+# Or if using bun
+bun install
+```
 
-## How can I deploy this project?
+### 2. Set Frontend Environment Variables
+Create a `.env` file in the project root:
+```
+VITE_API_BASE_URL=http://localhost:8000
+```
 
-Simply open [Lovable](https://lovable.dev/projects/18b5dbcf-6b1c-440f-8bc0-2a3133291e8b) and click on Share -> Publish.
+### 3. Start Frontend Development Server
+```bash
+# From project root
+npm run dev
+# Or with bun
+bun dev
+```
 
-## I want to use a custom domain - is that possible?
+The frontend will be available at `http://localhost:8080`
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Development Workflow
+
+1. Start backend server in one terminal
+2. Start frontend server in another terminal
+3. Open `http://localhost:8080` in your browser
+
+## Additional Commands
+
+### Backend
+- Run tests: `pytest`
+- Create migration: `alembic revision --autogenerate -m "Description"`
+
+### Frontend
+- Build for production: `npm run build`
+- Preview production build: `npm run preview`
+
+## Troubleshooting
+
+- Ensure all environment variables are correctly set
+- Check that all dependencies are installed
+- Verify database connection
+- Restart servers if encountering unexpected issues
+
+## Deployment
+
+For deployment instructions, visit: [Lovable Deployment Docs](https://docs.lovable.dev/deployment)
+```
