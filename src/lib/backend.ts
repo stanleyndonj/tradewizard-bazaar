@@ -1,4 +1,3 @@
-
 import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
@@ -61,13 +60,19 @@ export const registerUser = async (name: string, email: string, password: string
       body: JSON.stringify({ name, email, password }),
     });
 
-    const data = await handleApiResponse(response);
+    if (!response.ok) {
+      // Try to get more specific error message from the server
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Registration failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     if (data.access_token) {
       localStorage.setItem('authToken', data.access_token);
     }
     
-    return data.user;
+    return data.user || data;
   } catch (error) {
     console.error('Registration error:', error);
     throw error;
@@ -84,7 +89,13 @@ export const loginUser = async (email: string, password: string): Promise<User> 
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await handleApiResponse(response);
+    if (!response.ok) {
+      // Try to get more specific error message from the server
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Login failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
     
     if (data.access_token) {
       localStorage.setItem('authToken', data.access_token);
@@ -127,19 +138,16 @@ export const getCurrentUser = async (): Promise<User | null> => {
     });
     
     if (!response.ok) {
-      if (response.status === 401) {
-        console.log('Auth token invalid or expired');
-        // Don't remove the token here to prevent logout on page refresh
-        // if the server is temporarily unavailable
-      }
+      // Don't remove token on 401 - this could be a temporary server issue
+      // Only handle server responses in the 500 range as temporary issues
+      console.log(`Auth check failed with status ${response.status}`);
       return null;
     }
     
     return await response.json();
   } catch (error) {
     console.error('Error getting current user:', error);
-    // Don't remove the token here to prevent logout on page refresh
-    // if the server is temporarily unavailable
+    // Don't remove the token on network errors
     return null;
   }
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,8 +47,15 @@ const Navbar = () => {
         section.scrollIntoView({ behavior: 'smooth' });
       }
     } else {
-      // If on another page, navigate to home with the section hash
-      window.location.href = `/#${sectionId}`;
+      // If on another page, navigate to home and then scroll after the page loads
+      navigate('/');
+      // Wait for the navigation to complete and DOM to update
+      setTimeout(() => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
   };
 

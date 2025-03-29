@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   User, 
@@ -112,6 +111,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      throw error; // Re-throw so the UI can handle it
     } finally {
       setIsLoading(false);
     }
@@ -140,6 +140,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      throw error; // Re-throw so the component can handle it
     } finally {
       setIsLoading(false);
     }

@@ -11,6 +11,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBackend } from '@/context/BackendContext';
+import { FullPageLoader } from '@/components/ui/loader';
+import { toast } from '@/hooks/use-toast';
 
 // Login form validation schema
 const loginSchema = z.object({
@@ -33,7 +35,8 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<string>('login');
-  const { user, login, register, isLoading } = useBackend();
+  const { user, login, register: registerUser, isLoading } = useBackend();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -72,18 +75,37 @@ const Auth = () => {
 
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
-    await login(values.email, values.password);
+    setIsSubmitting(true);
+    try {
+      await login(values.email, values.password);
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
-    await register(values.name, values.email, values.password);
+    setIsSubmitting(true);
+    try {
+      await registerUser(values.name, values.email, values.password);
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "Please check your information and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg">Loading...</div>
+        <FullPageLoader text="Loading your account..." />
       </div>
     );
   }
@@ -152,9 +174,14 @@ const Auth = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     >
-                      {isLoading ? 'Signing in...' : 'Sign In'}
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <span className="mr-2">Signing in</span>
+                          <div className="h-5 w-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : 'Sign In'}
                     </Button>
                   </form>
                 </Form>
@@ -252,9 +279,14 @@ const Auth = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     >
-                      {isLoading ? 'Creating account...' : 'Create Account'}
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <span className="mr-2">Creating account</span>
+                          <div className="h-5 w-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : 'Create Account'}
                     </Button>
                   </form>
                 </Form>
