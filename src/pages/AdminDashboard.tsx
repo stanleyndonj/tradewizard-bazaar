@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut, Search, MessageCircle, Users, Bot, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import RobotManagementModal from '@/components/admin/RobotManagementModal';
+import { useBackend } from '@/context/BackendContext';
 
 interface User {
   id: string;
@@ -45,7 +46,7 @@ interface Robot {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const { user: currentUser, logout } = useBackend();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,15 +56,13 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Check if user is logged in and is admin
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
+    if (!currentUser) {
       navigate('/auth');
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser);
-    if (parsedUser.role !== 'admin') {
-      navigate('/messages');
+    if (!currentUser.is_admin) {
+      navigate('/customer-dashboard');
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page",
@@ -71,8 +70,6 @@ const AdminDashboard = () => {
       });
       return;
     }
-
-    setUser(parsedUser);
     
     // Set page title
     document.title = 'Admin Dashboard | TradeWizard';
@@ -179,15 +176,10 @@ const AdminDashboard = () => {
     ];
     
     setRobots(sampleRobots);
-  }, [navigate]);
+  }, [currentUser, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
-    navigate('/');
+  const handleLogout = async () => {
+    await logout();
   };
 
   const formatDate = (date: Date) => {
@@ -266,7 +258,7 @@ const AdminDashboard = () => {
     robot.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!user) {
+  if (!currentUser) {
     return null; // Will redirect in useEffect
   }
 

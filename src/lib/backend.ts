@@ -1,3 +1,4 @@
+
 import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
@@ -51,51 +52,65 @@ export interface Purchase {
 
 // Auth functions
 export const registerUser = async (name: string, email: string, password: string): Promise<User> => {
-  const response = await fetch(API_ENDPOINTS.REGISTER, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ name, email, password }),
-  });
+  try {
+    const response = await fetch(API_ENDPOINTS.REGISTER, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-  const data = await handleApiResponse(response);
-  
-  if (data.access_token) {
-    localStorage.setItem('authToken', data.access_token);
+    const data = await handleApiResponse(response);
+    
+    if (data.access_token) {
+      localStorage.setItem('authToken', data.access_token);
+    }
+    
+    return data.user;
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
   }
-  
-  return data.user;
 };
 
 export const loginUser = async (email: string, password: string): Promise<User> => {
-  const response = await fetch(API_ENDPOINTS.LOGIN, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const response = await fetch(API_ENDPOINTS.LOGIN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-  const data = await handleApiResponse(response);
-  
-  if (data.access_token) {
-    localStorage.setItem('authToken', data.access_token);
+    const data = await handleApiResponse(response);
+    
+    if (data.access_token) {
+      localStorage.setItem('authToken', data.access_token);
+    }
+    
+    return data.user;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
-  
-  return data.user;
 };
 
 export const logoutUser = async (): Promise<void> => {
-  await fetch(API_ENDPOINTS.LOGOUT, {
-    method: 'POST',
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  localStorage.removeItem('authToken');
+  try {
+    await fetch(API_ENDPOINTS.LOGOUT, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    localStorage.removeItem('authToken');
+  }
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
@@ -112,14 +127,19 @@ export const getCurrentUser = async (): Promise<User | null> => {
     });
     
     if (!response.ok) {
-      localStorage.removeItem('authToken');
+      if (response.status === 401) {
+        console.log('Auth token invalid or expired');
+        // Don't remove the token here to prevent logout on page refresh
+        // if the server is temporarily unavailable
+      }
       return null;
     }
     
     return await response.json();
   } catch (error) {
     console.error('Error getting current user:', error);
-    localStorage.removeItem('authToken');
+    // Don't remove the token here to prevent logout on page refresh
+    // if the server is temporarily unavailable
     return null;
   }
 };

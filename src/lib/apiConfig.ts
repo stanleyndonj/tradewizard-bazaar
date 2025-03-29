@@ -1,11 +1,12 @@
 
-// API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Get the API base URL from environment variable or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-export const API_ENDPOINTS = {
+// API endpoints
+const API_ENDPOINTS = {
   // Auth endpoints
-  LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/register`,
+  LOGIN: `${API_BASE_URL}/auth/login`,
   LOGOUT: `${API_BASE_URL}/auth/logout`,
   CURRENT_USER: `${API_BASE_URL}/users/me`,
   
@@ -13,38 +14,39 @@ export const API_ENDPOINTS = {
   ROBOTS: `${API_BASE_URL}/robots`,
   ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/robots/${id}`,
   
-  // Robot requests endpoints
+  // Robot request endpoints
   ROBOT_REQUESTS: `${API_BASE_URL}/robot-requests`,
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/users/${userId}/robot-requests`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/robot-requests/user/${userId}`,
   
-  // Purchases endpoints
+  // Purchase endpoints
   PURCHASES: `${API_BASE_URL}/purchases`,
-  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/users/${userId}/purchases`,
+  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/purchases/user/${userId}`,
   
-  // Mpesa endpoints
-  MPESA_INITIATE: `${API_BASE_URL}/payments/mpesa/initiate`,
-  MPESA_VERIFY: `${API_BASE_URL}/payments/mpesa/verify`,
+  // M-Pesa endpoints
+  MPESA_INITIATE: `${API_BASE_URL}/mpesa/initiate`,
+  MPESA_VERIFY: `${API_BASE_URL}/mpesa/verify`
 };
 
-// Helper to handle API responses
+// Helper function to get authentication headers
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Helper function to handle API responses
 export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.detail || 'An error occurred';
-    throw new Error(errorMessage);
+    // Try to get error message from response
+    try {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error ${response.status}`);
+    } catch (e) {
+      // If parsing fails, throw generic error
+      throw new Error(`HTTP error ${response.status}`);
+    }
   }
-  return response.json();
-};
-
-// Get auth token
-export const getAuthToken = () => {
-  return localStorage.getItem('authToken');
-};
-
-// Set auth headers
-export const getAuthHeaders = () => {
-  const token = getAuthToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  
+  return await response.json();
 };
 
 export default API_ENDPOINTS;

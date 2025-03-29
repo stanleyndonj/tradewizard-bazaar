@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Plus } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 
 interface Robot {
   id: string;
@@ -28,239 +28,170 @@ interface RobotManagementModalProps {
 }
 
 const RobotManagementModal = ({ isOpen, onClose, onSave, robot }: RobotManagementModalProps) => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("0");
-  const [currency, setCurrency] = useState("USD");
-  const [type, setType] = useState<'MT5' | 'Binary'>("MT5");
-  const [category, setCategory] = useState<'free' | 'paid'>("free");
-  const [features, setFeatures] = useState<string[]>([""]);
-  const [imageUrl, setImageUrl] = useState("/placeholder.svg");
-  
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState(0);
+  const [currency, setCurrency] = useState('USD');
+  const [type, setType] = useState<'MT5' | 'Binary'>('MT5');
+  const [category, setCategory] = useState<'free' | 'paid'>('paid');
+  const [featuresText, setFeaturesText] = useState('');
+  const [imageUrl, setImageUrl] = useState('/placeholder.svg');
+
+  // Initialize form when editing an existing robot
   useEffect(() => {
     if (robot) {
       setName(robot.name);
       setDescription(robot.description);
-      setPrice(robot.price.toString());
+      setPrice(robot.price);
       setCurrency(robot.currency);
       setType(robot.type);
       setCategory(robot.category);
-      setFeatures(robot.features.length > 0 ? robot.features : [""]);
+      setFeaturesText(robot.features.join('\n'));
       setImageUrl(robot.imageUrl);
     } else {
-      // Default values for new robot
-      setName("");
-      setDescription("");
-      setPrice("0");
-      setCurrency("USD");
-      setType("MT5");
-      setCategory("free");
-      setFeatures([""]);
-      setImageUrl("/placeholder.svg");
+      // Reset form for new robot
+      setName('');
+      setDescription('');
+      setPrice(0);
+      setCurrency('USD');
+      setType('MT5');
+      setCategory('paid');
+      setFeaturesText('');
+      setImageUrl('/placeholder.svg');
     }
   }, [robot]);
-  
-  const handleAddFeature = () => {
-    setFeatures([...features, ""]);
-  };
-  
-  const handleRemoveFeature = (index: number) => {
-    const newFeatures = [...features];
-    newFeatures.splice(index, 1);
-    setFeatures(newFeatures.length > 0 ? newFeatures : [""]);
-  };
-  
-  const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...features];
-    newFeatures[index] = value;
-    setFeatures(newFeatures);
-  };
-  
-  const handleSave = () => {
-    // Filter out empty features
-    const cleanedFeatures = features.filter(feature => feature.trim() !== "");
-    
-    // If category is free, force price to 0
-    const finalPrice = category === 'free' ? 0 : parseFloat(price);
-    
-    const updatedRobot: Robot = {
-      id: robot?.id || "temp-id", // Will be replaced with a real ID when saving
+
+  const handleSubmit = () => {
+    // Parse features from text input (one per line)
+    const features = featuresText
+      .split('\n')
+      .map(feature => feature.trim())
+      .filter(feature => feature.length > 0);
+
+    const robotData: Robot = {
+      id: robot?.id || '',
       name,
       description,
-      price: finalPrice,
+      price: category === 'free' ? 0 : price,
       currency,
       type,
       category,
-      features: cleanedFeatures.length > 0 ? cleanedFeatures : ["Basic trading robot"],
+      features,
       imageUrl
     };
-    
-    onSave(updatedRobot);
+
+    onSave(robotData);
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{robot ? "Edit Robot" : "Add New Robot"}</DialogTitle>
-          <DialogDescription>
-            {robot 
-              ? "Update the details of this trading robot" 
-              : "Fill in the details to add a new trading robot to the marketplace"}
-          </DialogDescription>
+          <DialogTitle>{robot ? 'Edit Robot' : 'Add New Robot'}</DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="robot-name">Robot Name</Label>
-              <Input
-                id="robot-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter robot name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="robot-type">Robot Type</Label>
-              <Select 
-                value={type} 
-                onValueChange={(value: 'MT5' | 'Binary') => setType(value)}
-              >
-                <SelectTrigger id="robot-type">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MT5">MT5</SelectItem>
-                  <SelectItem value="Binary">Binary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="robot-description">Description</Label>
-            <Textarea
-              id="robot-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter robot description"
-              rows={3}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Name</Label>
+            <Input 
+              id="name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              className="col-span-3" 
+              placeholder="e.g., MT5 Pro Scalper"
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="robot-category">Category</Label>
-              <Select 
-                value={category} 
-                onValueChange={(value: 'free' | 'paid') => setCategory(value)}
-              >
-                <SelectTrigger id="robot-category">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="robot-currency">Currency</Label>
-                <Select 
-                  value={currency} 
-                  onValueChange={setCurrency}
-                  disabled={category === 'free'}
-                >
-                  <SelectTrigger id="robot-currency">
-                    <SelectValue placeholder="Currency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="KES">KES</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">Description</Label>
+            <Textarea 
+              id="description" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              className="col-span-3" 
+              placeholder="Brief description of the robot"
+            />
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Type</Label>
+            <RadioGroup value={type} onValueChange={(value) => setType(value as 'MT5' | 'Binary')} className="col-span-3 flex space-x-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="MT5" id="mt5" />
+                <Label htmlFor="mt5">MT5</Label>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="robot-price">Price</Label>
-                <Input
-                  id="robot-price"
-                  type="number"
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Binary" id="binary" />
+                <Label htmlFor="binary">Binary</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Category</Label>
+            <div className="col-span-3 flex items-center space-x-4">
+              <Switch 
+                checked={category === 'free'} 
+                onCheckedChange={(checked) => setCategory(checked ? 'free' : 'paid')} 
+                id="free-switch"
+              />
+              <Label htmlFor="free-switch">Free Robot</Label>
+            </div>
+          </div>
+          
+          {category === 'paid' && (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="price" className="text-right">Price</Label>
+                <Input 
+                  id="price" 
+                  type="number" 
+                  value={price.toString()} 
+                  onChange={(e) => setPrice(Number(e.target.value))} 
+                  className="col-span-3" 
                   min="0"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  disabled={category === 'free'}
-                  placeholder="0.00"
                 />
               </div>
-            </div>
-          </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="currency" className="text-right">Currency</Label>
+                <Input 
+                  id="currency" 
+                  value={currency} 
+                  onChange={(e) => setCurrency(e.target.value)} 
+                  className="col-span-3" 
+                  placeholder="USD"
+                />
+              </div>
+            </>
+          )}
           
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Label>Features</Label>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm"
-                onClick={handleAddFeature}
-                className="h-8 px-2 text-xs"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Add Feature
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    value={feature}
-                    onChange={(e) => handleFeatureChange(index, e.target.value)}
-                    placeholder={`Feature ${index + 1}`}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => handleRemoveFeature(index)}
-                    disabled={features.length === 1}
-                    className="h-8 w-8 rounded-full p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="robot-image">Image URL</Label>
-            <Input
-              id="robot-image"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Enter image URL or path"
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="imageUrl" className="text-right">Image URL</Label>
+            <Input 
+              id="imageUrl" 
+              value={imageUrl} 
+              onChange={(e) => setImageUrl(e.target.value)} 
+              className="col-span-3" 
+              placeholder="/placeholder.svg"
             />
-            <p className="text-xs text-muted-foreground">
-              Leave as default to use placeholder image
-            </p>
+          </div>
+          
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="features" className="text-right pt-2">Features</Label>
+            <Textarea 
+              id="features" 
+              value={featuresText} 
+              onChange={(e) => setFeaturesText(e.target.value)} 
+              className="col-span-3 min-h-24" 
+              placeholder="Enter features, one per line"
+            />
           </div>
         </div>
-        
+
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="bg-trading-blue hover:bg-trading-darkBlue">
-            {robot ? "Update Robot" : "Add Robot"}
-          </Button>
+          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+          <Button type="button" onClick={handleSubmit}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
