@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -11,57 +12,39 @@ import { LogOut, Search, MessageCircle, Users, Bot, Plus, Edit, Trash2 } from 'l
 import { toast } from '@/hooks/use-toast';
 import RobotManagementModal from '@/components/admin/RobotManagementModal';
 import { useBackend } from '@/context/BackendContext';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  joinDate: Date;
-  lastActive: Date;
-  service: string;
-  status: 'active' | 'inactive';
-  messages: number;
-}
-
-interface Message {
-  id: string;
-  userId: string;
-  userName: string;
-  text: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-interface Robot {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  type: 'MT5' | 'Binary';
-  category: 'free' | 'paid';
-  features: string[];
-  imageUrl: string;
-}
+import { FullPageLoader } from '@/components/ui/loader';
+import ChatInterface from '@/components/admin/ChatInterface';
+import { formatDistanceToNow } from 'date-fns';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user: currentUser, logout } = useBackend();
+  const { 
+    user: currentUser, 
+    logout, 
+    isLoading, 
+    robots, 
+    conversations,
+    getUsers,
+    addRobot,
+    updateRobot,
+    deleteRobot,
+    setCurrentConversation
+  } = useBackend();
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [robots, setRobots] = useState<Robot[]>([]);
   const [isRobotModalOpen, setIsRobotModalOpen] = useState(false);
-  const [currentRobot, setCurrentRobot] = useState<Robot | null>(null);
+  const [currentRobot, setCurrentRobot] = useState<any | null>(null);
+  
+  const users = getUsers();
 
   useEffect(() => {
     // Check if user is logged in and is admin
-    if (!currentUser) {
+    if (!isLoading && !currentUser) {
       navigate('/auth');
       return;
     }
 
-    if (!currentUser.is_admin) {
+    if (!isLoading && !currentUser?.is_admin) {
       navigate('/customer-dashboard');
       toast({
         title: "Access Denied",
@@ -73,117 +56,14 @@ const AdminDashboard = () => {
     
     // Set page title
     document.title = 'Admin Dashboard | TradeWizard';
-    
-    // Sample data for demo
-    const sampleUsers: User[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        joinDate: new Date(2023, 5, 15),
-        lastActive: new Date(2023, 6, 20),
-        service: 'MT5 Trading Robot',
-        status: 'active',
-        messages: 5
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        joinDate: new Date(2023, 4, 10),
-        lastActive: new Date(2023, 6, 19),
-        service: 'Binary Option Robot',
-        status: 'active',
-        messages: 3
-      },
-      {
-        id: '3',
-        name: 'David Johnson',
-        email: 'david@example.com',
-        joinDate: new Date(2023, 3, 5),
-        lastActive: new Date(2023, 5, 15),
-        service: 'Custom Indicator',
-        status: 'inactive',
-        messages: 2
-      }
-    ];
-    
-    const sampleMessages: Message[] = [
-      {
-        id: '1',
-        userId: '1',
-        userName: 'John Doe',
-        text: 'Hello, I need help with my MT5 robot configuration.',
-        timestamp: new Date(2023, 6, 20, 10, 30),
-        read: true
-      },
-      {
-        id: '2',
-        userId: '2',
-        userName: 'Jane Smith',
-        text: 'When will my binary option robot be ready?',
-        timestamp: new Date(2023, 6, 19, 14, 15),
-        read: false
-      },
-      {
-        id: '3',
-        userId: '1',
-        userName: 'John Doe',
-        text: 'Can you add a specific indicator to my robot?',
-        timestamp: new Date(2023, 6, 18, 9, 45),
-        read: true
-      }
-    ];
-    
-    setUsers(sampleUsers);
-    setMessages(sampleMessages);
-    
-    // Sample robots data
-    const sampleRobots: Robot[] = [
-      {
-        id: '1',
-        name: 'MT5 Pro Scalper',
-        description: 'Advanced scalping robot for MT5 platform with smart entry and exit algorithms.',
-        price: 199,
-        currency: 'USD',
-        type: 'MT5',
-        category: 'paid',
-        features: ['Multi-timeframe analysis', 'Smart risk management', 'Compatible with all major currency pairs'],
-        imageUrl: '/placeholder.svg'
-      },
-      {
-        id: '2',
-        name: 'Binary Options Signal Bot',
-        description: 'Get reliable signals for binary options trading with high win rate.',
-        price: 149,
-        currency: 'USD',
-        type: 'Binary',
-        category: 'paid',
-        features: ['Real-time signals', '75%+ win rate', 'Works with multiple assets'],
-        imageUrl: '/placeholder.svg'
-      },
-      {
-        id: '3',
-        name: 'Forex Trend Finder',
-        description: 'Free MT5 robot that helps identify strong market trends.',
-        price: 0,
-        currency: 'USD',
-        type: 'MT5',
-        category: 'free',
-        features: ['Trend detection indicators', 'Email alerts', 'Visual dashboard'],
-        imageUrl: '/placeholder.svg'
-      }
-    ];
-    
-    setRobots(sampleRobots);
-  }, [currentUser, navigate]);
+  }, [currentUser, isLoading, navigate]);
 
   const handleLogout = async () => {
     await logout();
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -191,11 +71,17 @@ const AdminDashboard = () => {
   };
 
   const viewUserChat = (userId: string) => {
-    // In a real app, this would navigate to a user-specific chat history
-    toast({
-      title: "Chat Opened",
-      description: `Viewing chat history for user ID: ${userId}`,
-    });
+    // Find conversation with this user
+    const userConversation = conversations.find(conv => conv.userId === userId);
+    
+    if (userConversation) {
+      setCurrentConversation(userConversation.id);
+    } else {
+      toast({
+        title: "No Conversation",
+        description: "There is no active conversation with this user",
+      });
+    }
   };
 
   const handleAddRobot = () => {
@@ -203,39 +89,22 @@ const AdminDashboard = () => {
     setIsRobotModalOpen(true);
   };
 
-  const handleEditRobot = (robot: Robot) => {
+  const handleEditRobot = (robot: any) => {
     setCurrentRobot(robot);
     setIsRobotModalOpen(true);
   };
 
   const handleDeleteRobot = (robotId: string) => {
-    // In a real app, this would call an API to delete the robot
-    setRobots(prev => prev.filter(robot => robot.id !== robotId));
-    toast({
-      title: "Robot Deleted",
-      description: "The robot has been removed from the marketplace",
-    });
+    deleteRobot(robotId);
   };
 
-  const handleSaveRobot = (robot: Robot) => {
+  const handleSaveRobot = async (robot: any) => {
     if (currentRobot) {
       // Update existing robot
-      setRobots(prev => prev.map(r => r.id === robot.id ? robot : r));
-      toast({
-        title: "Robot Updated",
-        description: `${robot.name} has been updated`,
-      });
+      await updateRobot(currentRobot.id, robot);
     } else {
       // Add new robot
-      const newRobot = {
-        ...robot,
-        id: Date.now().toString(), // Generate a simple ID
-      };
-      setRobots(prev => [...prev, newRobot]);
-      toast({
-        title: "Robot Added",
-        description: `${robot.name} has been added to the marketplace`,
-      });
+      await addRobot(robot);
     }
     setIsRobotModalOpen(false);
   };
@@ -243,22 +112,26 @@ const AdminDashboard = () => {
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.service.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.role || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredMessages = messages.filter(message => 
-    message.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    message.text.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredMessages = conversations.filter(conv => 
+    conv.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredRobots = robots.filter(robot => 
     robot.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     robot.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     robot.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    robot.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (robot.category || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!currentUser) {
+  if (isLoading) {
+    return <FullPageLoader text="Loading admin dashboard..." />;
+  }
+
+  if (!currentUser || !currentUser.is_admin) {
     return null; // Will redirect in useEffect
   }
 
@@ -325,8 +198,7 @@ const AdminDashboard = () => {
                           <TableHead>Name</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Join Date</TableHead>
-                          <TableHead>Last Active</TableHead>
-                          <TableHead>Service</TableHead>
+                          <TableHead>Role</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -337,17 +209,16 @@ const AdminDashboard = () => {
                             <TableRow key={user.id}>
                               <TableCell className="font-medium">{user.name}</TableCell>
                               <TableCell>{user.email}</TableCell>
-                              <TableCell>{formatDate(user.joinDate)}</TableCell>
-                              <TableCell>{formatDate(user.lastActive)}</TableCell>
+                              <TableCell>{formatDate(user.created_at)}</TableCell>
                               <TableCell>
                                 <div className="flex items-center">
                                   <Bot className="h-4 w-4 mr-2 text-trading-blue" />
-                                  {user.service}
+                                  {user.role || 'Customer'}
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                                  {user.status}
+                                <Badge variant={user.is_admin ? 'secondary' : 'default'}>
+                                  {user.is_admin ? 'Admin' : 'Active'}
                                 </Badge>
                               </TableCell>
                               <TableCell>
@@ -358,7 +229,7 @@ const AdminDashboard = () => {
                                   onClick={() => viewUserChat(user.id)}
                                 >
                                   <MessageCircle className="h-4 w-4 mr-2" />
-                                  Chat ({user.messages})
+                                  Chat
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -376,54 +247,7 @@ const AdminDashboard = () => {
                 </TabsContent>
                 
                 <TabsContent value="messages" className="mt-0">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Message</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredMessages.length > 0 ? (
-                          filteredMessages.map((message) => (
-                            <TableRow key={message.id}>
-                              <TableCell className="font-medium">{message.userName}</TableCell>
-                              <TableCell className="max-w-xs truncate">{message.text}</TableCell>
-                              <TableCell>
-                                {message.timestamp.toLocaleDateString()} {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={message.read ? 'outline' : 'default'}>
-                                  {message.read ? 'Read' : 'Unread'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="flex items-center"
-                                  onClick={() => viewUserChat(message.userId)}
-                                >
-                                  <MessageCircle className="h-4 w-4 mr-2" />
-                                  Reply
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-4">
-                              No messages found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <ChatInterface />
                 </TabsContent>
                 
                 <TabsContent value="robots" className="mt-0">
@@ -464,7 +288,7 @@ const AdminDashboard = () => {
                               <TableCell>
                                 {robot.category === 'free' 
                                   ? 'Free' 
-                                  : `${robot.currency} ${robot.price.toFixed(2)}`}
+                                  : `${robot.currency || 'USD'} ${robot.price.toFixed(2)}`}
                               </TableCell>
                               <TableCell>
                                 <div className="flex space-x-2">

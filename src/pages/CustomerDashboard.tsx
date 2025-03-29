@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
-import { Download, ArrowRight } from 'lucide-react';
+import { Download, ArrowRight, MessageSquare } from 'lucide-react';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
+import { FullPageLoader } from '@/components/ui/loader';
+import CustomerChat from '@/components/customer/CustomerChat';
 
 const CustomerDashboard = () => {
   const { user, robotRequests, purchases, robots, fetchRobotRequests, fetchPurchases, isLoading } = useBackend();
@@ -37,12 +39,12 @@ const CustomerDashboard = () => {
     }
   }, [user, isLoading, navigate]);
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg">Loading...</div>
-      </div>
-    );
+  if (isLoading) {
+    return <FullPageLoader text="Loading dashboard..." />;
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   // Get robot name from id
@@ -93,9 +95,10 @@ const CustomerDashboard = () => {
           
           <div className="max-w-6xl mx-auto mt-8">
             <Tabs defaultValue="robots" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="robots">Custom Robot Requests</TabsTrigger>
                 <TabsTrigger value="purchases">Your Purchases</TabsTrigger>
+                <TabsTrigger value="support">Support Chat</TabsTrigger>
               </TabsList>
               
               <TabsContent value="robots" className="animate-fade-in">
@@ -138,10 +141,10 @@ const CustomerDashboard = () => {
                           <Button 
                             variant="outline" 
                             className="w-full" 
-                            onClick={() => navigate('/messages')}
+                            onClick={() => navigate('/customer-dashboard', { state: { tab: 'support' } })}
                           >
-                            Check Messages
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            Check Status
+                            <MessageSquare className="ml-2 h-4 w-4" />
                           </Button>
                         </CardFooter>
                       </Card>
@@ -208,6 +211,10 @@ const CustomerDashboard = () => {
                     </div>
                   )}
                 </div>
+              </TabsContent>
+              
+              <TabsContent value="support" className="animate-fade-in">
+                <CustomerChat />
               </TabsContent>
             </Tabs>
           </div>

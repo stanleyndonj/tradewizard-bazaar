@@ -154,37 +154,52 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 // Robot functions
 export const getRobots = async (): Promise<Robot[]> => {
-  const response = await fetch(API_ENDPOINTS.ROBOTS, {
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return handleApiResponse(response);
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOTS, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching robots:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 export const getRobotById = async (id: string): Promise<Robot> => {
-  const response = await fetch(API_ENDPOINTS.ROBOT_BY_ID(id), {
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return handleApiResponse(response);
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_BY_ID(id), {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error(`Error fetching robot with ID ${id}:`, error);
+    throw error;
+  }
 };
 
 // Robot requests functions
 export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> => {
-  const response = await fetch(API_ENDPOINTS.USER_ROBOT_REQUESTS(userId), {
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return handleApiResponse(response);
+  try {
+    const response = await fetch(API_ENDPOINTS.USER_ROBOT_REQUESTS(userId), {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching robot requests:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 export const submitRobotRequest = async (
@@ -194,22 +209,27 @@ export const submitRobotRequest = async (
   timeframe: string,
   riskLevel: number
 ): Promise<RobotRequest> => {
-  const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
-    method: 'POST',
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      robot_type: robotType,
-      trading_pairs: tradingPairs,
-      timeframe: timeframe,
-      risk_level: riskLevel,
-    }),
-  });
-  
-  return handleApiResponse(response);
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        robot_type: robotType,
+        trading_pairs: tradingPairs,
+        timeframe: timeframe,
+        risk_level: riskLevel,
+      }),
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error submitting robot request:', error);
+    throw error;
+  }
 };
 
 // Purchase functions
