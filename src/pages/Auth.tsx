@@ -61,7 +61,12 @@ const Auth = () => {
 
     // Redirect if already logged in
     if (user) {
-      navigate('/customer-dashboard');
+      // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
+      if (user.is_admin) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/customer-dashboard');
+      }
     }
   }, [user, navigate]);
 

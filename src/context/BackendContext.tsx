@@ -99,7 +99,12 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         localStorage.removeItem('redirectAfterAuth');
         navigate(redirectPath);
       } else {
-        navigate('/dashboard');
+        // Redirect based on user role
+        if (loggedInUser.is_admin) {
+          navigate('/admin-dashboard');
+        } else {
+          navigate('/customer-dashboard');
+        }
       }
     } catch (error) {
       toast({
@@ -123,7 +128,12 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: "Account created successfully",
       });
       
-      navigate('/dashboard');
+      // Redirect based on user role
+      if (newUser.is_admin) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/customer-dashboard');
+      }
     } catch (error) {
       toast({
         title: "Registration failed",
