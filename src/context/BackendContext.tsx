@@ -17,7 +17,8 @@ import {
   getUserPurchases,
   makePurchase,
   initiateMpesaPayment,
-  verifyMpesaPayment
+  verifyMpesaPayment,
+  RobotRequestParams
 } from '@/lib/backend';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -70,29 +71,7 @@ interface BackendContextType {
   fetchRobotRequests: () => Promise<void>;
   fetchAllRobotRequests: () => Promise<void>;
   fetchPurchases: () => Promise<void>;
-  submitRequest: (params: {
-    robotType: string;
-    tradingPairs: string;
-    timeframe: string;
-    riskLevel: number;
-    botName?: string;
-    market?: string;
-    stakeAmount?: number;
-    contractType?: string;
-    duration?: string;
-    prediction?: string;
-    currency?: string;
-    tradingStrategy?: string;
-    accountCredentials?: string;
-    volume?: number;
-    orderType?: string;
-    stopLoss?: number;
-    takeProfit?: number;
-    entryRules?: string;
-    exitRules?: string;
-    riskManagement?: string;
-    additionalParameters?: string;
-  }) => Promise<void>;
+  submitRequest: (params: RobotRequestParams) => Promise<void>;
   updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string; progress?: number;}) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
@@ -354,29 +333,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const submitRequest = async (params: {
-    robotType: string;
-    tradingPairs: string;
-    timeframe: string;
-    riskLevel: number;
-    botName?: string;
-    market?: string;
-    stakeAmount?: number;
-    contractType?: string;
-    duration?: string;
-    prediction?: string;
-    currency?: string;
-    tradingStrategy?: string;
-    accountCredentials?: string;
-    volume?: number;
-    orderType?: string;
-    stopLoss?: number;
-    takeProfit?: number;
-    entryRules?: string;
-    exitRules?: string;
-    riskManagement?: string;
-    additionalParameters?: string;
-  }) => {
+  const submitRequest = async (params: RobotRequestParams) => {
     try {
       if (!user) {
         throw new Error('You must be logged in to submit a request');
@@ -395,6 +352,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         title: "Success",
         description: "Your robot request has been submitted successfully",
       });
+      
+      return newRequest;
     } catch (error) {
       console.error("Error submitting request:", error);
       toast({
@@ -402,6 +361,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: error instanceof Error ? error.message : "Failed to submit request",
         variant: "destructive",
       });
+      throw error;
     }
   };
   

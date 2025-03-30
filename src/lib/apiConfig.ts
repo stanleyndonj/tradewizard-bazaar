@@ -21,11 +21,11 @@ const API_ENDPOINTS = {
   // Robot request endpoints
   ROBOT_REQUESTS: `${API_BASE_URL}/robot-requests`,
   ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/robot-requests/${id}`,
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/robot-requests/users/${userId}`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/users/${userId}/robot-requests`,
   
   // Purchase endpoints
   PURCHASES: `${API_BASE_URL}/purchases`,
-  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/purchases/user/${userId}`,
+  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/users/${userId}/purchases`,
   
   // M-Pesa endpoints
   MPESA_INITIATE: `${API_BASE_URL}/mpesa/initiate`,

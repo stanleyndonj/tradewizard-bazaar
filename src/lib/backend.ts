@@ -1,4 +1,3 @@
-
 import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
@@ -215,38 +214,6 @@ export const getRobotById = async (id: string): Promise<Robot> => {
 };
 
 // Robot requests functions
-export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> => {
-  try {
-    const response = await fetch(API_ENDPOINTS.USER_ROBOT_REQUESTS(userId), {
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    return handleApiResponse(response);
-  } catch (error) {
-    console.error('Error fetching robot requests:', error);
-    return []; // Return empty array instead of throwing
-  }
-};
-
-export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
-  try {
-    const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    return handleApiResponse(response);
-  } catch (error) {
-    console.error('Error fetching all robot requests:', error);
-    return []; // Return empty array instead of throwing
-  }
-};
-
 export interface RobotRequestParams {
   robotType: string;
   tradingPairs: string;
@@ -275,8 +242,51 @@ export interface RobotRequestParams {
   additionalParameters?: string;
 }
 
+export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> => {
+  try {
+    console.log(`Fetching robot requests for user: ${userId} with URL: ${API_ENDPOINTS.USER_ROBOT_REQUESTS(userId)}`);
+    const response = await fetch(API_ENDPOINTS.USER_ROBOT_REQUESTS(userId), {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`Error response when fetching robot requests: ${response.status} ${response.statusText}`);
+    }
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching robot requests:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
+export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
+  try {
+    console.log(`Fetching all robot requests with URL: ${API_ENDPOINTS.ROBOT_REQUESTS}`);
+    const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`Error response when fetching all robot requests: ${response.status} ${response.statusText}`);
+    }
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching all robot requests:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
 export const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
   try {
+    console.log(`Submitting robot request with URL: ${API_ENDPOINTS.ROBOT_REQUESTS} and params:`, params);
     const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
       method: 'POST',
       headers: {
@@ -311,6 +321,10 @@ export const submitRobotRequest = async (params: RobotRequestParams): Promise<Ro
         additional_parameters: params.additionalParameters
       }),
     });
+    
+    if (!response.ok) {
+      console.error(`Error response when submitting robot request: ${response.status} ${response.statusText}`);
+    }
     
     return handleApiResponse(response);
   } catch (error) {
@@ -348,14 +362,25 @@ export const updateRobotRequest = async (
 
 // Purchase functions
 export const getUserPurchases = async (userId: string): Promise<Purchase[]> => {
-  const response = await fetch(API_ENDPOINTS.USER_PURCHASES(userId), {
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  return handleApiResponse(response);
+  try {
+    console.log(`Fetching user purchases with URL: ${API_ENDPOINTS.USER_PURCHASES(userId)}`);
+    const response = await fetch(API_ENDPOINTS.USER_PURCHASES(userId), {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`Error response when fetching user purchases: ${response.status} ${response.statusText}`);
+      return []; // Return empty array on error
+    }
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching user purchases:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 export const makePurchase = async (

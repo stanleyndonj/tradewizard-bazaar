@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -38,7 +39,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(robot.router)
-app.include_router(robot_request.router, prefix="/robot-requests")
+app.include_router(robot_request.router)  # No prefix here, it's already in the router
 app.include_router(purchase.router)
 app.include_router(mpesa.router)
 

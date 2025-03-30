@@ -77,37 +77,6 @@ async def create_robot_request(
     
     return new_request
 
-@router.get("/users/{user_id}", response_model=List[RobotRequestResponse])
-async def get_user_robot_requests(
-    user_id: str,
-    db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
-):
-    """Get all robot requests for a specific user"""
-    if not current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
-    # Check if the user is requesting their own requests or is an admin
-    current_user = db.query(User).filter(User.id == current_user_id).first()
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    if current_user_id != user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view these requests"
-        )
-    
-    # Get the requests
-    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
-    return requests
-
 @router.get("", response_model=List[RobotRequestResponse])
 async def get_all_robot_requests(
     db: Session = Depends(get_db),
@@ -131,6 +100,37 @@ async def get_all_robot_requests(
     # Get all requests
     requests = db.query(RobotRequest).all()
     return requests
+
+@router.get("/{request_id}", response_model=RobotRequestResponse)
+async def get_robot_request(
+    request_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_user_from_token)
+):
+    """Get a specific robot request"""
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    # Get the request
+    request = db.query(RobotRequest).filter(RobotRequest.id == request_id).first()
+    if not request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Robot request not found"
+        )
+    
+    # Check if the user is the owner or an admin
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    if current_user_id != request.user_id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this request"
+        )
+    
+    return request
 
 @router.patch("/{request_id}", response_model=RobotRequestResponse)
 async def update_robot_request(

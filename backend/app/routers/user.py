@@ -1,52 +1,79 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-import uuid
+from typing import List, Optional
+
 from ..database import get_db
 from ..models.user import User
-from ..schemas.user import UserCreate, UserResponse
-from ..utils.auth import get_password_hash, get_user_from_token
+from ..models.robot_request import RobotRequest
+from ..models.purchase import Purchase
+from ..schemas.user import UserCreate, UserResponse, UserUpdate
+from ..schemas.robot_request import RobotRequestResponse
+from ..schemas.purchase import PurchaseResponse
+from ..utils.auth import get_user_from_token, create_access_token
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.get("/me", response_model=UserResponse)
-async def get_current_user(db: Session = Depends(get_db), token: str = Depends(get_user_from_token)):
-    if token is None:
+# ... keep existing code (user endpoints)
+
+@router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
+async def get_user_robot_requests(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_user_from_token)
+):
+    """Get all robot requests for a specific user"""
+    if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
     
-    user = db.query(User).filter(User.id == token).first()
-    if user is None:
+    # Check if the user is requesting their own requests or is an admin
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
     
-    return user
-
-@router.post("", response_model=UserResponse)
-async def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    # Check if user already exists
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
+    if current_user_id != user_id and not current_user.is_admin:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view these requests"
         )
     
-    # Create the user
-    hashed_password = get_password_hash(user.password)
-    new_user = User(
-        id=str(uuid.uuid4()),
-        name=user.name,
-        email=user.email,
-        password=hashed_password
-    )
+    # Get the requests
+    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
+    return requests
+
+@router.get("/{user_id}/purchases", response_model=List[PurchaseResponse])
+async def get_user_purchases(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_user_from_token)
+):
+    """Get all purchases for a specific user"""
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
     
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    # Check if the user is requesting their own purchases or is an admin
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
     
-    return new_user
+    if current_user_id != user_id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view these purchases"
+        )
+    
+    # Get the purchases
+    purchases = db.query(Purchase).filter(Purchase.user_id == user_id).all()
+    return purchases
