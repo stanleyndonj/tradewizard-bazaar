@@ -1,5 +1,5 @@
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -10,12 +10,20 @@ class RobotRequestBase(BaseModel):
     risk_level: int
 
 class RobotRequestCreate(RobotRequestBase):
-    user_id: str
+    pass
+
+class RobotRequestUpdate(BaseModel):
+    status: Optional[str] = None
+    is_delivered: Optional[bool] = None
+    notes: Optional[str] = None
 
 class RobotRequestResponse(RobotRequestBase):
     id: str
     user_id: str
     status: str
+    is_delivered: bool = False
+    delivery_date: Optional[datetime] = None
+    notes: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

@@ -10,13 +10,18 @@ const API_ENDPOINTS = {
   LOGOUT: `${API_BASE_URL}/auth/logout`,
   CURRENT_USER: `${API_BASE_URL}/users/me`,
   
+  // User endpoints
+  USERS: `${API_BASE_URL}/users`,
+  USER_BY_ID: (id: string) => `${API_BASE_URL}/users/${id}`,
+  
   // Robot endpoints
   ROBOTS: `${API_BASE_URL}/robots`,
   ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/robots/${id}`,
   
   // Robot request endpoints
   ROBOT_REQUESTS: `${API_BASE_URL}/robot-requests`,
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/robot-requests/user/${userId}`,
+  ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/robot-requests/${id}`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/robot-requests/users/${userId}`,
   
   // Purchase endpoints
   PURCHASES: `${API_BASE_URL}/purchases`,

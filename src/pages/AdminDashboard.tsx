@@ -8,13 +8,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Search, MessageCircle, Users, Bot, Plus, Edit, Trash2 } from 'lucide-react';
+import { LogOut, Search, MessageCircle, Users, Bot, Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import RobotManagementModal from '@/components/admin/RobotManagementModal';
 import { useBackend } from '@/context/BackendContext';
 import { FullPageLoader } from '@/components/ui/loader';
 import ChatInterface from '@/components/admin/ChatInterface';
 import { formatDistanceToNow } from 'date-fns';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -23,19 +32,30 @@ const AdminDashboard = () => {
     logout, 
     isLoading, 
     robots, 
+    robotRequests,
     conversations,
-    getUsers,
+    fetchAllRobotRequests,
+    updateRobotRequestStatus,
+    setCurrentConversation,
+    createConversation,
     addRobot,
     updateRobot,
     deleteRobot,
-    setCurrentConversation
   } = useBackend();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isRobotModalOpen, setIsRobotModalOpen] = useState(false);
   const [currentRobot, setCurrentRobot] = useState<any | null>(null);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [notes, setNotes] = useState('');
   
-  const users = getUsers();
+  // Load all robot requests when the component mounts
+  useEffect(() => {
+    if (currentUser?.is_admin) {
+      fetchAllRobotRequests();
+    }
+  }, [currentUser, fetchAllRobotRequests]);
 
   useEffect(() => {
     // Check if user is logged in and is admin
@@ -70,17 +90,17 @@ const AdminDashboard = () => {
     });
   };
 
-  const viewUserChat = (userId: string) => {
+  const viewUserChat = (userId: string, userName: string, userEmail: string) => {
     // Find conversation with this user
     const userConversation = conversations.find(conv => conv.userId === userId);
     
     if (userConversation) {
       setCurrentConversation(userConversation.id);
+      navigate('/messages');
     } else {
-      toast({
-        title: "No Conversation",
-        description: "There is no active conversation with this user",
-      });
+      // Create a new conversation
+      createConversation(userId, userName, userEmail);
+      navigate('/messages');
     }
   };
 
@@ -108,11 +128,42 @@ const AdminDashboard = () => {
     }
     setIsRobotModalOpen(false);
   };
+  
+  const handleRequestAction = (request: any) => {
+    setSelectedRequest(request);
+    setNotes(request.notes || '');
+    setRequestDialogOpen(true);
+  };
+  
+  const handleUpdateRequest = async (status: string, delivered: boolean) => {
+    if (!selectedRequest) return;
+    
+    try {
+      await updateRobotRequestStatus(selectedRequest.id, {
+        status,
+        is_delivered: delivered,
+        notes
+      });
+      
+      setRequestDialogOpen(false);
+      
+      toast({
+        title: "Request Updated",
+        description: `Request status: ${status}, Delivered: ${delivered ? 'Yes' : 'No'}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update the request status",
+        variant: "destructive",
+      });
+    }
+  };
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.role || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRobotRequests = robotRequests.filter(request => 
+    request.robot_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    request.trading_pairs.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredMessages = conversations.filter(conv => 
@@ -174,11 +225,11 @@ const AdminDashboard = () => {
             
             {/* Dashboard content */}
             <div className="p-4">
-              <Tabs defaultValue="users">
+              <Tabs defaultValue="robot-requests">
                 <TabsList className="grid w-full grid-cols-3 mb-6">
-                  <TabsTrigger value="users" className="flex items-center">
-                    <Users className="h-5 w-5 mr-2" />
-                    Users
+                  <TabsTrigger value="robot-requests" className="flex items-center">
+                    <Bot className="h-5 w-5 mr-2" />
+                    Robot Requests
                   </TabsTrigger>
                   <TabsTrigger value="messages" className="flex items-center">
                     <MessageCircle className="h-5 w-5 mr-2" />
@@ -190,54 +241,66 @@ const AdminDashboard = () => {
                   </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="users" className="mt-0">
+                <TabsContent value="robot-requests" className="mt-0">
                   <div className="rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Join Date</TableHead>
-                          <TableHead>Role</TableHead>
+                          <TableHead>User ID</TableHead>
+                          <TableHead>Robot Type</TableHead>
+                          <TableHead>Trading Pairs</TableHead>
+                          <TableHead>Timeframe</TableHead>
+                          <TableHead>Risk Level</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Delivered</TableHead>
+                          <TableHead>Created</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredUsers.length > 0 ? (
-                          filteredUsers.map((user) => (
-                            <TableRow key={user.id}>
-                              <TableCell className="font-medium">{user.name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
-                              <TableCell>{formatDate(user.created_at)}</TableCell>
+                        {filteredRobotRequests.length > 0 ? (
+                          filteredRobotRequests.map((request) => (
+                            <TableRow key={request.id}>
+                              <TableCell className="font-medium">{request.user_id}</TableCell>
+                              <TableCell>{request.robot_type}</TableCell>
+                              <TableCell>{request.trading_pairs}</TableCell>
+                              <TableCell>{request.timeframe}</TableCell>
+                              <TableCell>{request.risk_level}</TableCell>
                               <TableCell>
-                                <div className="flex items-center">
-                                  <Bot className="h-4 w-4 mr-2 text-trading-blue" />
-                                  {user.role || 'Customer'}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={user.is_admin ? 'secondary' : 'default'}>
-                                  {user.is_admin ? 'Admin' : 'Active'}
+                                <Badge 
+                                  variant={
+                                    request.status === 'approved' 
+                                      ? 'success' 
+                                      : request.status === 'rejected'
+                                      ? 'destructive'
+                                      : 'default'
+                                  }
+                                >
+                                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                                 </Badge>
                               </TableCell>
                               <TableCell>
+                                {request.is_delivered ? (
+                                  <Check className="h-5 w-5 text-green-500" />
+                                ) : (
+                                  <X className="h-5 w-5 text-red-500" />
+                                )}
+                              </TableCell>
+                              <TableCell>{formatDate(request.created_at)}</TableCell>
+                              <TableCell>
                                 <Button 
                                   size="sm" 
-                                  variant="outline"
-                                  className="flex items-center"
-                                  onClick={() => viewUserChat(user.id)}
+                                  onClick={() => handleRequestAction(request)}
                                 >
-                                  <MessageCircle className="h-4 w-4 mr-2" />
-                                  Chat
+                                  Manage
                                 </Button>
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-4">
-                              No users found
+                            <TableCell colSpan={9} className="text-center py-4">
+                              No robot requests found
                             </TableCell>
                           </TableRow>
                         )}
@@ -339,6 +402,115 @@ const AdminDashboard = () => {
           robot={currentRobot}
         />
       )}
+      
+      {/* Robot Request Management Dialog */}
+      <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Robot Request</DialogTitle>
+            <DialogDescription>
+              Update the status and delivery information for this robot request.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedRequest && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Robot Type:</p>
+                  <p className="text-sm">{selectedRequest.robot_type}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Trading Pairs:</p>
+                  <p className="text-sm">{selectedRequest.trading_pairs}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Timeframe:</p>
+                  <p className="text-sm">{selectedRequest.timeframe}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Risk Level:</p>
+                  <p className="text-sm">{selectedRequest.risk_level}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Current Status:</p>
+                  <Badge 
+                    variant={
+                      selectedRequest.status === 'approved' 
+                        ? 'success' 
+                        : selectedRequest.status === 'rejected'
+                        ? 'destructive'
+                        : 'default'
+                    }
+                  >
+                    {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Delivered:</p>
+                  {selectedRequest.is_delivered ? (
+                    <Badge variant="success">Yes</Badge>
+                  ) : (
+                    <Badge variant="destructive">No</Badge>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="notes" className="text-sm font-medium">
+                  Notes
+                </label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add notes about this robot request"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => handleUpdateRequest('approved', false)}
+                className="flex-1 sm:flex-none"
+              >
+                Approve
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleUpdateRequest('rejected', false)}
+                className="flex-1 sm:flex-none"
+              >
+                Reject
+              </Button>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="success"
+                onClick={() => handleUpdateRequest('approved', true)}
+                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+              >
+                Mark as Delivered
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRequestDialogOpen(false)}
+                className="flex-1 sm:flex-none"
+              >
+                Cancel
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

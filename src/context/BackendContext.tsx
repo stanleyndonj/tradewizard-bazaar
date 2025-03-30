@@ -12,7 +12,9 @@ import {
   getRobots,
   getRobotById,
   getRobotRequests,
+  getAllRobotRequests,
   submitRobotRequest,
+  updateRobotRequest,
   getUserPurchases,
   makePurchase,
   initiateMpesaPayment,
@@ -20,20 +22,37 @@ import {
 } from '@/lib/backend';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { 
-  mockUsers, 
-  mockRobots, 
-  mockRobotRequests, 
-  mockPurchases,
-  mockMessages, 
-  mockConversations, 
-  mockChatMessages,
-  Message,
-  Conversation,
-  ChatMessage,
-  getMockDataForCurrentUser
-} from '@/lib/mockData';
 import { FullPageLoader } from '@/components/ui/loader';
+
+// Define the chat interfaces (we'll store these locally for now)
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  sender: 'user' | 'admin';
+  senderId: string;
+  text: string;
+  timestamp: string;
+  read: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+}
+
+interface Message {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  read: boolean;
+  timestamp: string;
+}
 
 interface BackendContextType {
   user: User | null;
@@ -50,8 +69,10 @@ interface BackendContextType {
   logout: () => Promise<void>;
   fetchRobots: () => Promise<void>;
   fetchRobotRequests: () => Promise<void>;
+  fetchAllRobotRequests: () => Promise<void>;
   fetchPurchases: () => Promise<void>;
   submitRequest: (robotType: string, tradingPairs: string, timeframe: string, riskLevel: number) => Promise<void>;
+  updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; notes?: string;}) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
   verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
@@ -64,9 +85,33 @@ interface BackendContextType {
   addRobot: (robot: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
   updateRobot: (id: string, updates: Partial<Robot>) => Promise<void>;
   deleteRobot: (id: string) => Promise<void>;
+  createConversation: (userId: string, userName: string, userEmail: string) => void;
 }
 
 const BackendContext = createContext<BackendContextType | undefined>(undefined);
+
+// Local storage for chat data (in a real app, this would be in the database)
+const localStorageKey = 'tradewizard_chat_data';
+
+const getInitialChatData = () => {
+  const storedData = localStorage.getItem(localStorageKey);
+  if (storedData) {
+    try {
+      return JSON.parse(storedData);
+    } catch (e) {
+      console.error('Error parsing chat data from localStorage:', e);
+    }
+  }
+  
+  return {
+    conversations: [],
+    messages: {}
+  };
+};
+
+const saveChatData = (conversations: Conversation[], messages: Record<string, ChatMessage[]>) => {
+  localStorage.setItem(localStorageKey, JSON.stringify({ conversations, messages }));
+};
 
 export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
@@ -76,17 +121,19 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [robotRequests, setRobotRequests] = useState<RobotRequest[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+  
+  // Chat state
+  const [chatData] = useState(getInitialChatData());
+  const [conversations, setConversations] = useState<Conversation[]>(chatData.conversations || []);
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>(chatData.messages || {});
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
-
+  
   // Initialize the context by loading the user
   useEffect(() => {
     const initializeUser = async () => {
       try {
         const currentUser = await getCurrentUser();
         
-        // For demo purposes, if we can't get a real user, use a mock one
         if (currentUser) {
           setUser(currentUser);
           
@@ -96,31 +143,6 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
             fetchRobotRequests(),
             fetchPurchases()
           ]);
-          
-          // Load mock messages and conversations for UI demo
-          setMessages(mockMessages);
-          
-          // Get user-specific conversations
-          if (currentUser.is_admin) {
-            // Admin sees all conversations
-            setConversations(mockConversations);
-            setChatMessages(mockChatMessages);
-          } else {
-            // Regular user sees only their conversations
-            const userConversations = mockConversations.filter(
-              conv => conv.userId === currentUser.id
-            );
-            setConversations(userConversations);
-            
-            // Filter chat messages for user's conversations
-            const userChatMessages: Record<string, ChatMessage[]> = {};
-            userConversations.forEach(conv => {
-              if (mockChatMessages[conv.id]) {
-                userChatMessages[conv.id] = mockChatMessages[conv.id];
-              }
-            });
-            setChatMessages(userChatMessages);
-          }
         } else {
           // No user logged in
           setUser(null);
@@ -134,69 +156,17 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     initializeUser();
   }, []);
+  
+  // Save chat data to localStorage whenever it changes
+  useEffect(() => {
+    saveChatData(conversations, chatMessages);
+  }, [conversations, chatMessages]);
 
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
       
-      // For demonstration, check if there's a matching mock user
-      const mockUser = mockUsers.find(u => u.email === email);
-      
-      if (mockUser && password === 'password') {
-        // Simulate successful login with mock data
-        setUser(mockUser);
-        
-        // Load mock data for this user
-        setRobots(mockRobots);
-        
-        // Get user-specific data
-        if (mockUser.is_admin) {
-          // Admin sees all data
-          setRobotRequests(mockRobotRequests);
-          setPurchases(mockPurchases);
-          setMessages(mockMessages);
-          setConversations(mockConversations);
-          setChatMessages(mockChatMessages);
-        } else {
-          // Regular user sees only their data
-          const userData = getMockDataForCurrentUser(mockUser.id);
-          setRobotRequests(userData.robotRequests);
-          setPurchases(userData.purchases);
-          setConversations(userData.conversations);
-          
-          // Filter chat messages for user's conversations
-          const userChatMessages: Record<string, ChatMessage[]> = {};
-          userData.conversations.forEach(conv => {
-            if (mockChatMessages[conv.id]) {
-              userChatMessages[conv.id] = mockChatMessages[conv.id];
-            }
-          });
-          setChatMessages(userChatMessages);
-        }
-        
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-        
-        // Check if there's a redirect saved
-        const redirectPath = localStorage.getItem('redirectAfterAuth');
-        if (redirectPath) {
-          localStorage.removeItem('redirectAfterAuth');
-          navigate(redirectPath);
-        } else {
-          // Redirect based on user role
-          if (mockUser.is_admin) {
-            navigate('/admin-dashboard');
-          } else {
-            navigate('/customer-dashboard');
-          }
-        }
-        
-        return;
-      }
-      
-      // Try real login if mock didn't work
+      // Attempt to login with real backend
       const loggedInUser = await loginUser(email, password);
       setUser(loggedInUser);
       
@@ -206,31 +176,6 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         fetchRobotRequests(),
         fetchPurchases()
       ]);
-      
-      // Set mock messages for UI demo
-      setMessages(mockMessages);
-      
-      // Get user-specific conversations for UI demo
-      if (loggedInUser.is_admin) {
-        // Admin sees all conversations
-        setConversations(mockConversations);
-        setChatMessages(mockChatMessages);
-      } else {
-        // Regular user sees only their conversations
-        const userConversations = mockConversations.filter(
-          conv => conv.userId === loggedInUser.id
-        );
-        setConversations(userConversations);
-        
-        // Filter chat messages for user's conversations
-        const userChatMessages: Record<string, ChatMessage[]> = {};
-        userConversations.forEach(conv => {
-          if (mockChatMessages[conv.id]) {
-            userChatMessages[conv.id] = mockChatMessages[conv.id];
-          }
-        });
-        setChatMessages(userChatMessages);
-      }
       
       toast({
         title: "Success",
@@ -266,65 +211,24 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     try {
       setIsLoading(true);
       
-      // For demonstration, check if there's a matching mock user email
-      if (mockUsers.some(u => u.email === email)) {
-        throw new Error("Email already registered");
-      }
-      
       // Try to register with the backend
-      try {
-        const newUser = await registerUser(name, email, password);
-        setUser(newUser);
-        
-        // Load mock data for UI demo
-        setRobots(mockRobots);
-        setRobotRequests([]);
-        setPurchases([]);
-        setMessages([]);
-        setConversations([]);
-        setChatMessages({});
-        
-        toast({
-          title: "Success",
-          description: "Account created successfully",
-        });
-        
-        // Redirect based on user role
-        if (newUser.is_admin) {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/customer-dashboard');
-        }
-        
-        return;
-      } catch (error) {
-        console.error("Backend registration failed, using mock:", error);
-        
-        // Create a new mock user for demonstration
-        const newMockUser: User = {
-          id: `u${mockUsers.length + 1}`,
-          name,
-          email,
-          is_admin: false,
-          role: 'customer',
-          created_at: new Date().toISOString()
-        };
-        
-        setUser(newMockUser);
-        
-        // Set mock data for new user
-        setRobots(mockRobots);
-        setRobotRequests([]);
-        setPurchases([]);
-        setMessages([]);
-        setConversations([]);
-        setChatMessages({});
-        
-        toast({
-          title: "Success",
-          description: "Account created successfully (Demo Mode)",
-        });
-        
+      const newUser = await registerUser(name, email, password);
+      setUser(newUser);
+      
+      // Initialize empty data for the new user
+      setRobots([]);
+      setRobotRequests([]);
+      setPurchases([]);
+      
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      });
+      
+      // Redirect based on user role
+      if (newUser.is_admin) {
+        navigate('/admin-dashboard');
+      } else {
         navigate('/customer-dashboard');
       }
     } catch (error) {
@@ -346,8 +250,6 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       setRobotRequests([]);
       setPurchases([]);
       setMessages([]);
-      setConversations([]);
-      setChatMessages({});
       setCurrentConversation(null);
       
       toast({
@@ -367,19 +269,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const fetchRobots = async () => {
     try {
-      // Try to fetch real robots first
-      try {
-        const fetchedRobots = await getRobots();
-        if (fetchedRobots && fetchedRobots.length > 0) {
-          setRobots(fetchedRobots);
-          return;
-        }
-      } catch (error) {
-        console.error('Error fetching robots from API, using mock data:', error);
-      }
-      
-      // Fallback to mock robots for demonstration
-      setRobots(mockRobots);
+      const fetchedRobots = await getRobots();
+      setRobots(fetchedRobots);
     } catch (error) {
       console.error('Error fetching robots:', error);
       toast({
@@ -393,28 +284,27 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchRobotRequests = async () => {
     try {
       if (user) {
-        // Try to fetch real robot requests first
-        try {
-          const fetchedRequests = await getRobotRequests(user.id);
-          if (fetchedRequests && fetchedRequests.length > 0) {
-            setRobotRequests(fetchedRequests);
-            return;
-          }
-        } catch (error) {
-          console.error('Error fetching robot requests from API, using mock data:', error);
-        }
-        
-        // Fallback to mock robot requests for demonstration
-        if (user.is_admin) {
-          // Admin sees all requests
-          setRobotRequests(mockRobotRequests);
-        } else {
-          // Regular user sees only their requests
-          setRobotRequests(mockRobotRequests.filter(req => req.user_id === user.id));
-        }
+        const fetchedRequests = await getRobotRequests(user.id);
+        setRobotRequests(fetchedRequests);
       }
     } catch (error) {
       console.error('Error fetching robot requests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch robot requests",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const fetchAllRobotRequests = async () => {
+    try {
+      if (user && user.is_admin) {
+        const fetchedRequests = await getAllRobotRequests();
+        setRobotRequests(fetchedRequests);
+      }
+    } catch (error) {
+      console.error('Error fetching all robot requests:', error);
       toast({
         title: "Error",
         description: "Failed to fetch robot requests",
@@ -426,25 +316,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchPurchases = async () => {
     try {
       if (user) {
-        // Try to fetch real purchases first
-        try {
-          const fetchedPurchases = await getUserPurchases(user.id);
-          if (fetchedPurchases && fetchedPurchases.length > 0) {
-            setPurchases(fetchedPurchases);
-            return;
-          }
-        } catch (error) {
-          console.error('Error fetching purchases from API, using mock data:', error);
-        }
-        
-        // Fallback to mock purchases for demonstration
-        if (user.is_admin) {
-          // Admin sees all purchases
-          setPurchases(mockPurchases);
-        } else {
-          // Regular user sees only their purchases
-          setPurchases(mockPurchases.filter(purchase => purchase.user_id === user.id));
-        }
+        const fetchedPurchases = await getUserPurchases(user.id);
+        setPurchases(fetchedPurchases);
       }
     } catch (error) {
       console.error('Error fetching purchases:', error);
@@ -467,43 +340,50 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         throw new Error('You must be logged in to submit a request');
       }
       
-      // Try to submit real request first
-      try {
-        const newRequest = await submitRobotRequest(user.id, robotType, tradingPairs, timeframe, riskLevel);
-        setRobotRequests(prev => [...prev, newRequest]);
-        
-        toast({
-          title: "Success",
-          description: "Your robot request has been submitted successfully",
-        });
-        
-        return;
-      } catch (error) {
-        console.error('Error submitting robot request to API, using mock data:', error);
-      }
-      
-      // Create a mock request for demonstration
-      const newMockRequest: RobotRequest = {
-        id: `rr${Date.now()}`,
-        user_id: user.id,
-        robot_type: robotType,
-        trading_pairs: tradingPairs,
-        timeframe: timeframe,
-        risk_level: riskLevel,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
-      
-      setRobotRequests(prev => [...prev, newMockRequest]);
+      const newRequest = await submitRobotRequest(user.id, robotType, tradingPairs, timeframe, riskLevel);
+      setRobotRequests(prev => [...prev, newRequest]);
       
       toast({
         title: "Success",
-        description: "Your robot request has been submitted successfully (Demo Mode)",
+        description: "Your robot request has been submitted successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit request",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const updateRobotRequestStatus = async (
+    requestId: string,
+    updates: {
+      status?: string;
+      is_delivered?: boolean;
+      notes?: string;
+    }
+  ) => {
+    try {
+      if (!user || !user.is_admin) {
+        throw new Error('Admin access required');
+      }
+      
+      const updatedRequest = await updateRobotRequest(requestId, updates);
+      
+      // Update the request in the state
+      setRobotRequests(prev => 
+        prev.map(req => req.id === requestId ? updatedRequest : req)
+      );
+      
+      toast({
+        title: "Success",
+        description: "Robot request updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update request",
         variant: "destructive",
       });
     }
@@ -520,38 +400,12 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         throw new Error('You must be logged in to make a purchase');
       }
       
-      // Try to make real purchase first
-      try {
-        const newPurchase = await makePurchase(user.id, robotId, amount, currency, paymentMethod);
-        setPurchases(prev => [...prev, newPurchase]);
-        
-        toast({
-          title: "Success",
-          description: "Your purchase was completed successfully",
-        });
-        
-        return;
-      } catch (error) {
-        console.error('Error making purchase with API, using mock data:', error);
-      }
-      
-      // Create a mock purchase for demonstration
-      const newMockPurchase: Purchase = {
-        id: `p${Date.now()}`,
-        user_id: user.id,
-        robot_id: robotId,
-        amount: amount,
-        currency: currency,
-        payment_method: paymentMethod,
-        status: 'completed',
-        created_at: new Date().toISOString()
-      };
-      
-      setPurchases(prev => [...prev, newMockPurchase]);
+      const newPurchase = await makePurchase(user.id, robotId, amount, currency, paymentMethod);
+      setPurchases(prev => [...prev, newPurchase]);
       
       toast({
         title: "Success",
-        description: "Your purchase was completed successfully (Demo Mode)",
+        description: "Your purchase was completed successfully",
       });
     } catch (error) {
       toast({
@@ -569,23 +423,14 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     robotId: string
   ) => {
     try {
-      // Try real Mpesa payment first
-      try {
-        const response = await initiateMpesaPayment(phone, amount, robotId);
-        return response.checkoutRequestID;
-      } catch (error) {
-        console.error('Error initiating M-Pesa payment with API, using mock data:', error);
-      }
-      
-      // Return a mock checkout ID for demonstration
-      const mockCheckoutId = `mock-checkout-${Date.now()}`;
+      const response = await initiateMpesaPayment(phone, amount, robotId);
       
       toast({
         title: "Payment Initiated",
-        description: "Check your phone for the M-Pesa prompt (Demo Mode)",
+        description: "Check your phone for the M-Pesa prompt",
       });
       
-      return mockCheckoutId;
+      return response.checkoutRequestID;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to initiate M-Pesa payment";
       toast({
@@ -599,19 +444,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const checkPaymentStatus = async (checkoutRequestId: string) => {
     try {
-      // Try real payment verification first
-      try {
-        return await verifyMpesaPayment(checkoutRequestId);
-      } catch (error) {
-        console.error('Error verifying payment with API, using mock data:', error);
-      }
-      
-      // For demonstration, assume success for mock checkout IDs
-      if (checkoutRequestId.startsWith('mock-checkout-')) {
-        return true;
-      }
-      
-      return false;
+      return await verifyMpesaPayment(checkoutRequestId);
     } catch (error) {
       console.error('Error verifying payment:', error);
       return false;
@@ -621,12 +454,12 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const refetchData = async () => {
     await Promise.all([
       fetchRobots(),
-      fetchRobotRequests(),
+      user?.is_admin ? fetchAllRobotRequests() : fetchRobotRequests(),
       fetchPurchases()
     ]);
   };
   
-  // Messages and chat functionality
+  // Chat functionality (stored locally for now)
   const sendMessage = async (conversationId: string, text: string) => {
     if (!user) {
       throw new Error('You must be logged in to send messages');
@@ -668,51 +501,6 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
           : c
       )
     );
-    
-    // If admin is responding, simulate a response after a delay in demo mode
-    if (user.is_admin && Math.random() < 0.5) {
-      setTimeout(() => {
-        const responses = [
-          "Thank you for your message! I'll help you with that.",
-          "I'm looking into this and will get back to you soon.",
-          "Thanks for reaching out. Is there anything else you need help with?",
-          "I understand your concern. Let me check this for you.",
-          "Your issue has been noted. We'll resolve it as soon as possible."
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        const autoReply: ChatMessage = {
-          id: `cm${Date.now()}`,
-          conversationId,
-          sender: 'user',
-          senderId: conversation.userId,
-          text: randomResponse,
-          timestamp: new Date().toISOString(),
-          read: false
-        };
-        
-        // Add the auto-reply to the conversation
-        setChatMessages(prev => ({
-          ...prev,
-          [conversationId]: [...(prev[conversationId] || []), autoReply]
-        }));
-        
-        // Update the conversation's last message
-        setConversations(prev => 
-          prev.map(c => 
-            c.id === conversationId 
-              ? { 
-                  ...c, 
-                  lastMessage: randomResponse, 
-                  lastMessageTime: autoReply.timestamp,
-                  unreadCount: c.unreadCount + 1
-                } 
-              : c
-          )
-        );
-      }, 10000 + Math.random() * 20000); // Random delay between 10-30 seconds
-    }
   };
   
   const markMessageAsRead = (messageId: string) => {
@@ -751,9 +539,10 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
   
-  // Admin functionality
+  // Admin functionality - for now just use what's already registered locally
   const getUsers = () => {
-    return user?.is_admin ? mockUsers : [];
+    // In a real implementation, we would fetch users from the backend
+    return [];
   };
   
   const getRobotById = (id: string) => {
@@ -772,7 +561,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       created_at: new Date().toISOString()
     };
     
-    // Add to robots list
+    // Add to robots list - in a real app, we would call an API
     setRobots(prev => [...prev, newRobot]);
     
     toast({
@@ -786,7 +575,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw new Error('Only admins can update robots');
     }
     
-    // Update the robot
+    // Update the robot - in a real app, we would call an API
     setRobots(prev => 
       prev.map(robot => 
         robot.id === id ? { ...robot, ...updates } : robot
@@ -804,13 +593,43 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw new Error('Only admins can delete robots');
     }
     
-    // Remove the robot
+    // Remove the robot - in a real app, we would call an API
     setRobots(prev => prev.filter(robot => robot.id !== id));
     
     toast({
       title: "Success",
       description: "Robot has been deleted",
     });
+  };
+  
+  // Create a new conversation
+  const createConversation = (userId: string, userName: string, userEmail: string) => {
+    // Check if conversation already exists
+    const existingConversation = conversations.find(c => c.userId === userId);
+    if (existingConversation) {
+      setCurrentConversation(existingConversation.id);
+      return;
+    }
+    
+    // Create a new conversation
+    const newConversation: Conversation = {
+      id: `conv${Date.now()}`,
+      userId,
+      userName,
+      userEmail,
+      lastMessage: "New conversation started",
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0
+    };
+    
+    setConversations(prev => [...prev, newConversation]);
+    setCurrentConversation(newConversation.id);
+    
+    // Initialize empty message array for the conversation
+    setChatMessages(prev => ({
+      ...prev,
+      [newConversation.id]: []
+    }));
   };
 
   const value = {
@@ -828,8 +647,10 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     logout,
     fetchRobots,
     fetchRobotRequests,
+    fetchAllRobotRequests,
     fetchPurchases,
     submitRequest,
+    updateRobotRequestStatus,
     purchaseRobot,
     initiateMpesaPayment: handleMpesaPayment,
     verifyPayment: checkPaymentStatus,
@@ -841,7 +662,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     getRobotById,
     addRobot,
     updateRobot,
-    deleteRobot
+    deleteRobot,
+    createConversation
   };
 
   if (isLoading) {

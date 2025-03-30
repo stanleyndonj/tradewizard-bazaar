@@ -1,3 +1,4 @@
+
 import API_ENDPOINTS, { handleApiResponse, getAuthHeaders } from './apiConfig';
 
 // Types
@@ -6,7 +7,9 @@ export interface User {
   name: string;
   email: string;
   is_admin: boolean;
-  role?: string; // Added role property
+  role?: string;
+  has_requested_robot?: boolean;
+  robots_delivered?: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -19,9 +22,9 @@ export interface Robot {
   price: number;
   features: string[];
   image_url?: string;
-  currency: string;   // Added missing properties
-  category: string;   // Added missing properties
-  imageUrl?: string;  // Added missing properties
+  currency: string;
+  category: string;
+  imageUrl?: string;
   created_at: string;
 }
 
@@ -33,6 +36,9 @@ export interface RobotRequest {
   timeframe: string;
   risk_level: number;
   status: string;
+  is_delivered: boolean;
+  delivery_date?: string;
+  notes?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -46,7 +52,7 @@ export interface Purchase {
   payment_method: string;
   status: string;
   created_at: string;
-  purchaseDate?: string; // Added this property
+  purchaseDate?: string;
 }
 
 // Auth functions
@@ -202,6 +208,22 @@ export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> 
   }
 };
 
+export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching all robot requests:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
 export const submitRobotRequest = async (
   userId: string,
   robotType: string,
@@ -228,6 +250,31 @@ export const submitRobotRequest = async (
     return handleApiResponse(response);
   } catch (error) {
     console.error('Error submitting robot request:', error);
+    throw error;
+  }
+};
+
+export const updateRobotRequest = async (
+  requestId: string,
+  updates: {
+    status?: string;
+    is_delivered?: boolean;
+    notes?: string;
+  }
+): Promise<RobotRequest> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_REQUEST_BY_ID(requestId), {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error updating robot request:', error);
     throw error;
   }
 };
