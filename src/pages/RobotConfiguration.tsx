@@ -133,6 +133,10 @@ const RobotConfiguration = () => {
   const isBinary = type?.toLowerCase().includes('binary');
   const formSchema = isBinary ? binaryFormSchema : mt5FormSchema;
   
+  // Types for the form data
+  type BinaryFormValues = z.infer<typeof binaryFormSchema>;
+  type MT5FormValues = z.infer<typeof mt5FormSchema>;
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -144,12 +148,16 @@ const RobotConfiguration = () => {
       currency: "USD",
       tradingStrategy: "",
       // MT5 specific defaults
-      volume: 0.01,
-      stopLoss: 0,
-      takeProfit: 0,
+      ...(isBinary ? {} : {
+        volume: 0.01,
+        stopLoss: 0,
+        takeProfit: 0,
+      }),
       // Binary specific defaults
-      stakeAmount: 10,
-      duration: "60", // 60 seconds
+      ...(isBinary ? {
+        stakeAmount: 10,
+        duration: "60", // 60 seconds
+      } : {}),
     },
   });
 
@@ -198,31 +206,33 @@ const RobotConfiguration = () => {
         tradingStrategy: data.tradingStrategy,
       };
 
-      // Add binary-specific fields
+      // Add type-specific fields based on the robot type
       if (isBinary) {
-        Object.assign(requestData, {
-          stakeAmount: data.stakeAmount,
-          contractType: data.contractType,
-          duration: data.duration,
-          prediction: data.prediction,
+        // Safe to cast since we've checked isBinary
+        const binaryData = data as BinaryFormValues;
+        await submitRequest({
+          ...requestData,
+          stakeAmount: binaryData.stakeAmount,
+          contractType: binaryData.contractType,
+          duration: binaryData.duration,
+          prediction: binaryData.prediction,
         });
-      } 
-      // Add MT5-specific fields
-      else {
-        Object.assign(requestData, {
-          accountCredentials: data.accountCredentials,
-          volume: data.volume,
-          orderType: data.orderType,
-          stopLoss: data.stopLoss,
-          takeProfit: data.takeProfit,
-          entryRules: data.entryRules,
-          exitRules: data.exitRules,
-          riskManagement: data.riskManagement,
-          additionalParameters: data.additionalParameters,
+      } else {
+        // Safe to cast since we've checked !isBinary
+        const mt5Data = data as MT5FormValues;
+        await submitRequest({
+          ...requestData,
+          accountCredentials: mt5Data.accountCredentials,
+          volume: mt5Data.volume,
+          orderType: mt5Data.orderType,
+          stopLoss: mt5Data.stopLoss,
+          takeProfit: mt5Data.takeProfit,
+          entryRules: mt5Data.entryRules,
+          exitRules: mt5Data.exitRules,
+          riskManagement: mt5Data.riskManagement,
+          additionalParameters: mt5Data.additionalParameters,
         });
       }
-      
-      await submitRequest(requestData);
       
       toast({
         title: "Request submitted",

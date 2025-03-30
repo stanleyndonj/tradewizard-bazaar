@@ -254,12 +254,16 @@ export interface RobotRequestParams {
   riskLevel: number;
   botName?: string;
   market?: string;
+  currency?: string;
+  tradingStrategy?: string;
+  
+  // Binary bot specific fields
   stakeAmount?: number;
   contractType?: string;
   duration?: string;
   prediction?: string;
-  currency?: string;
-  tradingStrategy?: string;
+  
+  // MT5 specific fields
   accountCredentials?: string;
   volume?: number;
   orderType?: string;
