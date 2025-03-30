@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   User, 
@@ -71,8 +70,30 @@ interface BackendContextType {
   fetchRobotRequests: () => Promise<void>;
   fetchAllRobotRequests: () => Promise<void>;
   fetchPurchases: () => Promise<void>;
-  submitRequest: (robotType: string, tradingPairs: string, timeframe: string, riskLevel: number) => Promise<void>;
-  updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string;}) => Promise<void>;
+  submitRequest: (params: {
+    robotType: string;
+    tradingPairs: string;
+    timeframe: string;
+    riskLevel: number;
+    botName?: string;
+    market?: string;
+    stakeAmount?: number;
+    contractType?: string;
+    duration?: string;
+    prediction?: string;
+    currency?: string;
+    tradingStrategy?: string;
+    accountCredentials?: string;
+    volume?: number;
+    orderType?: string;
+    stopLoss?: number;
+    takeProfit?: number;
+    entryRules?: string;
+    exitRules?: string;
+    riskManagement?: string;
+    additionalParameters?: string;
+  }) => Promise<void>;
+  updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string; progress?: number;}) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
   verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
@@ -333,24 +354,40 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const submitRequest = async (
-    robotType: string,
-    tradingPairs: string,
-    timeframe: string,
-    riskLevel: number
-  ) => {
+  const submitRequest = async (params: {
+    robotType: string;
+    tradingPairs: string;
+    timeframe: string;
+    riskLevel: number;
+    botName?: string;
+    market?: string;
+    stakeAmount?: number;
+    contractType?: string;
+    duration?: string;
+    prediction?: string;
+    currency?: string;
+    tradingStrategy?: string;
+    accountCredentials?: string;
+    volume?: number;
+    orderType?: string;
+    stopLoss?: number;
+    takeProfit?: number;
+    entryRules?: string;
+    exitRules?: string;
+    riskManagement?: string;
+    additionalParameters?: string;
+  }) => {
     try {
       if (!user) {
         throw new Error('You must be logged in to submit a request');
       }
       
-      // Fix here: The submitRobotRequest function should be called with the correct number of arguments
-      const newRequest = await submitRobotRequest(
-        robotType,
-        tradingPairs,
-        timeframe,
-        riskLevel
-      );
+      console.log("Submitting robot request with params:", params);
+      
+      // Submit the robot request with all fields
+      const newRequest = await submitRobotRequest(params);
+      
+      console.log("New request created:", newRequest);
       
       setRobotRequests(prev => [...prev, newRequest]);
       
@@ -359,6 +396,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: "Your robot request has been submitted successfully",
       });
     } catch (error) {
+      console.error("Error submitting request:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to submit request",
@@ -374,6 +412,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       is_delivered?: boolean;
       download_url?: string;
       notes?: string;
+      progress?: number;
     }
   ) => {
     try {

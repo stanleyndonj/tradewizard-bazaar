@@ -40,8 +40,30 @@ export interface RobotRequest {
   delivery_date?: string;
   download_url?: string;
   notes?: string;
+  progress?: number;
   created_at: string;
   updated_at?: string;
+  
+  // New fields for detailed configuration
+  bot_name?: string;
+  market?: string;
+  stake_amount?: number;
+  contract_type?: string;
+  duration?: string;
+  prediction?: string;
+  currency?: string;
+  trading_strategy?: string;
+  
+  // MT5 specific fields
+  account_credentials?: string;
+  volume?: number;
+  order_type?: string;
+  stop_loss?: number;
+  take_profit?: number;
+  entry_rules?: string;
+  exit_rules?: string;
+  risk_management?: string;
+  additional_parameters?: string;
 }
 
 export interface Purchase {
@@ -225,12 +247,31 @@ export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
   }
 };
 
-export const submitRobotRequest = async (
-  robotType: string,
-  tradingPairs: string,
-  timeframe: string,
-  riskLevel: number
-): Promise<RobotRequest> => {
+export interface RobotRequestParams {
+  robotType: string;
+  tradingPairs: string;
+  timeframe: string;
+  riskLevel: number;
+  botName?: string;
+  market?: string;
+  stakeAmount?: number;
+  contractType?: string;
+  duration?: string;
+  prediction?: string;
+  currency?: string;
+  tradingStrategy?: string;
+  accountCredentials?: string;
+  volume?: number;
+  orderType?: string;
+  stopLoss?: number;
+  takeProfit?: number;
+  entryRules?: string;
+  exitRules?: string;
+  riskManagement?: string;
+  additionalParameters?: string;
+}
+
+export const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
   try {
     const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
       method: 'POST',
@@ -239,10 +280,31 @@ export const submitRobotRequest = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        robot_type: robotType,
-        trading_pairs: tradingPairs,
-        timeframe: timeframe,
-        risk_level: riskLevel,
+        robot_type: params.robotType,
+        trading_pairs: params.tradingPairs,
+        timeframe: params.timeframe,
+        risk_level: params.riskLevel,
+        
+        // New fields
+        bot_name: params.botName,
+        market: params.market,
+        stake_amount: params.stakeAmount,
+        contract_type: params.contractType,
+        duration: params.duration,
+        prediction: params.prediction,
+        currency: params.currency,
+        trading_strategy: params.tradingStrategy,
+        
+        // MT5 specific fields
+        account_credentials: params.accountCredentials,
+        volume: params.volume,
+        order_type: params.orderType,
+        stop_loss: params.stopLoss,
+        take_profit: params.takeProfit,
+        entry_rules: params.entryRules,
+        exit_rules: params.exitRules,
+        risk_management: params.riskManagement,
+        additional_parameters: params.additionalParameters
       }),
     });
     
@@ -260,6 +322,7 @@ export const updateRobotRequest = async (
     is_delivered?: boolean;
     download_url?: string;
     notes?: string;
+    progress?: number;
   }
 ): Promise<RobotRequest> => {
   try {

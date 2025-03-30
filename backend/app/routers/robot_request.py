@@ -34,7 +34,7 @@ async def create_robot_request(
             detail="User not found"
         )
     
-    # Create the robot request
+    # Create the robot request with all fields
     new_request = RobotRequest(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -43,7 +43,29 @@ async def create_robot_request(
         timeframe=request.timeframe,
         risk_level=request.risk_level,
         status="pending",
-        is_delivered=False
+        is_delivered=False,
+        progress=0,
+        
+        # New fields
+        bot_name=request.bot_name,
+        market=request.market,
+        stake_amount=request.stake_amount,
+        contract_type=request.contract_type,
+        duration=request.duration,
+        prediction=request.prediction,
+        currency=request.currency,
+        trading_strategy=request.trading_strategy,
+        
+        # MT5 specific fields
+        account_credentials=request.account_credentials,
+        volume=request.volume,
+        order_type=request.order_type,
+        stop_loss=request.stop_loss,
+        take_profit=request.take_profit,
+        entry_rules=request.entry_rules,
+        exit_rules=request.exit_rules,
+        risk_management=request.risk_management,
+        additional_parameters=request.additional_parameters
     )
     
     # Update user's has_requested_robot status
@@ -148,6 +170,7 @@ async def update_robot_request(
         request.is_delivered = updates.is_delivered
         if updates.is_delivered:
             request.delivery_date = datetime.now()
+            request.progress = 100
             
             # Update user's robots_delivered status
             user = db.query(User).filter(User.id == request.user_id).first()
@@ -159,6 +182,9 @@ async def update_robot_request(
         
     if updates.notes is not None:
         request.notes = updates.notes
+        
+    if updates.progress is not None:
+        request.progress = updates.progress
     
     db.commit()
     db.refresh(request)
