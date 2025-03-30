@@ -340,7 +340,14 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         throw new Error('You must be logged in to submit a request');
       }
       
-      const newRequest = await submitRobotRequest(user.id, robotType, tradingPairs, timeframe, riskLevel);
+      // Fix here: The submitRobotRequest function should be called with the correct number of arguments
+      const newRequest = await submitRobotRequest(
+        robotType,
+        tradingPairs,
+        timeframe,
+        riskLevel
+      );
+      
       setRobotRequests(prev => [...prev, newRequest]);
       
       toast({
