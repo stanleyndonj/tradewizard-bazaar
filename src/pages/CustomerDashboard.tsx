@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useBackend } from '@/context/BackendContext';
@@ -7,19 +7,27 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Download, ArrowRight, MessageSquare } from 'lucide-react';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
 import { FullPageLoader } from '@/components/ui/loader';
 import CustomerChat from '@/components/customer/CustomerChat';
+import { toast } from '@/hooks/use-toast';
 
 const CustomerDashboard = () => {
   const { user, robotRequests, purchases, robots, fetchRobotRequests, fetchPurchases, isLoading } = useBackend();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('robots');
 
   useEffect(() => {
     // Set page title
     document.title = 'Customer Dashboard | TradeWizard';
+    
+    // Check for tab in location state
+    if (location.state && location.state.tab) {
+      setActiveTab(location.state.tab);
+    }
     
     // Fetch fresh data
     const loadData = async () => {
@@ -30,7 +38,7 @@ const CustomerDashboard = () => {
     };
     
     loadData();
-  }, [fetchRobotRequests, fetchPurchases]);
+  }, [fetchRobotRequests, fetchPurchases, location.state]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -80,6 +88,26 @@ const CustomerDashboard = () => {
     }
   };
 
+  const handleDownload = (request: any) => {
+    if (request.is_delivered && request.download_url) {
+      // If there's a download URL, use it
+      window.open(request.download_url, '_blank');
+    } else if (request.is_delivered) {
+      // If delivered but no URL, show a message
+      toast({
+        title: "Download Ready",
+        description: "Your robot is ready for download. Please contact support if you have issues accessing it.",
+      });
+    } else {
+      // If not delivered yet
+      toast({
+        title: "Not Ready",
+        description: "Your robot is not ready for download yet. Please check back later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -94,7 +122,7 @@ const CustomerDashboard = () => {
           />
           
           <div className="max-w-6xl mx-auto mt-8">
-            <Tabs defaultValue="robots" className="w-full">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-8">
                 <TabsTrigger value="robots">Custom Robot Requests</TabsTrigger>
                 <TabsTrigger value="purchases">Your Purchases</TabsTrigger>
@@ -132,19 +160,44 @@ const CustomerDashboard = () => {
                               <p className="font-medium">{request.risk_level}%</p>
                             </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Requested on</p>
-                            <p className="font-medium">{formatDate(request.created_at)}</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium text-muted-foreground">Requested on</p>
+                              <p className="font-medium">{formatDate(request.created_at)}</p>
+                            </div>
+                            {request.delivery_date && (
+                              <div>
+                                <p className="text-sm font-medium text-muted-foreground">Delivered on</p>
+                                <p className="font-medium">{formatDate(request.delivery_date)}</p>
+                              </div>
+                            )}
                           </div>
+                          {request.notes && (
+                            <div className="mt-4 p-3 bg-muted rounded-md">
+                              <p className="text-sm font-medium text-muted-foreground">Admin Notes:</p>
+                              <p>{request.notes}</p>
+                            </div>
+                          )}
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex gap-2">
                           <Button 
                             variant="outline" 
-                            className="w-full" 
-                            onClick={() => navigate('/customer-dashboard', { state: { tab: 'support' } })}
+                            className="flex-1" 
+                            onClick={() => {
+                              setActiveTab('support');
+                            }}
                           >
-                            Check Status
+                            Contact Support
                             <MessageSquare className="ml-2 h-4 w-4" />
+                          </Button>
+                          
+                          <Button 
+                            className={`flex-1 ${!request.is_delivered ? 'opacity-50' : ''}`}
+                            onClick={() => handleDownload(request)}
+                            disabled={!request.is_delivered}
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Robot
                           </Button>
                         </CardFooter>
                       </Card>
@@ -194,7 +247,26 @@ const CustomerDashboard = () => {
                           </div>
                         </CardContent>
                         <CardFooter>
-                          <Button className="w-full">
+                          <Button 
+                            className="w-full"
+                            onClick={() => {
+                              // Find a robot request with the same type as the purchased robot
+                              const robot = robots.find(r => r.id === purchase.robot_id);
+                              if (robot) {
+                                const matchingRequest = robotRequests.find(r => 
+                                  r.robot_type === robot.type && r.is_delivered
+                                );
+                                if (matchingRequest && matchingRequest.download_url) {
+                                  window.open(matchingRequest.download_url, '_blank');
+                                } else {
+                                  toast({
+                                    title: "Download Ready",
+                                    description: "Your purchase is ready. Click again to download.",
+                                  });
+                                }
+                              }
+                            }}
+                          >
                             <Download className="mr-2 h-4 w-4" />
                             Download Robot
                           </Button>

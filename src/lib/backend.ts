@@ -38,6 +38,7 @@ export interface RobotRequest {
   status: string;
   is_delivered: boolean;
   delivery_date?: string;
+  download_url?: string;
   notes?: string;
   created_at: string;
   updated_at?: string;
@@ -257,6 +258,7 @@ export const updateRobotRequest = async (
   updates: {
     status?: string;
     is_delivered?: boolean;
+    download_url?: string;
     notes?: string;
   }
 ): Promise<RobotRequest> => {

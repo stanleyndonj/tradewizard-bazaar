@@ -72,7 +72,7 @@ interface BackendContextType {
   fetchAllRobotRequests: () => Promise<void>;
   fetchPurchases: () => Promise<void>;
   submitRequest: (robotType: string, tradingPairs: string, timeframe: string, riskLevel: number) => Promise<void>;
-  updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; notes?: string;}) => Promise<void>;
+  updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string;}) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
   verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
@@ -284,7 +284,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchRobotRequests = async () => {
     try {
       if (user) {
+        console.log("Fetching robot requests for user:", user.id);
         const fetchedRequests = await getRobotRequests(user.id);
+        console.log("Fetched requests:", fetchedRequests);
         setRobotRequests(fetchedRequests);
       }
     } catch (error) {
@@ -300,7 +302,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchAllRobotRequests = async () => {
     try {
       if (user && user.is_admin) {
+        console.log("Admin fetching all robot requests");
         const fetchedRequests = await getAllRobotRequests();
+        console.log("Admin fetched requests:", fetchedRequests);
         setRobotRequests(fetchedRequests);
       }
     } catch (error) {
@@ -368,6 +372,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     updates: {
       status?: string;
       is_delivered?: boolean;
+      download_url?: string;
       notes?: string;
     }
   ) => {
@@ -376,7 +381,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         throw new Error('Admin access required');
       }
       
+      console.log("Updating robot request:", requestId, updates);
       const updatedRequest = await updateRobotRequest(requestId, updates);
+      console.log("Updated request:", updatedRequest);
       
       // Update the request in the state
       setRobotRequests(prev => 

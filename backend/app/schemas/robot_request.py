@@ -15,6 +15,7 @@ class RobotRequestCreate(RobotRequestBase):
 class RobotRequestUpdate(BaseModel):
     status: Optional[str] = None
     is_delivered: Optional[bool] = None
+    download_url: Optional[str] = None
     notes: Optional[str] = None
 
 class RobotRequestResponse(RobotRequestBase):
@@ -23,6 +24,7 @@ class RobotRequestResponse(RobotRequestBase):
     status: str
     is_delivered: bool = False
     delivery_date: Optional[datetime] = None
+    download_url: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

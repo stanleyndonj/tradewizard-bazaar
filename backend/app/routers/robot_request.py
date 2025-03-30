@@ -154,6 +154,9 @@ async def update_robot_request(
             if user:
                 user.robots_delivered = True
     
+    if updates.download_url is not None:
+        request.download_url = updates.download_url
+        
     if updates.notes is not None:
         request.notes = updates.notes
     
