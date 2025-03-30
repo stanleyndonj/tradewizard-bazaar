@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Send, MessageCircle, Clock } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 const CustomerChat = () => {
   const { 
@@ -19,7 +19,8 @@ const CustomerChat = () => {
     currentConversation, 
     setCurrentConversation,
     sendMessage,
-    markMessageAsRead
+    markMessageAsRead,
+    createConversation
   } = useBackend();
   
   const [messageText, setMessageText] = useState('');
@@ -56,15 +57,34 @@ const CustomerChat = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!messageText.trim() || !currentConversation) return;
+    if (!messageText.trim()) return;
     
     setLoading(true);
     
     try {
-      await sendMessage(currentConversation, messageText);
-      setMessageText('');
+      if (!currentConversation) {
+        // If no conversation exists, create one
+        if (user) {
+          createConversation(user.id, user.name, user.email);
+          // Wait for the conversation to be created
+          setTimeout(() => {
+            if (currentConversation) {
+              sendMessage(currentConversation, messageText);
+              setMessageText('');
+            }
+          }, 100);
+        }
+      } else {
+        await sendMessage(currentConversation, messageText);
+        setMessageText('');
+      }
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -77,14 +97,14 @@ const CustomerChat = () => {
   
   // Start a new support conversation
   const startNewConversation = () => {
-    if (conversations.length === 0) {
-      // For demonstration purposes, we should already have a conversation
-      // But this would be the place to create a new one
-      return;
-    }
+    if (!user) return;
     
-    // Select the first conversation for now
-    setCurrentConversation(conversations[0].id);
+    // Create a new conversation for the user
+    createConversation(user.id, user.name, user.email);
+    toast({
+      title: "Conversation started",
+      description: "You can now chat with our support team",
+    });
   };
   
   if (conversations.length === 0) {
@@ -120,7 +140,7 @@ const CustomerChat = () => {
             {/* Messages area */}
             <ScrollArea className="flex-1 pr-4">
               <div className="space-y-4 pb-2">
-                {chatMessages[currentConversation].map(message => (
+                {chatMessages[currentConversation]?.map(message => (
                   <div
                     key={message.id}
                     className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}

@@ -225,7 +225,6 @@ export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
 };
 
 export const submitRobotRequest = async (
-  userId: string,
   robotType: string,
   tradingPairs: string,
   timeframe: string,
@@ -239,7 +238,6 @@ export const submitRobotRequest = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        user_id: userId,
         robot_type: robotType,
         trading_pairs: tradingPairs,
         timeframe: timeframe,
