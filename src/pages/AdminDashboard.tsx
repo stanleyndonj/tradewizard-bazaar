@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -270,11 +269,12 @@ const AdminDashboard = () => {
                                 <Badge 
                                   variant={
                                     request.status === 'approved' 
-                                      ? 'success' 
+                                      ? 'default' 
                                       : request.status === 'rejected'
                                       ? 'destructive'
-                                      : 'default'
+                                      : 'secondary'
                                   }
+                                  className={request.status === 'approved' ? 'bg-green-500 text-white' : ''}
                                 >
                                   {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                                 </Badge>
@@ -437,11 +437,12 @@ const AdminDashboard = () => {
                   <Badge 
                     variant={
                       selectedRequest.status === 'approved' 
-                        ? 'success' 
+                        ? 'default' 
                         : selectedRequest.status === 'rejected'
                         ? 'destructive'
-                        : 'default'
+                        : 'secondary'
                     }
+                    className={selectedRequest.status === 'approved' ? 'bg-green-500 text-white' : ''}
                   >
                     {selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}
                   </Badge>
@@ -449,7 +450,7 @@ const AdminDashboard = () => {
                 <div>
                   <p className="text-sm font-medium">Delivered:</p>
                   {selectedRequest.is_delivered ? (
-                    <Badge variant="success">Yes</Badge>
+                    <Badge variant="default" className="bg-green-500 text-white">Yes</Badge>
                   ) : (
                     <Badge variant="destructive">No</Badge>
                   )}
@@ -493,9 +494,9 @@ const AdminDashboard = () => {
             <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 type="button"
-                variant="success"
+                variant="outline"
                 onClick={() => handleUpdateRequest('approved', true)}
-                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700"
+                className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
               >
                 Mark as Delivered
               </Button>

@@ -1,4 +1,3 @@
-
 import { User, Robot, RobotRequest, Purchase } from './backend';
 
 // Helper to create a mock user
@@ -122,6 +121,7 @@ export const mockRobotRequests: RobotRequest[] = [
     timeframe: '1h',
     risk_level: 3,
     status: 'pending',
+    is_delivered: false,
     created_at: new Date(Date.now() - 259200000).toISOString()
   },
   {
@@ -132,6 +132,7 @@ export const mockRobotRequests: RobotRequest[] = [
     timeframe: '5m',
     risk_level: 5,
     status: 'approved',
+    is_delivered: false,
     created_at: new Date(Date.now() - 432000000).toISOString()
   }
 ];
