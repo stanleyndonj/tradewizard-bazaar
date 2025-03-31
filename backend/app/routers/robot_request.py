@@ -16,17 +16,17 @@ router = APIRouter(prefix="/robot-requests", tags=["robot-requests"])
 async def create_robot_request(
     request: RobotRequestCreate,
     db: Session = Depends(get_db),
-    user_id: Optional[str] = Depends(get_user_from_token)
+    current_user_id: str = Depends(get_user_from_token)
 ):
     """Create a new robot request"""
-    if not user_id:
+    if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
     
     # Verify that the user exists
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -36,7 +36,7 @@ async def create_robot_request(
     # Create the robot request with all fields
     new_request = RobotRequest(
         id=str(uuid.uuid4()),
-        user_id=user_id,
+        user_id=current_user_id,
         robot_type=request.robot_type,
         trading_pairs=request.trading_pairs,
         timeframe=request.timeframe,

@@ -284,9 +284,16 @@ export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
   }
 };
 
+// Submit robot request function
 export const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
   try {
     console.log(`Submitting robot request with URL: ${API_ENDPOINTS.ROBOT_REQUESTS} and params:`, params);
+    
+    // Get auth headers
+    const headers = getAuthHeaders();
+    if (!headers.Authorization) {
+      throw new Error('Authentication required. Please log in.');
+    }
     
     // Make sure to properly convert numeric values
     const body = {
@@ -322,7 +329,7 @@ export const submitRobotRequest = async (params: RobotRequestParams): Promise<Ro
     const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
       method: 'POST',
       headers: {
-        ...getAuthHeaders(),
+        ...headers,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
