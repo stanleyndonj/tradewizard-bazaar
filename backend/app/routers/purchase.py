@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import uuid
 
 from ..database import get_db
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/purchases", tags=["purchases"])
 async def create_purchase(
     purchase: PurchaseCreate,
     db: Session = Depends(get_db),
-    user_id: str = Depends(get_user_from_token)
+    user_id: Optional[str] = Depends(get_user_from_token)
 ):
     """Create a new purchase"""
     if not user_id:
@@ -59,13 +59,15 @@ async def create_purchase(
     
     return new_purchase
 
+# This endpoint should no longer be used since we're now using the endpoint in user.py
+# but we'll keep it for backward compatibility
 @router.get("/users/{user_id}", response_model=List[PurchaseResponse])
 async def get_user_purchases(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
+    current_user_id: Optional[str] = Depends(get_user_from_token)
 ):
-    """Get all purchases for a specific user"""
+    """Get all purchases for a specific user (deprecated, use /users/{user_id}/purchases instead)"""
     if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -17,7 +16,7 @@ router = APIRouter(prefix="/robot-requests", tags=["robot-requests"])
 async def create_robot_request(
     request: RobotRequestCreate,
     db: Session = Depends(get_db),
-    user_id: str = Depends(get_user_from_token)
+    user_id: Optional[str] = Depends(get_user_from_token)
 ):
     """Create a new robot request"""
     if not user_id:

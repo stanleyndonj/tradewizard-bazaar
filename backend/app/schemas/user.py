@@ -24,6 +24,8 @@ class UserResponse(UserBase):
     id: str
     is_admin: bool
     role: Optional[str] = "user"
+    has_requested_robot: Optional[bool] = False
+    robots_delivered: Optional[bool] = False
     created_at: datetime
     updated_at: Optional[datetime] = None
 

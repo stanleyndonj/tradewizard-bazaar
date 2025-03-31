@@ -287,43 +287,51 @@ export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
 export const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
   try {
     console.log(`Submitting robot request with URL: ${API_ENDPOINTS.ROBOT_REQUESTS} and params:`, params);
+    
+    // Make sure to properly convert numeric values
+    const body = {
+      robot_type: params.robotType,
+      trading_pairs: params.tradingPairs,
+      timeframe: params.timeframe,
+      risk_level: Number(params.riskLevel),
+      
+      // New fields
+      bot_name: params.botName || null,
+      market: params.market || null,
+      stake_amount: params.stakeAmount ? Number(params.stakeAmount) : null,
+      contract_type: params.contractType || null,
+      duration: params.duration || null,
+      prediction: params.prediction || null,
+      currency: params.currency || null,
+      trading_strategy: params.tradingStrategy || null,
+      
+      // MT5 specific fields
+      account_credentials: params.accountCredentials || null,
+      volume: params.volume ? Number(params.volume) : null,
+      order_type: params.orderType || null,
+      stop_loss: params.stopLoss ? Number(params.stopLoss) : null,
+      take_profit: params.takeProfit ? Number(params.takeProfit) : null,
+      entry_rules: params.entryRules || null,
+      exit_rules: params.exitRules || null,
+      risk_management: params.riskManagement || null,
+      additional_parameters: params.additionalParameters || null
+    };
+    
+    console.log("Request body:", body);
+    
     const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
       method: 'POST',
       headers: {
         ...getAuthHeaders(),
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        robot_type: params.robotType,
-        trading_pairs: params.tradingPairs,
-        timeframe: params.timeframe,
-        risk_level: params.riskLevel,
-        
-        // New fields
-        bot_name: params.botName,
-        market: params.market,
-        stake_amount: params.stakeAmount,
-        contract_type: params.contractType,
-        duration: params.duration,
-        prediction: params.prediction,
-        currency: params.currency,
-        trading_strategy: params.tradingStrategy,
-        
-        // MT5 specific fields
-        account_credentials: params.accountCredentials,
-        volume: params.volume,
-        order_type: params.orderType,
-        stop_loss: params.stopLoss,
-        take_profit: params.takeProfit,
-        entry_rules: params.entryRules,
-        exit_rules: params.exitRules,
-        risk_management: params.riskManagement,
-        additional_parameters: params.additionalParameters
-      }),
+      body: JSON.stringify(body),
     });
     
     if (!response.ok) {
       console.error(`Error response when submitting robot request: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Error details: ${errorText}`);
     }
     
     return handleApiResponse(response);

@@ -9,7 +9,6 @@ class PurchaseBase(BaseModel):
     payment_method: str
 
 class PurchaseCreate(PurchaseBase):
-    user_id: str
     robot_id: str
 
 class PurchaseResponse(PurchaseBase):
