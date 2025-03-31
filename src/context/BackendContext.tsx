@@ -71,7 +71,7 @@ interface BackendContextType {
   fetchRobotRequests: () => Promise<void>;
   fetchAllRobotRequests: () => Promise<void>;
   fetchPurchases: () => Promise<void>;
-  submitRequest: (params: RobotRequestParams) => Promise<void>;
+  submitRequest: (params: RobotRequestParams) => Promise<RobotRequest>;
   updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string; progress?: number;}) => Promise<void>;
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<string>;
@@ -333,7 +333,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const submitRequest = async (params: RobotRequestParams) => {
+  const submitRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
     try {
       if (!user) {
         throw new Error('You must be logged in to submit a request');

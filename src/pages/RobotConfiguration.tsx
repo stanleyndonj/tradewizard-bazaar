@@ -209,17 +209,18 @@ const RobotConfiguration = () => {
       if (isBinary) {
         // Safe to cast since we've checked isBinary
         const binaryData = data as BinaryFormValues;
-        await submitRequest({
+        const response = await submitRequest({
           ...requestData,
           stakeAmount: binaryData.stakeAmount,
           contractType: binaryData.contractType,
           duration: binaryData.duration,
           prediction: binaryData.prediction,
         });
+        console.log("Robot request created:", response);
       } else {
         // Safe to cast since we've checked !isBinary
         const mt5Data = data as MT5FormValues;
-        await submitRequest({
+        const response = await submitRequest({
           ...requestData,
           accountCredentials: mt5Data.accountCredentials,
           volume: mt5Data.volume,
@@ -231,6 +232,7 @@ const RobotConfiguration = () => {
           riskManagement: mt5Data.riskManagement,
           additionalParameters: mt5Data.additionalParameters,
         });
+        console.log("Robot request created:", response);
       }
       
       toast({
