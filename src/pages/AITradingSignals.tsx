@@ -28,6 +28,7 @@ import { toast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
 import { MarketAnalysis, TradingSignal, analyzeMarket, getTradingSignals } from '@/lib/backend';
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
+import { TradingLoader } from '@/components/ui/loader';
 
 const AITradingSignals = () => {
   const navigate = useNavigate();
@@ -104,17 +105,21 @@ const AITradingSignals = () => {
     return robots.find(robot => (robot.category || 'paid') === 'paid');
   };
 
-  // Handle subscription upgrade
+  // Handle subscription upgrade - FIXED to open payment modal directly
   const handleUpgradeSubscription = () => {
     const premiumRobot = findPremiumRobot();
     
     if (premiumRobot) {
-      // Open payment modal directly
+      // Open payment modal directly instead of navigating to marketplace
       setSelectedRobot(premiumRobot);
       setIsPaymentModalOpen(true);
     } else {
-      // If no premium robot is found, navigate to marketplace
-      navigate('/robot-marketplace');
+      // As a fallback if no premium robot is found
+      toast({
+        title: "No Premium Plan Found",
+        description: "We couldn't find a premium plan. Please try again later.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,6 +157,19 @@ const AITradingSignals = () => {
       return 'Invalid date';
     }
   };
+
+  // Show loading state with our new trading loader
+  if (signalsLoading && (hasSubscription || isAdmin)) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <TradingLoader text="Loading AI Trading Signals..." />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
