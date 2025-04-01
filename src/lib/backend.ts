@@ -77,6 +77,58 @@ export interface Purchase {
   purchaseDate?: string;
 }
 
+// New interfaces for AI Trading Signals
+export interface TradingSignal {
+  id: string;
+  symbol: string;
+  direction: 'BUY' | 'SELL';
+  strength: 'Strong' | 'Moderate' | 'Weak';
+  confidence: number;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  timeframe: string;
+  timestamp: string;
+  market: string;
+  analysis: string;
+}
+
+export interface MarketAnalysis {
+  symbol: string;
+  timeframe: string;
+  timestamp: string;
+  direction: 'BUY' | 'SELL';
+  confidence: number;
+  entry_price: number;
+  stop_loss: number;
+  take_profit: number;
+  analysis_summary: string;
+  technical_indicators: {
+    rsi: number;
+    macd: number;
+    bollinger_bands: {
+      upper: number;
+      middle: number;
+      lower: number;
+    };
+    moving_averages: {
+      sma_50: number;
+      sma_200: number;
+      ema_12: number;
+      ema_26: number;
+    };
+  };
+  market_sentiment: 'Bullish' | 'Bearish' | 'Neutral';
+  volume_analysis: {
+    volume: number;
+    volume_change: string;
+  };
+  support_resistance: {
+    support_levels: number[];
+    resistance_levels: number[];
+  };
+}
+
 // Auth functions
 export const registerUser = async (name: string, email: string, password: string): Promise<User> => {
   try {
@@ -464,4 +516,64 @@ export const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boo
   
   const result = await handleApiResponse(response);
   return result.success;
+};
+
+// AI Trading Signals functions
+export const getTradingSignals = async (
+  market: string = 'forex',
+  timeframe: string = '1h',
+  count: number = 10
+): Promise<TradingSignal[]> => {
+  try {
+    const url = `${API_ENDPOINTS.AI_TRADING_SIGNALS}?market=${market}&timeframe=${timeframe}&count=${count}`;
+    console.log(`Fetching trading signals with URL: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`Error response when fetching trading signals: ${response.status} ${response.statusText}`);
+      if (response.status === 403) {
+        throw new Error('Subscription required to access AI trading signals');
+      }
+    }
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching trading signals:', error);
+    throw error;
+  }
+};
+
+export const analyzeMarket = async (
+  symbol: string,
+  timeframe: string = '1h'
+): Promise<MarketAnalysis> => {
+  try {
+    const url = `${API_ENDPOINTS.AI_MARKET_ANALYSIS}?symbol=${symbol}&timeframe=${timeframe}`;
+    console.log(`Analyzing market with URL: ${url}`);
+    
+    const response = await fetch(url, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`Error response when analyzing market: ${response.status} ${response.statusText}`);
+      if (response.status === 403) {
+        throw new Error('Subscription required to access AI market analysis');
+      }
+    }
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error analyzing market:', error);
+    throw error;
+  }
 };

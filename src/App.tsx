@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import RobotMarketplace from "./pages/RobotMarketplace";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import AITradingSignals from "./pages/AITradingSignals";
 import { BackendProvider } from "./context/BackendContext";
 
 const App = () => {
@@ -55,6 +56,7 @@ const App = () => {
               <Route path="/customer-dashboard" element={<CustomerDashboard />} />
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/robot-marketplace" element={<RobotMarketplace />} />
+              <Route path="/ai-trading-signals" element={<AITradingSignals />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

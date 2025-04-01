@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare } from 'lucide-react';
+import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -121,6 +121,9 @@ const Navbar = () => {
                 <Link to="/customer-dashboard" className="text-sm font-medium hover:text-trading-blue transition-colors">
                   Dashboard
                 </Link>
+                <Link to="/ai-trading-signals" className="text-sm font-medium hover:text-trading-blue transition-colors">
+                  Trading Signals
+                </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 h-auto hover:bg-transparent" aria-label="User menu">
@@ -145,6 +148,12 @@ const Navbar = () => {
                       <Link to="/robot-marketplace" className="flex items-center">
                         <ShoppingCart className="mr-2 h-4 w-4" />
                         Marketplace
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/ai-trading-signals" className="flex items-center">
+                        <BarChart2 className="mr-2 h-4 w-4" />
+                        Trading Signals
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -229,6 +238,12 @@ const Navbar = () => {
                     className="text-sm font-medium py-2 hover:text-trading-blue transition-colors"
                   >
                     Dashboard
+                  </Link>
+                  <Link 
+                    to="/ai-trading-signals" 
+                    className="text-sm font-medium py-2 hover:text-trading-blue transition-colors"
+                  >
+                    Trading Signals
                   </Link>
                   <Link 
                     to="/messages" 

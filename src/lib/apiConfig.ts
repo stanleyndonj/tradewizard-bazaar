@@ -31,7 +31,11 @@ const API_ENDPOINTS = {
   
   // M-Pesa endpoints
   MPESA_INITIATE: `${API_BASE_URL}/mpesa/initiate`,
-  MPESA_VERIFY: `${API_BASE_URL}/mpesa/verify`
+  MPESA_VERIFY: `${API_BASE_URL}/mpesa/verify`,
+  
+  // AI Trading Signals endpoints
+  AI_TRADING_SIGNALS: `${API_BASE_URL}/ai-trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_BASE_URL}/ai-trading-signals/analyze`
 };
 
 // Helper function to get authentication headers
