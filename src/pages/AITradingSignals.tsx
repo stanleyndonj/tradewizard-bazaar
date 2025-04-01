@@ -16,6 +16,12 @@ import { MarketAnalysis, TradingSignal, analyzeMarket, getTradingSignals } from 
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 import { TradingLoader } from '@/components/ui/loader';
 
+// Import the new components
+import MarketDataWidget from '@/components/trading/MarketDataWidget';
+import TradingCalculators from '@/components/trading/TradingCalculators';
+import AITradingChat from '@/components/trading/AITradingChat';
+import NewsWidget from '@/components/trading/NewsWidget';
+
 const AITradingSignals = () => {
   const navigate = useNavigate();
   const { user, robots, isLoading: backendLoading } = useBackend();
@@ -30,6 +36,7 @@ const AITradingSignals = () => {
   const [customSymbol, setCustomSymbol] = useState('EUR/USD');
   const [hasSubscription, setHasSubscription] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeSection, setActiveSection] = useState('signals');
   
   // Payment modal state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -184,7 +191,7 @@ const AITradingSignals = () => {
     }
   };
 
-  // Show loading state with our new trading loader for all loading states
+  // Show loading state with our trading loader for all loading states
   if (backendLoading || (signalsLoading && (hasSubscription || isAdmin))) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -214,7 +221,7 @@ const AITradingSignals = () => {
                   AI Trading Signals
                 </h1>
                 <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-                  Get access to real-time AI-powered trading signals and market analysis for Forex, Crypto, and Stocks markets with our premium subscription.
+                  Get access to real-time AI-powered trading signals, market analysis, news, and trading tools with our premium subscription.
                 </p>
               </div>
               
@@ -251,12 +258,12 @@ const AITradingSignals = () => {
                   <CardHeader className="space-y-1">
                     <CardTitle className="text-xl flex items-center">
                       <BarChart3 className="mr-2 h-5 w-5 text-trading-red" />
-                      Prediction Models
+                      Trading Tools
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm">
-                      AI-powered market predictions with high confidence levels.
+                      Advanced tools including position calculators, watchlists, and AI chat.
                     </p>
                   </CardContent>
                 </Card>
@@ -298,179 +305,214 @@ const AITradingSignals = () => {
                 </div>
               </div>
               
-              <Tabs defaultValue="forex" value={activeTab} onValueChange={handleMarketChange}>
-                <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                  <TabsList className="mb-4 md:mb-0">
-                    <TabsTrigger value="forex">Forex</TabsTrigger>
-                    <TabsTrigger value="crypto">Crypto</TabsTrigger>
-                    <TabsTrigger value="stocks">Stocks</TabsTrigger>
-                  </TabsList>
-                  
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('5m')} className={timeframe === '5m' ? 'bg-secondary' : ''}>5m</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('15m')} className={timeframe === '15m' ? 'bg-secondary' : ''}>15m</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1h')} className={timeframe === '1h' ? 'bg-secondary' : ''}>1h</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('4h')} className={timeframe === '4h' ? 'bg-secondary' : ''}>4h</Button>
-                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1d')} className={timeframe === '1d' ? 'bg-secondary' : ''}>1d</Button>
-                  </div>
-                </div>
+              {/* Main navigation tabs */}
+              <Tabs defaultValue="signals" value={activeSection} onValueChange={setActiveSection}>
+                <TabsList className="w-full grid grid-cols-4 mb-6">
+                  <TabsTrigger value="signals">Signals</TabsTrigger>
+                  <TabsTrigger value="market-data">Market Data</TabsTrigger>
+                  <TabsTrigger value="tools">Trading Tools</TabsTrigger>
+                  <TabsTrigger value="ai-chat">AI Chat</TabsTrigger>
+                </TabsList>
                 
-                <div className="mb-8">
-                  <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="flex-grow">
-                      <Label htmlFor="symbol-search">Custom Symbol Analysis</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          id="symbol-search"
-                          placeholder="Enter symbol (e.g., EUR/USD, BTC/USD)"
-                          value={customSymbol}
-                          onChange={(e) => setCustomSymbol(e.target.value)}
-                        />
-                        <Button onClick={handleSymbolAnalysis} disabled={analysisLoading}>
-                          {analysisLoading ? 'Analyzing...' : 'Analyze'}
-                        </Button>
+                {/* Signals Tab Content */}
+                <TabsContent value="signals" className="space-y-6">
+                  <Tabs defaultValue="forex" value={activeTab} onValueChange={handleMarketChange}>
+                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                      <TabsList className="mb-4 md:mb-0">
+                        <TabsTrigger value="forex">Forex</TabsTrigger>
+                        <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                        <TabsTrigger value="stocks">Stocks</TabsTrigger>
+                      </TabsList>
+                      
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('5m')} className={timeframe === '5m' ? 'bg-secondary' : ''}>5m</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('15m')} className={timeframe === '15m' ? 'bg-secondary' : ''}>15m</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1h')} className={timeframe === '1h' ? 'bg-secondary' : ''}>1h</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('4h')} className={timeframe === '4h' ? 'bg-secondary' : ''}>4h</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1d')} className={timeframe === '1d' ? 'bg-secondary' : ''}>1d</Button>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-auto">
-                      <Label htmlFor="quick-search">Quick Filter</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          id="quick-search"
-                          placeholder="Filter signals..."
-                          value={searchSymbol}
-                          onChange={(e) => setSearchSymbol(e.target.value)}
-                          className="w-full md:w-[200px]"
-                        />
-                        <Button variant="outline">
-                          <Search className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Analysis Result */}
-                {analysisResult && (
-                  <Card className="mb-8 bg-muted/30 border-trading-blue/20">
-                    <CardHeader>
-                      <CardTitle className="text-xl flex justify-between">
-                        <span>Analysis: {analysisResult.symbol}</span>
-                        <Badge className={`${analysisResult.direction === 'BUY' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
-                          {analysisResult.direction}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        Confidence: {analysisResult.confidence}% • Timeframe: {analysisResult.timeframe}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-3 bg-background rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">Entry Price</p>
-                          <p className="text-lg font-semibold">{analysisResult.entry_price}</p>
-                        </div>
-                        <div className="p-3 bg-background rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">Stop Loss</p>
-                          <p className="text-lg font-semibold text-red-500">{analysisResult.stop_loss}</p>
-                        </div>
-                        <div className="p-3 bg-background rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">Take Profit</p>
-                          <p className="text-lg font-semibold text-green-500">{analysisResult.take_profit}</p>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-medium mb-2">Analysis Summary</h4>
-                        <p className="text-sm">{analysisResult.analysis_summary}</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-medium mb-2">Technical Indicators</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span>RSI:</span>
-                              <span className="font-medium">{analysisResult.technical_indicators.rsi}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>MACD:</span>
-                              <span className="font-medium">{analysisResult.technical_indicators.macd}</span>
-                            </div>
+                    <div className="mb-8">
+                      <div className="flex flex-col md:flex-row gap-4 mb-6">
+                        <div className="flex-grow">
+                          <Label htmlFor="symbol-search">Custom Symbol Analysis</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              id="symbol-search"
+                              placeholder="Enter symbol (e.g., EUR/USD, BTC/USD)"
+                              value={customSymbol}
+                              onChange={(e) => setCustomSymbol(e.target.value)}
+                            />
+                            <Button onClick={handleSymbolAnalysis} disabled={analysisLoading}>
+                              {analysisLoading ? 'Analyzing...' : 'Analyze'}
+                            </Button>
                           </div>
                         </div>
                         
-                        <div>
-                          <h4 className="font-medium mb-2">Support/Resistance</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span>Support:</span>
-                              <span className="font-medium">{analysisResult.support_resistance.support_levels.join(', ')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Resistance:</span>
-                              <span className="font-medium">{analysisResult.support_resistance.resistance_levels.join(', ')}</span>
-                            </div>
+                        <div className="w-full md:w-auto">
+                          <Label htmlFor="quick-search">Quick Filter</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              id="quick-search"
+                              placeholder="Filter signals..."
+                              value={searchSymbol}
+                              onChange={(e) => setSearchSymbol(e.target.value)}
+                              className="w-full md:w-[200px]"
+                            />
+                            <Button variant="outline">
+                              <Search className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Trading Signals */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {signalsLoading ? (
-                    <TradingLoader text="Generating signals..." />
-                  ) : (
-                    signals
-                      .filter(signal => searchSymbol ? signal.symbol.toLowerCase().includes(searchSymbol.toLowerCase()) : true)
-                      .map((signal) => (
-                        <Card key={signal.id} className="overflow-hidden">
-                          <CardHeader className="pb-3">
-                            <div className="flex justify-between items-start">
-                              <CardTitle>{signal.symbol}</CardTitle>
-                              <Badge className={signal.direction === 'BUY' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
-                                {signal.direction}
-                              </Badge>
-                            </div>
-                            <CardDescription>
-                              {formatTime(signal.timestamp)} • {signal.timeframe} • {signal.strength}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="pb-3">
-                            <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground">Entry</p>
-                                <p className="font-medium">{signal.entry_price}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground">Stop Loss</p>
-                                <p className="font-medium text-red-500">{signal.stop_loss}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground">Take Profit</p>
-                                <p className="font-medium text-green-500">{signal.take_profit}</p>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground mb-1">Signal Analysis</p>
-                              <p className="text-sm">{signal.analysis}</p>
-                            </div>
-                          </CardContent>
-                          <CardFooter className="bg-muted/30 py-3 border-t flex justify-between">
-                            <Badge variant="outline" className="bg-primary/10">
-                              {signal.confidence}% Confidence
+                    </div>
+                    
+                    {/* Analysis Result */}
+                    {analysisResult && (
+                      <Card className="mb-8 bg-muted/30 border-trading-blue/20">
+                        <CardHeader>
+                          <CardTitle className="text-xl flex justify-between">
+                            <span>Analysis: {analysisResult.symbol}</span>
+                            <Badge className={`${analysisResult.direction === 'BUY' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                              {analysisResult.direction}
                             </Badge>
-                            <Button variant="outline" size="sm">
-                              <LineChart className="h-4 w-4 mr-1" />
-                              Detailed Analysis
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      ))
-                  )}
-                </div>
+                          </CardTitle>
+                          <CardDescription>
+                            Confidence: {analysisResult.confidence}% • Timeframe: {analysisResult.timeframe}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-3 bg-background rounded-lg">
+                              <p className="text-sm font-medium text-muted-foreground">Entry Price</p>
+                              <p className="text-lg font-semibold">{analysisResult.entry_price}</p>
+                            </div>
+                            <div className="p-3 bg-background rounded-lg">
+                              <p className="text-sm font-medium text-muted-foreground">Stop Loss</p>
+                              <p className="text-lg font-semibold text-red-500">{analysisResult.stop_loss}</p>
+                            </div>
+                            <div className="p-3 bg-background rounded-lg">
+                              <p className="text-sm font-medium text-muted-foreground">Take Profit</p>
+                              <p className="text-lg font-semibold text-green-500">{analysisResult.take_profit}</p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-medium mb-2">Analysis Summary</h4>
+                            <p className="text-sm">{analysisResult.analysis_summary}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-medium mb-2">Technical Indicators</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>RSI:</span>
+                                  <span className="font-medium">{analysisResult.technical_indicators.rsi}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>MACD:</span>
+                                  <span className="font-medium">{analysisResult.technical_indicators.macd}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-medium mb-2">Support/Resistance</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Support:</span>
+                                  <span className="font-medium">{analysisResult.support_resistance.support_levels.join(', ')}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Resistance:</span>
+                                  <span className="font-medium">{analysisResult.support_resistance.resistance_levels.join(', ')}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    
+                    {/* Trading Signals */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {signalsLoading ? (
+                        <TradingLoader text="Generating signals..." />
+                      ) : (
+                        signals
+                          .filter(signal => searchSymbol ? signal.symbol.toLowerCase().includes(searchSymbol.toLowerCase()) : true)
+                          .map((signal) => (
+                            <Card key={signal.id} className="overflow-hidden">
+                              <CardHeader className="pb-3">
+                                <div className="flex justify-between items-start">
+                                  <CardTitle>{signal.symbol}</CardTitle>
+                                  <Badge className={signal.direction === 'BUY' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
+                                    {signal.direction}
+                                  </Badge>
+                                </div>
+                                <CardDescription>
+                                  {formatTime(signal.timestamp)} • {signal.timeframe} • {signal.strength}
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="pb-3">
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground">Entry</p>
+                                    <p className="font-medium">{signal.entry_price}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground">Stop Loss</p>
+                                    <p className="font-medium text-red-500">{signal.stop_loss}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground">Take Profit</p>
+                                    <p className="font-medium text-green-500">{signal.take_profit}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">Signal Analysis</p>
+                                  <p className="text-sm">{signal.analysis}</p>
+                                </div>
+                              </CardContent>
+                              <CardFooter className="bg-muted/30 py-3 border-t flex justify-between">
+                                <Badge variant="outline" className="bg-primary/10">
+                                  {signal.confidence}% Confidence
+                                </Badge>
+                                <Button variant="outline" size="sm">
+                                  <LineChart className="h-4 w-4 mr-1" />
+                                  Detailed Analysis
+                                </Button>
+                              </CardFooter>
+                            </Card>
+                          ))
+                      )}
+                    </div>
+                  </Tabs>
+                </TabsContent>
+                
+                {/* Market Data Tab Content */}
+                <TabsContent value="market-data" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="md:col-span-2">
+                      <MarketDataWidget />
+                    </div>
+                    <div>
+                      <NewsWidget />
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* Trading Tools Tab Content */}
+                <TabsContent value="tools" className="space-y-6">
+                  <TradingCalculators />
+                </TabsContent>
+                
+                {/* AI Chat Tab Content */}
+                <TabsContent value="ai-chat" className="space-y-6">
+                  <AITradingChat />
+                </TabsContent>
               </Tabs>
             </div>
           )}

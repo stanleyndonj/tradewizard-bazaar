@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,7 +46,7 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <BackendProvider>
-            <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><TradingLoader text="Loading application..." /></div>}>
+            <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><TradingLoader text="Loading TradeWizard..." /></div>}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/about-us" element={<AboutUs />} />
