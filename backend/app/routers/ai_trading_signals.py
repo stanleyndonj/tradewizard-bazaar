@@ -1,10 +1,8 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import json
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
 
 from ..database import get_db
 from ..models.user import User
@@ -61,31 +59,25 @@ async def get_trading_signals(
     db: Session = Depends(get_db),
     current_user_id: str = Depends(get_user_from_token)
 ):
-    """Get AI trading signals"""
-    if not current_user_id:
+    """Get AI trading signals with admin bypass"""
+    user = db.query(User).filter(User.id == current_user_id).first()
+    
+    # Admin users can access without subscription check
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
     
-    # Fetch the user
-    user = db.query(User).filter(User.id == current_user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    # Check if user has subscription (using robots_delivered as a placeholder)
-    if not user.robots_delivered:
+    # Admin bypass for subscription
+    if not user.is_admin and not user.robots_delivered:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Subscription required to access AI trading signals"
         )
     
-    # Generate mock signals (in production, this would call an actual AI service)
+    # Rest of the function remains the same...
     signals = generate_mock_signals(market, timeframe, count)
-    
     return signals
 
 @router.get("/analyze")
