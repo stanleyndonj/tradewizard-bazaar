@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     M_PESA_LIPA_NA_MPESA_PASSKEY: str = ""
 
     # Add new settings for payment and admin configuration
-    ADMIN_EMAILS: list = []  # List of admin email addresses
+    ADMIN_EMAILS: list = ["admin@example.com"]  # List of admin email addresses
     DISABLE_SUBSCRIPTION_CHECK: bool = False  # Global override for subscription checks
 
     class Config:

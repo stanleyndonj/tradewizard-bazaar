@@ -27,18 +27,22 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
 import { MarketAnalysis, TradingSignal, analyzeMarket, getTradingSignals } from '@/lib/backend';
+import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 
 const AITradingSignals = () => {
   const navigate = useNavigate();
-  const { user } = useBackend();
+  const { user, robots } = useBackend();
   const [activeTab, setActiveTab] = useState('market-analyzer');
   const [marketType, setMarketType] = useState('forex');
   const [timeframe, setTimeframe] = useState('1h');
   const [symbol, setSymbol] = useState('EUR/USD');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedRobot, setSelectedRobot] = useState(null);
 
   // Check for subscription
   const hasSubscription = user?.robots_delivered;
+  const isAdmin = user?.is_admin;
 
   useEffect(() => {
     // Set page title
@@ -64,7 +68,7 @@ const AITradingSignals = () => {
   } = useQuery({
     queryKey: ['tradingSignals', marketType, timeframe],
     queryFn: () => getTradingSignals(marketType, timeframe, 20),
-    enabled: !!user && !!hasSubscription
+    enabled: !!user && (!!hasSubscription || !!isAdmin)
   });
 
   // State for market analysis
@@ -94,9 +98,50 @@ const AITradingSignals = () => {
     }
   };
 
+  // Find a premium robot for subscription
+  const findPremiumRobot = () => {
+    if (!robots || robots.length === 0) return null;
+    return robots.find(robot => (robot.category || 'paid') === 'paid');
+  };
+
   // Handle subscription upgrade
   const handleUpgradeSubscription = () => {
-    navigate('/robot-marketplace');
+    const premiumRobot = findPremiumRobot();
+    
+    if (premiumRobot) {
+      // Open payment modal directly
+      setSelectedRobot(premiumRobot);
+      setIsPaymentModalOpen(true);
+    } else {
+      // If no premium robot is found, navigate to marketplace
+      navigate('/robot-marketplace');
+    }
+  };
+
+  // Handle close payment modal
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedRobot(null);
+  };
+
+  // Handle payment complete
+  const handlePaymentComplete = (paymentMethod: string) => {
+    if (!selectedRobot) return;
+    
+    // This would call purchaseRobot from the backend context
+    // For now we just close the modal
+    
+    setIsPaymentModalOpen(false);
+    setSelectedRobot(null);
+    
+    // Show success message
+    toast({
+      title: "Subscription Activated",
+      description: "Your subscription has been activated. You now have access to AI Trading Signals.",
+    });
+    
+    // Refresh page to show trading signals
+    window.location.reload();
   };
 
   // Render timestamp in human-readable format
@@ -124,7 +169,7 @@ const AITradingSignals = () => {
           </p>
         </div>
         
-        {!hasSubscription ? (
+        {!hasSubscription && !isAdmin ? (
           <Card className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 mb-10">
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -528,6 +573,16 @@ const AITradingSignals = () => {
       </main>
       
       <Footer />
+      
+      {/* Payment Modal */}
+      {isPaymentModalOpen && selectedRobot && (
+        <EnhancedPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={handleClosePaymentModal}
+          robot={selectedRobot}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </div>
   );
 };

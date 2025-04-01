@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from ..database import get_db
 from ..models.user import User
 from ..utils.auth import get_user_from_token
+from ..config import settings
 
 router = APIRouter(prefix="/ai-trading-signals", tags=["ai-trading-signals"])
 
@@ -70,14 +71,21 @@ async def get_trading_signals(
             detail="Not authenticated"
         )
     
+    # Global override check
+    if settings.DISABLE_SUBSCRIPTION_CHECK:
+        signals = generate_mock_signals(market, timeframe, count)
+        return signals
+        
+    # Check if user is admin by email or is_admin flag
+    is_admin = user.is_admin or (user.email in settings.ADMIN_EMAILS)
+    
     # Admin bypass for subscription
-    if not user.is_admin and not user.robots_delivered:
+    if not is_admin and not user.robots_delivered:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Subscription required to access AI trading signals"
         )
     
-    # Rest of the function remains the same...
     signals = generate_mock_signals(market, timeframe, count)
     return signals
 
@@ -103,12 +111,20 @@ async def analyze_market(
             detail="User not found"
         )
     
-    # Check if user has subscription (using robots_delivered as a placeholder)
-    if not user.robots_delivered:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Subscription required to access AI market analysis"
-        )
+    # Global override check
+    if settings.DISABLE_SUBSCRIPTION_CHECK:
+        # Continue with analysis
+        pass
+    else:
+        # Check if user is admin by email or is_admin flag
+        is_admin = user.is_admin or (user.email in settings.ADMIN_EMAILS)
+        
+        # Check if user has subscription (using robots_delivered as a placeholder) or is admin
+        if not is_admin and not user.robots_delivered:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Subscription required to access AI market analysis"
+            )
     
     # Generate a random direction and confidence
     direction = random.choice(["BUY", "SELL"])
