@@ -1,30 +1,16 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  BarChart2, 
-  ChevronRight, 
-  Clock, 
-  Lock, 
-  TrendingDown, 
-  TrendingUp, 
-  AlertTriangle,
-  LineChart,
-  Sparkles
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { ArrowRight, TrendingUp, Lock, Search, LineChart, Clock, Zap, BarChart3, CandlestickChart } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { MarketAnalysis, TradingSignal, analyzeMarket, getTradingSignals } from '@/lib/backend';
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
@@ -32,134 +18,174 @@ import { TradingLoader } from '@/components/ui/loader';
 
 const AITradingSignals = () => {
   const navigate = useNavigate();
-  const { user, robots } = useBackend();
-  const [activeTab, setActiveTab] = useState('market-analyzer');
-  const [marketType, setMarketType] = useState('forex');
+  const { user, robots, isLoading: backendLoading } = useBackend();
+  
+  const [signals, setSignals] = useState<TradingSignal[]>([]);
+  const [analysisResult, setAnalysisResult] = useState<MarketAnalysis | null>(null);
+  const [signalsLoading, setSignalsLoading] = useState(true);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('forex');
   const [timeframe, setTimeframe] = useState('1h');
-  const [symbol, setSymbol] = useState('EUR/USD');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [searchSymbol, setSearchSymbol] = useState('');
+  const [customSymbol, setCustomSymbol] = useState('EUR/USD');
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Payment modal state
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedRobot, setSelectedRobot] = useState(null);
-
-  // Check for subscription
-  const hasSubscription = user?.robots_delivered;
-  const isAdmin = user?.is_admin;
+  const [selectedRobot, setSelectedRobot] = useState<any>(null);
 
   useEffect(() => {
-    // Set page title
     document.title = 'AI Trading Signals | TradeWizard';
     
-    // Redirect if not logged in
-    if (!user) {
+    if (!backendLoading && !user) {
       toast({
-        title: "Authentication Required",
+        title: "Authentication required",
         description: "Please sign in to access AI Trading Signals",
         variant: "destructive",
       });
-      navigate('/auth', { state: { redirectAfter: '/ai-trading-signals' } });
+      navigate('/auth');
     }
-  }, [user, navigate]);
+  }, [backendLoading, user, navigate]);
 
-  // Query for getting trading signals
-  const { 
-    data: signals, 
-    isLoading: signalsLoading, 
-    error: signalsError,
-    refetch: refetchSignals
-  } = useQuery({
-    queryKey: ['tradingSignals', marketType, timeframe],
-    queryFn: () => getTradingSignals(marketType, timeframe, 20),
-    enabled: !!user && (!!hasSubscription || !!isAdmin)
-  });
+  useEffect(() => {
+    if (user) {
+      // Check if user has subscription or is admin
+      const checkAccess = async () => {
+        try {
+          // Check if user email is in admin list or has robots_delivered
+          setHasSubscription(user.robots_delivered || false);
+          setIsAdmin(user.is_admin || false);
+          
+          if (user.robots_delivered || user.is_admin) {
+            // Load signals for users with access
+            await loadSignals(activeTab, timeframe);
+          }
+        } catch (error) {
+          console.error("Error checking subscription:", error);
+        } finally {
+          setSignalsLoading(false);
+        }
+      };
+      
+      checkAccess();
+    }
+  }, [user, activeTab, timeframe]);
 
-  // State for market analysis
-  const [analysis, setAnalysis] = useState<MarketAnalysis | null>(null);
-
-  // Handle market analysis
-  const handleAnalyzeMarket = async () => {
-    if (!symbol || !timeframe) return;
-    
-    setIsAnalyzing(true);
+  const loadSignals = async (market: string, tf: string) => {
+    setSignalsLoading(true);
     try {
-      const result = await analyzeMarket(symbol, timeframe);
-      setAnalysis(result);
-      toast({
-        title: "Analysis Complete",
-        description: `Analysis for ${symbol} on ${timeframe} timeframe completed successfully`,
-      });
+      const data = await getTradingSignals(market, tf);
+      setSignals(data);
     } catch (error) {
-      console.error('Error analyzing market:', error);
+      console.error("Error loading signals:", error);
       toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze market. Please try again.",
+        title: "Error loading signals",
+        description: "Failed to load trading signals. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsAnalyzing(false);
+      setSignalsLoading(false);
     }
   };
 
-  // Find a premium robot for subscription
-  const findPremiumRobot = () => {
-    if (!robots || robots.length === 0) return null;
-    return robots.find(robot => (robot.category || 'paid') === 'paid');
+  const handleMarketChange = (value: string) => {
+    setActiveTab(value);
+    loadSignals(value, timeframe);
   };
 
-  // Handle subscription upgrade - FIXED to open payment modal directly
-  const handleUpgradeSubscription = () => {
-    const premiumRobot = findPremiumRobot();
-    
-    if (premiumRobot) {
-      // Open payment modal directly instead of navigating to marketplace
-      setSelectedRobot(premiumRobot);
-      setIsPaymentModalOpen(true);
-    } else {
-      // As a fallback if no premium robot is found
+  const handleTimeframeChange = (value: string) => {
+    setTimeframe(value);
+    loadSignals(activeTab, value);
+  };
+
+  const handleSymbolAnalysis = async () => {
+    if (!customSymbol) {
       toast({
-        title: "No Premium Plan Found",
-        description: "We couldn't find a premium plan. Please try again later.",
+        title: "Symbol required",
+        description: "Please enter a trading symbol to analyze",
         variant: "destructive",
       });
+      return;
+    }
+    
+    setAnalysisLoading(true);
+    try {
+      const analysis = await analyzeMarket(customSymbol, timeframe);
+      setAnalysisResult(analysis);
+    } catch (error) {
+      console.error("Error analyzing market:", error);
+      toast({
+        title: "Analysis failed",
+        description: "Failed to analyze the market. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalysisLoading(false);
     }
   };
 
-  // Handle close payment modal
-  const handleClosePaymentModal = () => {
-    setIsPaymentModalOpen(false);
-    setSelectedRobot(null);
+  // Find a premium robot for payment modal
+  const findPremiumRobot = () => {
+    // Find first premium robot or create a placeholder
+    const premiumRobot = robots.find(robot => (robot.category || 'paid') === 'paid');
+    
+    if (premiumRobot) {
+      return premiumRobot;
+    } else {
+      // Create a placeholder if no premium robot exists
+      return {
+        id: "premium-ai-signals",
+        name: "AI Trading Signals Premium",
+        price: 49.99,
+        currency: "USD",
+        description: "Get unlimited access to AI Trading Signals"
+      };
+    }
   };
 
-  // Handle payment complete
+  // Handle subscription upgrade - Open payment modal directly
+  const handleUpgradeSubscription = () => {
+    const premiumRobot = findPremiumRobot();
+    setSelectedRobot(premiumRobot);
+    setIsPaymentModalOpen(true);
+  };
+
+  // Handle successful payment
   const handlePaymentComplete = (paymentMethod: string) => {
-    if (!selectedRobot) return;
-    
-    // This would call purchaseRobot from the backend context
-    // For now we just close the modal
-    
-    setIsPaymentModalOpen(false);
-    setSelectedRobot(null);
-    
-    // Show success message
+    // This would typically involve a backend call to verify payment
     toast({
-      title: "Subscription Activated",
-      description: "Your subscription has been activated. You now have access to AI Trading Signals.",
+      title: "Payment successful",
+      description: `Your payment via ${paymentMethod} has been received. Your subscription is now active.`,
     });
     
-    // Refresh page to show trading signals
-    window.location.reload();
+    // Update user subscription status
+    setHasSubscription(true);
+    
+    // Load signals
+    loadSignals(activeTab, timeframe);
+    
+    // Close modal
+    setIsPaymentModalOpen(false);
   };
 
-  // Render timestamp in human-readable format
-  const formatTimestamp = (timestamp: string) => {
+  // Format timestamp
+  const formatTime = (timestamp: string) => {
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch (error) {
+      const date = new Date(timestamp);
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (e) {
       return 'Invalid date';
     }
   };
 
-  // Show loading state with our new trading loader
-  if (signalsLoading && (hasSubscription || isAdmin)) {
+  // Show loading state with our new trading loader for all loading states
+  if (backendLoading || (signalsLoading && (hasSubscription || isAdmin))) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -175,419 +201,280 @@ const AITradingSignals = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow pt-28 pb-16 px-4 md:px-8 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-2">
-            <Sparkles className="text-trading-blue mr-2" size={24} />
-            <h1 className="text-3xl md:text-4xl font-bold">AI Trading Signals</h1>
-          </div>
-          <p className="text-muted-foreground max-w-3xl mx-auto mt-2">
-            Advanced trading insights powered by artificial intelligence. Get real-time signals, market analysis, 
-            and trading recommendations based on sophisticated algorithms.
-          </p>
-        </div>
-        
-        {!hasSubscription && !isAdmin ? (
-          <Card className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 mb-10">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-amber-100 dark:bg-amber-800/40 p-3 rounded-full">
-                    <Lock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg">Premium Feature</h3>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                      AI Trading Signals are exclusively available to premium subscribers.
-                      Upgrade your subscription to unlock this powerful feature.
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleUpgradeSubscription}
-                  className="bg-amber-600 hover:bg-amber-700 text-white w-full md:w-auto"
-                >
-                  Upgrade Subscription
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Tabs 
-            defaultValue="market-analyzer" 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="space-y-6"
-          >
-            <div className="flex justify-center">
-              <TabsList className="grid grid-cols-2 w-full max-w-md">
-                <TabsTrigger value="market-analyzer" className="flex items-center space-x-2">
-                  <LineChart className="h-4 w-4" />
-                  <span>Market Analyzer</span>
-                </TabsTrigger>
-                <TabsTrigger value="signal-history" className="flex items-center space-x-2">
-                  <BarChart2 className="h-4 w-4" />
-                  <span>Signal History</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            {/* Market Analyzer Tab */}
-            <TabsContent value="market-analyzer" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Analysis Form */}
-                <Card className="lg:col-span-1">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <LineChart className="mr-2 h-5 w-5 text-trading-blue" />
-                      Market Analyzer
-                    </CardTitle>
-                    <CardDescription>
-                      Analyze any market for AI-powered trading signals
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Market Type</label>
-                      <Select 
-                        value={marketType} 
-                        onValueChange={setMarketType}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select market" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="forex">Forex</SelectItem>
-                          <SelectItem value="crypto">Crypto</SelectItem>
-                          <SelectItem value="stocks">Stocks</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Symbol</label>
-                      <Input 
-                        value={symbol} 
-                        onChange={(e) => setSymbol(e.target.value)} 
-                        placeholder="e.g. EUR/USD, BTC/USD, AAPL"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Timeframe</label>
-                      <Select 
-                        value={timeframe} 
-                        onValueChange={setTimeframe}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select timeframe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5m">5 Minutes</SelectItem>
-                          <SelectItem value="15m">15 Minutes</SelectItem>
-                          <SelectItem value="30m">30 Minutes</SelectItem>
-                          <SelectItem value="1h">1 Hour</SelectItem>
-                          <SelectItem value="4h">4 Hours</SelectItem>
-                          <SelectItem value="1d">Daily</SelectItem>
-                          <SelectItem value="1w">Weekly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      onClick={handleAnalyzeMarket} 
-                      className="w-full bg-trading-blue hover:bg-trading-darkBlue"
-                      disabled={isAnalyzing}
-                    >
-                      {isAnalyzing ? 'Analyzing...' : 'Analyze Market'}
-                    </Button>
-                  </CardFooter>
-                </Card>
-                
-                {/* Analysis Results */}
-                <Card className="lg:col-span-2">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Sparkles className="mr-2 h-5 w-5 text-trading-blue" />
-                      Analysis Results
-                    </CardTitle>
-                    <CardDescription>
-                      {analysis 
-                        ? `Analysis for ${analysis.symbol} on ${analysis.timeframe} timeframe`
-                        : 'Submit an analysis request to see results'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analysis ? (
-                      <div className="space-y-6">
-                        <div className="flex flex-wrap gap-4 items-center justify-between">
-                          <div>
-                            <Badge 
-                              className={`text-sm px-3 py-1 ${
-                                analysis.direction === 'BUY' 
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
-                              }`}
-                            >
-                              {analysis.direction === 'BUY' ? (
-                                <TrendingUp className="mr-1 h-3 w-3" />
-                              ) : (
-                                <TrendingDown className="mr-1 h-3 w-3" />
-                              )}
-                              {analysis.direction}
-                            </Badge>
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              {formatTimestamp(analysis.timestamp)}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                            <span className="font-medium">Confidence:</span>
-                            <span className="ml-1">{analysis.confidence}%</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-medium mb-2">Summary</h3>
-                          <p className="text-muted-foreground">{analysis.analysis_summary}</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-slate-50 p-3 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Entry Price</div>
-                            <div className="font-medium text-lg">{analysis.entry_price}</div>
-                          </div>
-                          <div className="bg-red-50 p-3 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Stop Loss</div>
-                            <div className="font-medium text-lg text-red-600">{analysis.stop_loss}</div>
-                          </div>
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <div className="text-sm text-muted-foreground">Take Profit</div>
-                            <div className="font-medium text-lg text-green-600">{analysis.take_profit}</div>
-                          </div>
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div>
-                          <h3 className="font-medium mb-2">Technical Indicators</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">RSI</div>
-                              <div className="font-medium">{analysis.technical_indicators.rsi}</div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">MACD</div>
-                              <div className="font-medium">{analysis.technical_indicators.macd}</div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">SMA 50</div>
-                              <div className="font-medium">{analysis.technical_indicators.moving_averages.sma_50}</div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">SMA 200</div>
-                              <div className="font-medium">{analysis.technical_indicators.moving_averages.sma_200}</div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <h3 className="font-medium mb-2">Support Levels</h3>
-                            <div className="space-y-2">
-                              {analysis.support_resistance.support_levels.map((level, index) => (
-                                <div key={index} className="flex justify-between items-center bg-slate-50 p-2 rounded">
-                                  <span>Support {index + 1}</span>
-                                  <span className="font-medium">{level}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <h3 className="font-medium mb-2">Resistance Levels</h3>
-                            <div className="space-y-2">
-                              {analysis.support_resistance.resistance_levels.map((level, index) => (
-                                <div key={index} className="flex justify-between items-center bg-slate-50 p-2 rounded">
-                                  <span>Resistance {index + 1}</span>
-                                  <span className="font-medium">{level}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-10">
-                        <LineChart className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium mb-2">No Analysis Yet</h3>
-                        <p className="text-muted-foreground max-w-md mx-auto">
-                          Fill out the form on the left and click "Analyze Market" to generate 
-                          AI-powered trading signals and market analysis.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Signal History Tab */}
-            <TabsContent value="signal-history" className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 flex-1">
-                  <Select 
-                    value={marketType} 
-                    onValueChange={(value) => {
-                      setMarketType(value);
-                      refetchSignals();
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select market" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="forex">Forex</SelectItem>
-                      <SelectItem value="crypto">Crypto</SelectItem>
-                      <SelectItem value="stocks">Stocks</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select 
-                    value={timeframe} 
-                    onValueChange={(value) => {
-                      setTimeframe(value);
-                      refetchSignals();
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5m">5 Minutes</SelectItem>
-                      <SelectItem value="15m">15 Minutes</SelectItem>
-                      <SelectItem value="30m">30 Minutes</SelectItem>
-                      <SelectItem value="1h">1 Hour</SelectItem>
-                      <SelectItem value="4h">4 Hours</SelectItem>
-                      <SelectItem value="1d">Daily</SelectItem>
-                      <SelectItem value="1w">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => refetchSignals()}
-                  className="w-full md:w-auto"
-                >
-                  Refresh Signals
-                </Button>
+      <main className="flex-grow pt-24 pb-16">
+        <div className="section-container py-10">
+          {/* Access restricted UI for non-subscribers */}
+          {!hasSubscription && !isAdmin && (
+            <div className="max-w-4xl mx-auto text-center py-16">
+              <div className="mb-8">
+                <Badge variant="outline" className="px-3 py-1 text-sm mb-2">
+                  <Lock className="w-3 h-3 mr-1" /> Premium Feature
+                </Badge>
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                  AI Trading Signals
+                </h1>
+                <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+                  Get access to real-time AI-powered trading signals and market analysis for Forex, Crypto, and Stocks markets with our premium subscription.
+                </p>
               </div>
               
-              {signalsLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin h-8 w-8 border-4 border-trading-blue border-t-transparent rounded-full mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading trading signals...</p>
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-10">
+                <Card className="bg-muted/50">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl flex items-center">
+                      <TrendingUp className="mr-2 h-5 w-5 text-trading-blue" />
+                      Market Signals
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">
+                      Receive real-time trading signals with entry, exit, and stop-loss points.
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-muted/50">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl flex items-center">
+                      <CandlestickChart className="mr-2 h-5 w-5 text-trading-green" />
+                      Technical Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">
+                      In-depth technical analysis for any trading pair or asset.
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-muted/50">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl flex items-center">
+                      <BarChart3 className="mr-2 h-5 w-5 text-trading-red" />
+                      Prediction Models
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm">
+                      AI-powered market predictions with high confidence levels.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Button 
+                size="lg" 
+                className="mt-6"
+                onClick={handleUpgradeSubscription}
+              >
+                Upgrade Subscription
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              
+              <p className="text-xs text-muted-foreground mt-4">
+                Instant access after payment. Cancel anytime.
+              </p>
+            </div>
+          )}
+          
+          {/* Premium content for subscribers and admins */}
+          {(hasSubscription || isAdmin) && (
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">AI Trading Signals</h1>
+                  <p className="text-muted-foreground">
+                    AI-powered trading signals and market analysis
+                  </p>
                 </div>
-              ) : signalsError ? (
-                <Card className="border-red-200 bg-red-50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start space-x-4">
-                      <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0" />
-                      <div>
-                        <h3 className="font-semibold mb-1">Error Loading Signals</h3>
-                        <p className="text-muted-foreground text-sm">
-                          There was a problem loading trading signals. Please try again later.
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => refetchSignals()}
-                          className="mt-2"
-                        >
-                          Try Again
+                
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="px-3 py-1">
+                    <Clock className="w-3 h-3 mr-1" /> {timeframe}
+                  </Badge>
+                  <Badge variant="outline" className="bg-trading-blue/10 text-trading-blue px-3 py-1">
+                    <Zap className="w-3 h-3 mr-1" /> {isAdmin ? 'Admin Access' : 'Premium Access'}
+                  </Badge>
+                </div>
+              </div>
+              
+              <Tabs defaultValue="forex" value={activeTab} onValueChange={handleMarketChange}>
+                <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                  <TabsList className="mb-4 md:mb-0">
+                    <TabsTrigger value="forex">Forex</TabsTrigger>
+                    <TabsTrigger value="crypto">Crypto</TabsTrigger>
+                    <TabsTrigger value="stocks">Stocks</TabsTrigger>
+                  </TabsList>
+                  
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('5m')} className={timeframe === '5m' ? 'bg-secondary' : ''}>5m</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('15m')} className={timeframe === '15m' ? 'bg-secondary' : ''}>15m</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1h')} className={timeframe === '1h' ? 'bg-secondary' : ''}>1h</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('4h')} className={timeframe === '4h' ? 'bg-secondary' : ''}>4h</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleTimeframeChange('1d')} className={timeframe === '1d' ? 'bg-secondary' : ''}>1d</Button>
+                  </div>
+                </div>
+                
+                <div className="mb-8">
+                  <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-grow">
+                      <Label htmlFor="symbol-search">Custom Symbol Analysis</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          id="symbol-search"
+                          placeholder="Enter symbol (e.g., EUR/USD, BTC/USD)"
+                          value={customSymbol}
+                          onChange={(e) => setCustomSymbol(e.target.value)}
+                        />
+                        <Button onClick={handleSymbolAnalysis} disabled={analysisLoading}>
+                          {analysisLoading ? 'Analyzing...' : 'Analyze'}
                         </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ) : signals && signals.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {signals.map((signal: TradingSignal) => (
-                    <Card key={signal.id} className="overflow-hidden">
-                      <div className={`h-1 ${
-                        signal.direction === 'BUY' 
-                          ? 'bg-green-500' 
-                          : 'bg-red-500'
-                      }`} />
-                      <CardContent className="pt-6">
-                        <div className="flex flex-wrap gap-4 items-start justify-between">
-                          <div>
-                            <div className="flex items-center mb-1">
-                              <h3 className="font-medium text-lg mr-2">{signal.symbol}</h3>
-                              <Badge 
-                                className={`text-xs ${
-                                  signal.direction === 'BUY' 
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                }`}
-                              >
+                    
+                    <div className="w-full md:w-auto">
+                      <Label htmlFor="quick-search">Quick Filter</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          id="quick-search"
+                          placeholder="Filter signals..."
+                          value={searchSymbol}
+                          onChange={(e) => setSearchSymbol(e.target.value)}
+                          className="w-full md:w-[200px]"
+                        />
+                        <Button variant="outline">
+                          <Search className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Analysis Result */}
+                {analysisResult && (
+                  <Card className="mb-8 bg-muted/30 border-trading-blue/20">
+                    <CardHeader>
+                      <CardTitle className="text-xl flex justify-between">
+                        <span>Analysis: {analysisResult.symbol}</span>
+                        <Badge className={`${analysisResult.direction === 'BUY' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                          {analysisResult.direction}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Confidence: {analysisResult.confidence}% • Timeframe: {analysisResult.timeframe}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-3 bg-background rounded-lg">
+                          <p className="text-sm font-medium text-muted-foreground">Entry Price</p>
+                          <p className="text-lg font-semibold">{analysisResult.entry_price}</p>
+                        </div>
+                        <div className="p-3 bg-background rounded-lg">
+                          <p className="text-sm font-medium text-muted-foreground">Stop Loss</p>
+                          <p className="text-lg font-semibold text-red-500">{analysisResult.stop_loss}</p>
+                        </div>
+                        <div className="p-3 bg-background rounded-lg">
+                          <p className="text-sm font-medium text-muted-foreground">Take Profit</p>
+                          <p className="text-lg font-semibold text-green-500">{analysisResult.take_profit}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-medium mb-2">Analysis Summary</h4>
+                        <p className="text-sm">{analysisResult.analysis_summary}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Technical Indicators</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>RSI:</span>
+                              <span className="font-medium">{analysisResult.technical_indicators.rsi}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>MACD:</span>
+                              <span className="font-medium">{analysisResult.technical_indicators.macd}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium mb-2">Support/Resistance</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>Support:</span>
+                              <span className="font-medium">{analysisResult.support_resistance.support_levels.join(', ')}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Resistance:</span>
+                              <span className="font-medium">{analysisResult.support_resistance.resistance_levels.join(', ')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                {/* Trading Signals */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {signalsLoading ? (
+                    <TradingLoader text="Generating signals..." />
+                  ) : (
+                    signals
+                      .filter(signal => searchSymbol ? signal.symbol.toLowerCase().includes(searchSymbol.toLowerCase()) : true)
+                      .map((signal) => (
+                        <Card key={signal.id} className="overflow-hidden">
+                          <CardHeader className="pb-3">
+                            <div className="flex justify-between items-start">
+                              <CardTitle>{signal.symbol}</CardTitle>
+                              <Badge className={signal.direction === 'BUY' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}>
                                 {signal.direction}
                               </Badge>
-                              <Badge className="ml-2 text-xs bg-blue-100 text-blue-800 hover:bg-blue-200">
-                                {signal.strength}
-                              </Badge>
                             </div>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {formatTimestamp(signal.timestamp)}
-                              <span className="mx-2">•</span>
-                              <span>{signal.timeframe}</span>
+                            <CardDescription>
+                              {formatTime(signal.timestamp)} • {signal.timeframe} • {signal.strength}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pb-3">
+                            <div className="grid grid-cols-3 gap-2 mb-4">
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Entry</p>
+                                <p className="font-medium">{signal.entry_price}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Stop Loss</p>
+                                <p className="font-medium text-red-500">{signal.stop_loss}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Take Profit</p>
+                                <p className="font-medium text-green-500">{signal.take_profit}</p>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="flex items-center bg-slate-100 px-3 py-1 rounded-full text-sm">
-                            <span className="font-medium">Confidence:</span>
-                            <span className="ml-1">{signal.confidence}%</span>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">Entry</div>
-                            <div className="font-medium">{signal.entry_price}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Stop Loss</div>
-                            <div className="font-medium text-red-600">{signal.stop_loss}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Take Profit</div>
-                            <div className="font-medium text-green-600">{signal.take_profit}</div>
-                          </div>
-                        </div>
-                        
-                        <p className="mt-4 text-sm text-muted-foreground">{signal.analysis}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-1">Signal Analysis</p>
+                              <p className="text-sm">{signal.analysis}</p>
+                            </div>
+                          </CardContent>
+                          <CardFooter className="bg-muted/30 py-3 border-t flex justify-between">
+                            <Badge variant="outline" className="bg-primary/10">
+                              {signal.confidence}% Confidence
+                            </Badge>
+                            <Button variant="outline" size="sm">
+                              <LineChart className="h-4 w-4 mr-1" />
+                              Detailed Analysis
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-12 bg-slate-50 rounded-lg">
-                  <BarChart2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Signals Found</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    No trading signals available for the selected market and timeframe. 
-                    Try changing your selection or check back later.
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
+              </Tabs>
+            </div>
+          )}
+        </div>
       </main>
       
       <Footer />
@@ -596,7 +483,7 @@ const AITradingSignals = () => {
       {isPaymentModalOpen && selectedRobot && (
         <EnhancedPaymentModal
           isOpen={isPaymentModalOpen}
-          onClose={handleClosePaymentModal}
+          onClose={() => setIsPaymentModalOpen(false)}
           robot={selectedRobot}
           onPaymentComplete={handlePaymentComplete}
         />

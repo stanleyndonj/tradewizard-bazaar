@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -13,6 +12,7 @@ import RobotProductCard from '@/components/marketplace/RobotProductCard';
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 import { useBackend } from '@/context/BackendContext';
 import { Robot } from '@/lib/backend';
+import { TradingLoader } from '@/components/ui/loader';
 
 const RobotMarketplace = () => {
   const navigate = useNavigate();
@@ -78,7 +78,7 @@ const RobotMarketplace = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg">Loading...</div>
+        <TradingLoader text="Loading marketplace..." />
       </div>
     );
   }

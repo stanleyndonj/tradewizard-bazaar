@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -10,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Bot, MessageSquare, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { TradingLoader } from '@/components/ui/loader';
 
 // Mock types for our dashboard
 interface RobotRequest {
@@ -163,12 +163,7 @@ const Dashboard = () => {
         <Navbar />
         <main className="flex-grow pt-24">
           <div className="section-container py-20">
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-pulse flex flex-col items-center">
-                <div className="h-12 w-64 bg-gray-200 rounded mb-4"></div>
-                <div className="h-4 w-40 bg-gray-200 rounded"></div>
-              </div>
-            </div>
+            <TradingLoader text="Loading dashboard..." />
           </div>
         </main>
         <Footer />

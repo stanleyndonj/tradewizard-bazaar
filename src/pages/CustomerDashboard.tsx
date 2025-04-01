@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -10,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Download, ArrowRight, MessageSquare } from 'lucide-react';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
-import { FullPageLoader } from '@/components/ui/loader';
+import { TradingLoader } from '@/components/ui/loader';
 import CustomerChat from '@/components/customer/CustomerChat';
 import { toast } from '@/hooks/use-toast';
 
@@ -48,7 +47,7 @@ const CustomerDashboard = () => {
   }, [user, isLoading, navigate]);
 
   if (isLoading) {
-    return <FullPageLoader text="Loading dashboard..." />;
+    return <TradingLoader text="Loading dashboard..." />;
   }
 
   if (!user) {
