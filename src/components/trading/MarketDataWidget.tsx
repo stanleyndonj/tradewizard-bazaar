@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, Star, Plus, Bell } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TradingLoader } from '@/components/ui/loader';
 
 interface Asset {
   symbol: string;
@@ -101,74 +102,70 @@ export const MarketDataWidget = () => {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-3 text-muted-foreground text-sm font-medium">Asset</th>
-                <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">Price</th>
-                <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">24h Change</th>
-                <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">Volume</th>
-                <th className="text-center py-2 px-3 text-muted-foreground text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <tr key={i} className="border-b border-muted">
-                    <td className="py-3 px-3"><Skeleton className="h-6 w-24" /></td>
-                    <td className="py-3 px-3 text-right"><Skeleton className="h-6 w-16 ml-auto" /></td>
-                    <td className="py-3 px-3 text-right"><Skeleton className="h-6 w-16 ml-auto" /></td>
-                    <td className="py-3 px-3 text-right"><Skeleton className="h-6 w-20 ml-auto" /></td>
-                    <td className="py-3 px-3 text-center"><Skeleton className="h-8 w-20 mx-auto" /></td>
-                  </tr>
-                ))
-              ) : displayedAssets.length > 0 ? (
-                displayedAssets.map((asset) => (
-                  <tr key={asset.symbol} className="border-b border-muted hover:bg-muted/30">
-                    <td className="py-3 px-3">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="font-medium">{asset.symbol}</div>
-                          <div className="text-sm text-muted-foreground">{asset.name}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right font-medium">${asset.price.toLocaleString()}</td>
-                    <td className={`py-3 px-3 text-right font-medium ${asset.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      <div className="flex items-center justify-end">
-                        {asset.change >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-                        {asset.change >= 0 ? '+' : ''}{asset.change}%
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right text-muted-foreground">{asset.volume.toLocaleString()}</td>
-                    <td className="py-3 px-3">
-                      <div className="flex justify-center space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => toggleWatchlist(asset.symbol)}
-                          className={asset.inWatchlist ? 'text-amber-500' : ''}
-                        >
-                          <Star className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setAlert(asset.symbol)}>
-                          <Bell className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-6 text-center text-muted-foreground">
-                    No assets found matching your search.
-                  </td>
+        {loading ? (
+          <div className="min-h-[300px] flex items-center justify-center">
+            <TradingLoader text="Loading market data..." />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 text-muted-foreground text-sm font-medium">Asset</th>
+                  <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">Price</th>
+                  <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">24h Change</th>
+                  <th className="text-right py-2 px-3 text-muted-foreground text-sm font-medium">Volume</th>
+                  <th className="text-center py-2 px-3 text-muted-foreground text-sm font-medium">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {displayedAssets.length > 0 ? (
+                  displayedAssets.map((asset) => (
+                    <tr key={asset.symbol} className="border-b border-muted hover:bg-muted/30">
+                      <td className="py-3 px-3">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="font-medium">{asset.symbol}</div>
+                            <div className="text-sm text-muted-foreground">{asset.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right font-medium">${asset.price.toLocaleString()}</td>
+                      <td className={`py-3 px-3 text-right font-medium ${asset.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <div className="flex items-center justify-end">
+                          {asset.change >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                          {asset.change >= 0 ? '+' : ''}{asset.change}%
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-right text-muted-foreground">{asset.volume.toLocaleString()}</td>
+                      <td className="py-3 px-3">
+                        <div className="flex justify-center space-x-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => toggleWatchlist(asset.symbol)}
+                            className={asset.inWatchlist ? 'text-amber-500' : ''}
+                          >
+                            <Star className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setAlert(asset.symbol)}>
+                            <Bell className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                      No assets found matching your search.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
         
         <div className="mt-4 text-right">
           <Button variant="outline" size="sm">

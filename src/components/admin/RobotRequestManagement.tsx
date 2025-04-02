@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBackend } from '@/context/BackendContext';
-import { RobotRequest } from '@/lib/backend';
+import { RobotRequest, User } from '@/lib/backend';
 import { 
   Card, 
   CardHeader, 
@@ -36,9 +36,11 @@ import {
   X, 
   Download, 
   ChevronDown,
-  ChevronUp 
+  ChevronUp,
+  User as UserIcon
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { TradingLoader } from '@/components/ui/loader';
 
 interface RobotRequestManagementProps {
   requests: RobotRequest[];
@@ -46,7 +48,7 @@ interface RobotRequestManagementProps {
 }
 
 const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementProps) => {
-  const { updateRobotRequestStatus } = useBackend();
+  const { updateRobotRequestStatus, getCurrentUser } = useBackend();
   const [editingRequest, setEditingRequest] = useState<RobotRequest | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [status, setStatus] = useState<string>('');
@@ -55,6 +57,47 @@ const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementP
   const [downloadUrl, setDownloadUrl] = useState('');
   const [progress, setProgress] = useState(0);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [users, setUsers] = useState<Record<string, User>>({});
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+
+  // Fetch users to get their names
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoadingUsers(true);
+      try {
+        // In a real app, this would be an API call to get all users
+        // For now, let's create a mock function that returns users with matching IDs
+        const userIds = [...new Set(requests.map(request => request.user_id))];
+        
+        // Mock user data based on the IDs we have in requests
+        const mockUsers: Record<string, User> = {};
+        for (const id of userIds) {
+          mockUsers[id] = {
+            id,
+            name: `User ${id.substring(0, 5)}`, // Mock name based on ID
+            email: `user-${id.substring(0, 5)}@example.com`,
+            is_admin: false,
+            created_at: new Date().toISOString()
+          };
+        }
+        
+        setUsers(mockUsers);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch user information",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    if (requests.length > 0) {
+      fetchUsers();
+    }
+  }, [requests]);
 
   const handleOpenDialog = (request: RobotRequest) => {
     setEditingRequest(request);
@@ -132,6 +175,15 @@ const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementP
     }
   };
 
+  // Get user name from the users object
+  const getUserName = (userId: string) => {
+    return users[userId]?.name || "Unknown User";
+  };
+
+  if (isLoadingUsers && requests.length > 0) {
+    return <div className="py-10"><TradingLoader text="Loading user data..." /></div>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -161,7 +213,15 @@ const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementP
                         <ChevronDown className="ml-2 h-4 w-4" />
                       }
                     </CardTitle>
-                    <CardDescription>User ID: {request.user_id}</CardDescription>
+                    <CardDescription className="flex items-center mt-1">
+                      <UserIcon className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                      <span className="font-medium text-muted-foreground">
+                        {getUserName(request.user_id)}
+                      </span>
+                      <span className="text-xs ml-2 text-muted-foreground/70">
+                        ID: {request.user_id.substring(0, 8)}...
+                      </span>
+                    </CardDescription>
                   </div>
                   <Badge className={getStatusColor(request.status)}>
                     {request.status.charAt(0).toUpperCase() + request.status.slice(1).replace('_', ' ')}
@@ -354,6 +414,18 @@ const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementP
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
+            {editingRequest && (
+              <div className="p-3 bg-muted rounded-md mb-2">
+                <div className="flex items-center">
+                  <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">{getUserName(editingRequest.user_id)}</p>
+                    <p className="text-xs text-muted-foreground">ID: {editingRequest.user_id}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <label htmlFor="status" className="text-right">
                 Status
