@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Card, 
   CardHeader, 
@@ -21,8 +21,9 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Loader2, DollarSign, CreditCard } from 'lucide-react';
+import { useBackend } from '@/context/BackendContext';
 
-// Mock data for subscription plans
+// Interface for subscription plans
 interface PricingPlan {
   id: string;
   name: string;
@@ -33,39 +34,66 @@ interface PricingPlan {
 }
 
 const AIPricingManager = () => {
-  const [plans, setPlans] = useState<PricingPlan[]>([
-    {
-      id: 'basic-monthly',
-      name: 'Basic AI Trading Signals',
-      price: 29.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'Access to AI trading signals',
-        'Basic market analysis',
-        'Daily signal updates',
-        'Email notifications'
-      ]
-    },
-    {
-      id: 'premium-monthly',
-      name: 'Premium AI Trading Signals',
-      price: 99.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'All Basic features',
-        'Advanced market analysis',
-        'Real-time signal updates',
-        'Direct AI chat support',
-        'Custom alerts and notifications'
-      ]
-    }
-  ]);
-
+  const { updateSubscriptionPrice, getSubscriptionPrices } = useBackend();
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Load subscription plans on component mount
+  useEffect(() => {
+    const loadPrices = async () => {
+      try {
+        const pricingData = await getSubscriptionPrices();
+        if (pricingData && pricingData.length > 0) {
+          setPlans(pricingData);
+        } else {
+          // Default plans if none are in the backend yet
+          setPlans([
+            {
+              id: 'basic-monthly',
+              name: 'Basic AI Trading Signals',
+              price: 29.99,
+              currency: 'USD',
+              interval: 'monthly',
+              features: [
+                'Access to AI trading signals',
+                'Basic market analysis',
+                'Daily signal updates',
+                'Email notifications'
+              ]
+            },
+            {
+              id: 'premium-monthly',
+              name: 'Premium AI Trading Signals',
+              price: 99.99,
+              currency: 'USD',
+              interval: 'monthly',
+              features: [
+                'All Basic features',
+                'Advanced market analysis',
+                'Real-time signal updates',
+                'Direct AI chat support',
+                'Custom alerts and notifications'
+              ]
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading subscription prices:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load subscription prices",
+          variant: "destructive",
+        });
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadPrices();
+  }, [getSubscriptionPrices]);
 
   const handleOpenDialog = (plan: PricingPlan) => {
     setEditingPlan({...plan});
@@ -88,10 +116,10 @@ const AIPricingManager = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would be an API call to update the price
-      // For now, we'll just update the local state after a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update the price in the backend
+      await updateSubscriptionPrice(editingPlan.id, editingPlan.price);
       
+      // Update local state
       setPlans(plans.map(plan => 
         plan.id === editingPlan.id ? editingPlan : plan
       ));
@@ -113,6 +141,16 @@ const AIPricingManager = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loader while initially loading
+  if (initialLoading) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading subscription prices...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBackend } from '@/context/BackendContext';
 import RobotRequestManagement from '@/components/admin/RobotRequestManagement';
 import AIPricingManager from '@/components/admin/AIPricingManager';
+import UserManagement from '@/components/admin/UserManagement';
 import { TradingLoader } from '@/components/ui/loader';
 import Navbar from '@/components/layout/Navbar';
 
@@ -72,12 +73,7 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="users">
-            <div className="text-center py-16 bg-muted/30 rounded-md">
-              <h3 className="text-xl font-medium">User Management</h3>
-              <p className="mt-2 text-muted-foreground">
-                User management panel coming soon.
-              </p>
-            </div>
+            <UserManagement />
           </TabsContent>
         </Tabs>
       </div>

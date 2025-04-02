@@ -54,6 +54,15 @@ interface Message {
   timestamp: string;
 }
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: 'monthly' | 'yearly';
+  features: string[];
+}
+
 interface BackendContextType {
   user: User | null;
   isLoading: boolean;
@@ -80,12 +89,14 @@ interface BackendContextType {
   sendMessage: (conversationId: string, text: string) => Promise<void>;
   markMessageAsRead: (messageId: string) => void;
   setCurrentConversation: (conversationId: string | null) => void;
-  getUsers: () => User[];
+  getUsers: () => Promise<User[]>;
   getRobotById: (id: string) => Robot | undefined;
   addRobot: (robot: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
   updateRobot: (id: string, updates: Partial<Robot>) => Promise<void>;
   deleteRobot: (id: string) => Promise<void>;
   createConversation: (userId: string, userName: string, userEmail: string) => void;
+  getSubscriptionPrices: () => Promise<PricingPlan[]>;
+  updateSubscriptionPrice: (planId: string, newPrice: number) => Promise<void>;
 }
 
 const BackendContext = createContext<BackendContextType | undefined>(undefined);
@@ -127,6 +138,37 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [conversations, setConversations] = useState<Conversation[]>(chatData.conversations || []);
   const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>(chatData.messages || {});
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  
+  // Add this state for subscription plans
+  const [subscriptionPlans, setSubscriptionPlans] = useState<PricingPlan[]>([
+    {
+      id: 'basic-monthly',
+      name: 'Basic AI Trading Signals',
+      price: 29.99,
+      currency: 'USD',
+      interval: 'monthly',
+      features: [
+        'Access to AI trading signals',
+        'Basic market analysis',
+        'Daily signal updates',
+        'Email notifications'
+      ]
+    },
+    {
+      id: 'premium-monthly',
+      name: 'Premium AI Trading Signals',
+      price: 99.99,
+      currency: 'USD',
+      interval: 'monthly',
+      features: [
+        'All Basic features',
+        'Advanced market analysis',
+        'Real-time signal updates',
+        'Direct AI chat support',
+        'Custom alerts and notifications'
+      ]
+    }
+  ]);
   
   // Initialize the context by loading the user
   useEffect(() => {
@@ -556,9 +598,42 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
   
   // Admin functionality - for now just use what's already registered locally
-  const getUsers = () => {
-    // In a real implementation, we would fetch users from the backend
-    return [];
+  const getUsers = async (): Promise<User[]> => {
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // In a real implementation, we would fetch from the backend
+      // Mock some users for now
+      return [
+        {
+          id: 'usr1',
+          name: 'John Doe',
+          email: 'john@example.com',
+          is_admin: false,
+          robots_delivered: true,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'usr2',
+          name: 'Jane Smith',
+          email: 'jane@example.com',
+          is_admin: false,
+          robots_delivered: false,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'usr3',
+          name: 'Admin User',
+          email: 'admin@example.com',
+          is_admin: true,
+          created_at: new Date().toISOString()
+        }
+      ];
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
   };
   
   const getRobotById = (id: string) => {
@@ -648,6 +723,40 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }));
   };
 
+  // Implement the subscription price functions
+  const getSubscriptionPrices = async (): Promise<PricingPlan[]> => {
+    // In a real implementation, we would fetch this from the backend
+    // For now, we'll just return the local state
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return subscriptionPlans;
+    } catch (error) {
+      console.error('Error fetching subscription prices:', error);
+      return [];
+    }
+  };
+  
+  const updateSubscriptionPrice = async (planId: string, newPrice: number): Promise<void> => {
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Update subscription plan price in local state
+      setSubscriptionPlans(prev => 
+        prev.map(plan => 
+          plan.id === planId ? { ...plan, price: newPrice } : plan
+        )
+      );
+      
+      // In a real implementation, we would make an API call here
+      console.log(`Updated price for plan ${planId} to ${newPrice}`);
+    } catch (error) {
+      console.error('Error updating subscription price:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     isLoading,
@@ -679,7 +788,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     addRobot,
     updateRobot,
     deleteRobot,
-    createConversation
+    createConversation,
+    getSubscriptionPrices,
+    updateSubscriptionPrice
   };
 
   if (isLoading) {
