@@ -8,22 +8,22 @@ import AIPricingManager from '@/components/admin/AIPricingManager';
 import { TradingLoader } from '@/components/ui/loader';
 
 const AdminDashboard = () => {
-  const { isAuthenticated, user, allRobotRequests, refreshRobotRequests } = useBackend();
+  const { user, fetchAllRobotRequests } = useBackend();
   const [isLoading, setIsLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('robot-requests');
 
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (user) {
       loadData();
     }
-  }, [isAuthenticated, user]);
+  }, [user]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const robotRequests = await allRobotRequests();
-      setRequests(robotRequests);
+      const robotRequests = await fetchAllRobotRequests();
+      setRequests(robotRequests || []);
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -32,11 +32,11 @@ const AdminDashboard = () => {
   };
 
   // Admin access check
-  if (isAuthenticated === false) {
+  if (user === null) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (isAuthenticated && user && !user.is_admin) {
+  if (user && !user.is_admin) {
     return <Navigate to="/dashboard" replace />;
   }
 

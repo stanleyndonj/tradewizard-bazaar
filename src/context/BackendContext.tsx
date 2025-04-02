@@ -69,7 +69,7 @@ interface BackendContextType {
   logout: () => Promise<void>;
   fetchRobots: () => Promise<void>;
   fetchRobotRequests: () => Promise<void>;
-  fetchAllRobotRequests: () => Promise<void>;
+  fetchAllRobotRequests: () => Promise<RobotRequest[]>;
   fetchPurchases: () => Promise<void>;
   submitRequest: (params: RobotRequestParams) => Promise<RobotRequest>;
   updateRobotRequestStatus: (requestId: string, updates: {status?: string; is_delivered?: boolean; download_url?: string; notes?: string; progress?: number;}) => Promise<void>;
@@ -306,7 +306,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         const fetchedRequests = await getAllRobotRequests();
         console.log("Admin fetched requests:", fetchedRequests);
         setRobotRequests(fetchedRequests);
+        return fetchedRequests; // Return the fetched requests
       }
+      return []; // Return empty array if no requests were fetched
     } catch (error) {
       console.error('Error fetching all robot requests:', error);
       toast({
@@ -314,6 +316,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         description: "Failed to fetch robot requests",
         variant: "destructive",
       });
+      return []; // Return empty array on error
     }
   };
 

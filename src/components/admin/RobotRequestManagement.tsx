@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useBackend } from '@/context/BackendContext';
 import { RobotRequest, User } from '@/lib/backend';
@@ -48,7 +47,7 @@ interface RobotRequestManagementProps {
 }
 
 const RobotRequestManagement = ({ requests, onRefresh }: RobotRequestManagementProps) => {
-  const { updateRobotRequestStatus, getCurrentUser } = useBackend();
+  const { updateRobotRequestStatus } = useBackend();
   const [editingRequest, setEditingRequest] = useState<RobotRequest | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [status, setStatus] = useState<string>('');
