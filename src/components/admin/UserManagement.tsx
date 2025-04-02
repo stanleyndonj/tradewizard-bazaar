@@ -78,7 +78,7 @@ const UserManagement = () => {
                 </TableCell>
                 <TableCell>
                   {user.robots_delivered ? (
-                    <Badge variant="success" className="bg-green-100 text-green-800">Active</Badge>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
                   ) : (
                     <Badge variant="outline">None</Badge>
                   )}
