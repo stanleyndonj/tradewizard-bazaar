@@ -120,6 +120,134 @@ const getInitialChatData = () => {
   };
 };
 
+// Implement default conversations and messages for demo purposes
+const getDefaultConversationsForAdmin = (userId: string) => {
+  const adminConversationId = `conv-admin-${Date.now()}`;
+  const customerConversationId = `conv-customer-${Date.now()}`;
+  
+  const adminConversation = {
+    id: adminConversationId,
+    userId: 'admin-demo',
+    userName: 'Admin Demo',
+    userEmail: 'admin@tradewizard.com',
+    lastMessage: "Can you help with the AI trading platform?",
+    lastMessageTime: new Date().toISOString(),
+    unreadCount: 2
+  };
+  
+  const customerConversation = {
+    id: customerConversationId,
+    userId: 'customer-demo',
+    userName: 'Customer Demo',
+    userEmail: 'customer@example.com',
+    lastMessage: "Is there a discount for annual subscriptions?",
+    lastMessageTime: new Date(Date.now() - 3600000).toISOString(),
+    unreadCount: 1
+  };
+  
+  const adminMessages = [
+    {
+      id: `msg-${Date.now()}-1`,
+      conversationId: adminConversationId,
+      sender: 'user',
+      senderId: 'admin-demo',
+      text: "Hello, I need help setting up the AI trading platform.",
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      read: true
+    },
+    {
+      id: `msg-${Date.now()}-2`,
+      conversationId: adminConversationId,
+      sender: 'admin',
+      senderId: userId,
+      text: "Hi there! I'd be happy to help. What specific aspects are you struggling with?",
+      timestamp: new Date(Date.now() - 7100000).toISOString(),
+      read: true
+    },
+    {
+      id: `msg-${Date.now()}-3`,
+      conversationId: adminConversationId,
+      sender: 'user',
+      senderId: 'admin-demo',
+      text: "Can you help with the AI trading platform?",
+      timestamp: new Date(Date.now() - 1800000).toISOString(),
+      read: false
+    }
+  ];
+  
+  const customerMessages = [
+    {
+      id: `msg-${Date.now()}-4`,
+      conversationId: customerConversationId,
+      sender: 'user',
+      senderId: 'customer-demo',
+      text: "Hello, I'm interested in your AI trading signals service.",
+      timestamp: new Date(Date.now() - 4800000).toISOString(),
+      read: true
+    },
+    {
+      id: `msg-${Date.now()}-5`,
+      conversationId: customerConversationId,
+      sender: 'admin',
+      senderId: userId,
+      text: "Great to hear that! Our AI trading signals provide real-time market insights and trade recommendations.",
+      timestamp: new Date(Date.now() - 4700000).toISOString(),
+      read: true
+    },
+    {
+      id: `msg-${Date.now()}-6`,
+      conversationId: customerConversationId,
+      sender: 'user',
+      senderId: 'customer-demo',
+      text: "Is there a discount for annual subscriptions?",
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      read: false
+    }
+  ];
+  
+  return {
+    conversations: [adminConversation, customerConversation],
+    messages: {
+      [adminConversationId]: adminMessages,
+      [customerConversationId]: customerMessages
+    }
+  };
+};
+
+// Create a default conversation for a regular user
+const getDefaultConversationForUser = (userId: string, userName: string) => {
+  const conversationId = `conv-support-${Date.now()}`;
+  
+  const supportConversation = {
+    id: conversationId,
+    userId: 'support',
+    userName: 'Support Team',
+    userEmail: 'support@tradewizard.com',
+    lastMessage: "How can I help you today?",
+    lastMessageTime: new Date().toISOString(),
+    unreadCount: 0
+  };
+  
+  const messages = [
+    {
+      id: `msg-${Date.now()}-1`,
+      conversationId: conversationId,
+      sender: 'admin',
+      senderId: 'support',
+      text: "Welcome to TradeWizard! How can I help you today?",
+      timestamp: new Date().toISOString(),
+      read: false
+    }
+  ];
+  
+  return {
+    conversations: [supportConversation],
+    messages: {
+      [conversationId]: messages
+    }
+  };
+};
+
 const saveChatData = (conversations: Conversation[], messages: Record<string, ChatMessage[]>) => {
   localStorage.setItem(localStorageKey, JSON.stringify({ conversations, messages }));
 };
@@ -204,6 +332,24 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     saveChatData(conversations, chatMessages);
   }, [conversations, chatMessages]);
 
+  // Provide default chat data for demo purposes
+  useEffect(() => {
+    // Only populate demo data if user exists and there are no conversations yet
+    if (user && conversations.length === 0) {
+      if (user.is_admin) {
+        // Provide demo conversations for admin
+        const demoData = getDefaultConversationsForAdmin(user.id);
+        setConversations(demoData.conversations);
+        setChatMessages(demoData.messages);
+      } else {
+        // Create a default support conversation for regular users
+        const userData = getDefaultConversationForUser(user.id, user.name);
+        setConversations(userData.conversations);
+        setChatMessages(userData.messages);
+      }
+    }
+  }, [user, conversations.length]);
+  
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -554,11 +700,56 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
               ...c, 
               lastMessage: text, 
               lastMessageTime: newMessage.timestamp,
+              // If admin is sending to user or user is sending to admin, increment unread count
               unreadCount: user.is_admin ? c.unreadCount : c.unreadCount + 1
             } 
           : c
       )
     );
+
+    // For demo purposes, simulate an automatic response after a short delay
+    if (!user.is_admin) {
+      setTimeout(() => {
+        const responseOptions = [
+          "Thanks for your message! Our team will review this and get back to you shortly.",
+          "I've received your inquiry and will look into this for you. Is there anything else you need?",
+          "Thank you for contacting support. We typically respond within 24 hours for standard queries.",
+          "Your question has been received. Our trading experts will provide a detailed response soon."
+        ];
+        
+        const responseText = responseOptions[Math.floor(Math.random() * responseOptions.length)];
+        
+        const adminResponse: ChatMessage = {
+          id: `cm${Date.now() + 1}`,
+          conversationId,
+          sender: 'admin',
+          senderId: 'support',
+          text: responseText,
+          timestamp: new Date().toISOString(),
+          read: false
+        };
+        
+        // Add the admin response
+        setChatMessages(prev => ({
+          ...prev,
+          [conversationId]: [...(prev[conversationId] || []), adminResponse]
+        }));
+        
+        // Update conversation
+        setConversations(prev => 
+          prev.map(c => 
+            c.id === conversationId 
+              ? { 
+                  ...c, 
+                  lastMessage: responseText, 
+                  lastMessageTime: adminResponse.timestamp,
+                  unreadCount: c.unreadCount + 1
+                } 
+              : c
+          )
+        );
+      }, 3000);
+    }
   };
   
   const markMessageAsRead = (messageId: string) => {
@@ -588,7 +779,12 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       setConversations(prev => 
         prev.map(c => {
           if (c.id === foundConversationId) {
-            const unreadMessages = chatMessages[c.id]?.filter(msg => !msg.read && msg.id !== messageId) || [];
+            // Count remaining unread messages
+            const unreadMessages = chatMessages[c.id]?.filter(
+              msg => !msg.read && 
+              ((user?.is_admin && msg.sender === 'user') || 
+              (!user?.is_admin && msg.sender === 'admin'))
+            ) || [];
             return { ...c, unreadCount: unreadMessages.length };
           }
           return c;
@@ -597,7 +793,67 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
   
-  // Admin functionality - for now just use what's already registered locally
+  // Create a new conversation
+  const createConversation = (userId: string, userName: string, userEmail: string) => {
+    // Check if conversation already exists
+    const existingConversation = conversations.find(c => c.userId === userId);
+    if (existingConversation) {
+      setCurrentConversation(existingConversation.id);
+      return;
+    }
+    
+    // Create a new conversation
+    const newConversation: Conversation = {
+      id: `conv${Date.now()}`,
+      userId,
+      userName,
+      userEmail,
+      lastMessage: "New conversation started",
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0
+    };
+    
+    setConversations(prev => [...prev, newConversation]);
+    setCurrentConversation(newConversation.id);
+    
+    // Initialize empty message array for the conversation
+    setChatMessages(prev => ({
+      ...prev,
+      [newConversation.id]: []
+    }));
+    
+    // For a new conversation, add a welcome message
+    if (userId === 'support') {
+      const welcomeMessage: ChatMessage = {
+        id: `cm${Date.now()}`,
+        conversationId: newConversation.id,
+        sender: 'admin',
+        senderId: 'support',
+        text: "Welcome to TradeWizard! How can I help you today?",
+        timestamp: new Date().toISOString(),
+        read: false
+      };
+      
+      setChatMessages(prev => ({
+        ...prev,
+        [newConversation.id]: [welcomeMessage]
+      }));
+      
+      setConversations(prev => 
+        prev.map(c => 
+          c.id === newConversation.id 
+            ? { 
+                ...c, 
+                lastMessage: welcomeMessage.text, 
+                lastMessageTime: welcomeMessage.timestamp,
+                unreadCount: 1
+              } 
+            : c
+        )
+      );
+    }
+  };
+
   const getUsers = async (): Promise<User[]> => {
     try {
       // Simulate API call delay
@@ -693,36 +949,6 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
   };
   
-  // Create a new conversation
-  const createConversation = (userId: string, userName: string, userEmail: string) => {
-    // Check if conversation already exists
-    const existingConversation = conversations.find(c => c.userId === userId);
-    if (existingConversation) {
-      setCurrentConversation(existingConversation.id);
-      return;
-    }
-    
-    // Create a new conversation
-    const newConversation: Conversation = {
-      id: `conv${Date.now()}`,
-      userId,
-      userName,
-      userEmail,
-      lastMessage: "New conversation started",
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0
-    };
-    
-    setConversations(prev => [...prev, newConversation]);
-    setCurrentConversation(newConversation.id);
-    
-    // Initialize empty message array for the conversation
-    setChatMessages(prev => ({
-      ...prev,
-      [newConversation.id]: []
-    }));
-  };
-
   // Implement the subscription price functions
   const getSubscriptionPrices = async (): Promise<PricingPlan[]> => {
     // In a real implementation, we would fetch this from the backend

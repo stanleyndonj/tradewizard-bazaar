@@ -7,9 +7,10 @@ import { Loader } from '@/components/ui/loader';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, UserCircle } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 const ChatInterface = () => {
   const { 
@@ -19,12 +20,28 @@ const ChatInterface = () => {
     currentConversation, 
     setCurrentConversation,
     sendMessage,
-    markMessageAsRead
+    markMessageAsRead,
+    createConversation
   } = useBackend();
   
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // If user is not admin and no conversation exists, create one
+  useEffect(() => {
+    if (user && !user.is_admin && conversations.length === 0) {
+      // Create a conversation with support if none exists for non-admin user
+      createConversation('support', 'Support Team', 'support@tradewizard.com');
+    }
+  }, [user, conversations.length, createConversation]);
+  
+  // Automatically select first conversation for non-admin users
+  useEffect(() => {
+    if (user && !user.is_admin && conversations.length > 0 && !currentConversation) {
+      setCurrentConversation(conversations[0].id);
+    }
+  }, [user, conversations, currentConversation, setCurrentConversation]);
   
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -56,8 +73,17 @@ const ChatInterface = () => {
     try {
       await sendMessage(currentConversation, messageText);
       setMessageText('');
+      toast({
+        title: "Message sent",
+        description: "Your message has been sent successfully.",
+      });
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: "Error sending message",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -88,6 +114,78 @@ const ChatInterface = () => {
     ? conversations.find(c => c.id === currentConversation) 
     : null;
   
+  // For non-admin users, simplify the UI
+  if (user && !user.is_admin) {
+    return (
+      <div className="grid h-[calc(100vh-250px)]">
+        <div className="flex flex-col">
+          {/* Chat header for non-admin */}
+          <div className="p-4 border-b flex items-center bg-trading-blue text-white">
+            <Avatar className="h-10 w-10 mr-3 bg-white text-trading-blue">
+              <AvatarFallback>ST</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold">Support Team</h3>
+              <p className="text-sm opacity-80">Online</p>
+            </div>
+          </div>
+          
+          {/* Messages area */}
+          <ScrollArea className="flex-1 p-4 h-[calc(100vh-380px)]">
+            <div className="space-y-4">
+              {currentConversation && chatMessages[currentConversation]?.map(message => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.sender === 'user'
+                        ? 'bg-trading-blue text-white rounded-br-none'
+                        : 'bg-muted rounded-bl-none'
+                    }`}
+                  >
+                    <p>{message.text}</p>
+                    <p className={`text-xs mt-1 ${
+                      message.sender === 'user'
+                        ? 'text-blue-100'
+                        : 'text-muted-foreground'
+                    }`}>
+                      {formatMessageTime(message.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {!currentConversation && (
+                <div className="text-center text-muted-foreground py-10">
+                  Loading messages...
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+          
+          {/* Message input */}
+          <div className="p-4 border-t">
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Input
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1"
+                disabled={loading || !currentConversation}
+              />
+              <Button type="submit" disabled={loading || !messageText.trim() || !currentConversation}>
+                {loading ? <Loader size="sm" /> : <Send size={20} />}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Admin view (original layout)
   return (
     <div className="grid h-[calc(100vh-200px)] md:grid-cols-[300px_1fr]">
       {/* Conversations sidebar */}
@@ -151,6 +249,7 @@ const ChatInterface = () => {
               </Avatar>
               <div>
                 <h3 className="font-semibold">{currentConversationData.userName}</h3>
+                <p className="text-sm text-muted-foreground">{currentConversationData.userEmail}</p>
               </div>
             </div>
             
@@ -203,6 +302,7 @@ const ChatInterface = () => {
         ) : (
           <div className="h-full flex items-center justify-center text-center p-4">
             <div>
+              <UserCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold mb-2">Select a conversation</h3>
               <p className="text-muted-foreground">
                 Choose a conversation from the sidebar to start chatting
