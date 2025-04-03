@@ -64,23 +64,20 @@ async def get_trading_signals(
     """Get AI trading signals with admin bypass"""
     user = db.query(User).filter(User.id == current_user_id).first()
     
-    # Admin users can access without subscription check
+    # User authentication check
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
     
-    # Global override check
-    if settings.DISABLE_SUBSCRIPTION_CHECK:
+    # Global override check or admin check
+    if settings.DISABLE_SUBSCRIPTION_CHECK or user.is_admin or (user.email in settings.ADMIN_EMAILS):
         signals = generate_mock_signals(market, timeframe, count)
         return signals
         
-    # Check if user is admin by email or is_admin flag
-    is_admin = user.is_admin or (user.email in settings.ADMIN_EMAILS)
-    
-    # Admin bypass for subscription
-    if not is_admin and not user.robots_delivered:
+    # Regular user subscription check
+    if not user.robots_delivered:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Subscription required to access AI trading signals"
@@ -111,16 +108,13 @@ async def analyze_market(
             detail="User not found"
         )
     
-    # Global override check
-    if settings.DISABLE_SUBSCRIPTION_CHECK:
-        # Continue with analysis
+    # Global override check or admin check - admins always have access
+    if settings.DISABLE_SUBSCRIPTION_CHECK or user.is_admin or (user.email in settings.ADMIN_EMAILS):
+        # Continue with analysis - no subscription check for admins
         pass
     else:
-        # Check if user is admin by email or is_admin flag
-        is_admin = user.is_admin or (user.email in settings.ADMIN_EMAILS)
-        
-        # Check if user has subscription (using robots_delivered as a placeholder) or is admin
-        if not is_admin and not user.robots_delivered:
+        # Regular user subscription check
+        if not user.robots_delivered:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Subscription required to access AI market analysis"

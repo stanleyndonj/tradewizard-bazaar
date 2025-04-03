@@ -45,48 +45,58 @@ const AIPricingManager = () => {
   useEffect(() => {
     const loadPrices = async () => {
       try {
-        const pricingData = await getSubscriptionPrices();
-        if (pricingData && pricingData.length > 0) {
-          setPlans(pricingData);
-        } else {
-          // Default plans if none are in the backend yet
-          setPlans([
-            {
-              id: 'basic-monthly',
-              name: 'Basic AI Trading Signals',
-              price: 29.99,
-              currency: 'USD',
-              interval: 'monthly',
-              features: [
-                'Access to AI trading signals',
-                'Basic market analysis',
-                'Daily signal updates',
-                'Email notifications'
-              ]
-            },
-            {
-              id: 'premium-monthly',
-              name: 'Premium AI Trading Signals',
-              price: 99.99,
-              currency: 'USD',
-              interval: 'monthly',
-              features: [
-                'All Basic features',
-                'Advanced market analysis',
-                'Real-time signal updates',
-                'Direct AI chat support',
-                'Custom alerts and notifications'
-              ]
-            }
-          ]);
+        setInitialLoading(true);
+        console.log("Loading subscription prices...");
+        
+        // Use default plans as fallback if API call fails
+        const defaultPlans = [
+          {
+            id: 'basic-monthly',
+            name: 'Basic AI Trading Signals',
+            price: 29.99,
+            currency: 'USD',
+            interval: 'monthly' as const,
+            features: [
+              'Access to AI trading signals',
+              'Basic market analysis',
+              'Daily signal updates',
+              'Email notifications'
+            ]
+          },
+          {
+            id: 'premium-monthly',
+            name: 'Premium AI Trading Signals',
+            price: 99.99,
+            currency: 'USD',
+            interval: 'monthly' as const,
+            features: [
+              'All Basic features',
+              'Advanced market analysis',
+              'Real-time signal updates',
+              'Direct AI chat support',
+              'Custom alerts and notifications'
+            ]
+          }
+        ];
+        
+        try {
+          const pricingData = await getSubscriptionPrices();
+          if (pricingData && Array.isArray(pricingData) && pricingData.length > 0) {
+            console.log("Loaded pricing data:", pricingData);
+            setPlans(pricingData);
+          } else {
+            console.log("No pricing data returned, using default plans");
+            setPlans(defaultPlans);
+          }
+        } catch (error) {
+          console.error('Error in API call for subscription prices:', error);
+          setPlans(defaultPlans);
+          toast({
+            title: "Using default pricing",
+            description: "Using default pricing plans due to API error",
+            variant: "default",
+          });
         }
-      } catch (error) {
-        console.error('Error loading subscription prices:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load subscription prices",
-          variant: "destructive",
-        });
       } finally {
         setInitialLoading(false);
       }
@@ -132,6 +142,7 @@ const AIPricingManager = () => {
         description: `The price for ${editingPlan.name} has been updated to ${editingPlan.currency} ${editingPlan.price}`,
       });
     } catch (error) {
+      console.error("Error updating price:", error);
       toast({
         title: "Error",
         description: "Failed to update the price. Please try again.",

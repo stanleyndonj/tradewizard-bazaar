@@ -13,26 +13,30 @@ import { Bot, TrendingUp, MessageSquare } from 'lucide-react';
 const AITradingSignals = () => {
   const { user } = useBackend();
   const [isLoading, setIsLoading] = useState(true);
-  const [hasSubscription, setHasSubscription] = useState(false);
+  const [hasAccessRights, setHasAccessRights] = useState(false);
   const [activeTab, setActiveTab] = useState("signals");
 
   useEffect(() => {
     // Set page title
     document.title = 'AI Trading Signals | TradeWizard';
     
-    // Simulate checking if user has active subscription
-    const checkSubscription = async () => {
+    // Check if user has access to trading signals
+    const checkAccess = async () => {
       if (user) {
-        // In a real app, this would be an API call to check subscription status
-        // For now, we'll use a mock check based on the robots_delivered field
-        setHasSubscription(!!user.robots_delivered);
+        // Admin users always have access
+        if (user.is_admin) {
+          setHasAccessRights(true);
+        } else {
+          // Regular users need a subscription
+          setHasAccessRights(!!user.robots_delivered);
+        }
         setIsLoading(false);
       } else {
         setIsLoading(false);
       }
     };
     
-    checkSubscription();
+    checkAccess();
   }, [user]);
 
   // If not logged in, redirect to auth page
@@ -65,9 +69,14 @@ const AITradingSignals = () => {
         <div className="flex items-center gap-3 mb-6">
           <Bot className="h-8 w-8 text-trading-blue" />
           <h1 className="text-4xl font-bold">AI Trading Signals</h1>
+          {user?.is_admin && (
+            <span className="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full ml-2">
+              Admin View
+            </span>
+          )}
         </div>
         
-        {hasSubscription ? (
+        {hasAccessRights ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="signals" className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import UserManagement from '@/components/admin/UserManagement';
 import RobotManagement from '@/components/admin/RobotManagement';
 import { TradingLoader } from '@/components/ui/loader';
 import Navbar from '@/components/layout/Navbar';
+import { toast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
   const { user, fetchAllRobotRequests } = useBackend();
@@ -29,6 +30,11 @@ const AdminDashboard = () => {
       setRequests(robotRequests || []);
     } catch (error) {
       console.error('Error loading admin data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin data. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +46,11 @@ const AdminDashboard = () => {
   }
 
   if (user && !user.is_admin) {
+    toast({
+      title: "Access Denied",
+      description: "You don't have admin privileges to access this page",
+      variant: "destructive",
+    });
     return <Navigate to="/dashboard" replace />;
   }
 
