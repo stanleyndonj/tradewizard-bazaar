@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   User, 
@@ -145,7 +146,7 @@ const getDefaultConversationsForAdmin = (userId: string) => {
     unreadCount: 1
   };
   
-  const adminMessages = [
+  const adminMessages: ChatMessage[] = [
     {
       id: `msg-${Date.now()}-1`,
       conversationId: adminConversationId,
@@ -175,7 +176,7 @@ const getDefaultConversationsForAdmin = (userId: string) => {
     }
   ];
   
-  const customerMessages = [
+  const customerMessages: ChatMessage[] = [
     {
       id: `msg-${Date.now()}-4`,
       conversationId: customerConversationId,
@@ -210,7 +211,7 @@ const getDefaultConversationsForAdmin = (userId: string) => {
     messages: {
       [adminConversationId]: adminMessages,
       [customerConversationId]: customerMessages
-    }
+    } as Record<string, ChatMessage[]>
   };
 };
 
@@ -228,7 +229,7 @@ const getDefaultConversationForUser = (userId: string, userName: string) => {
     unreadCount: 0
   };
   
-  const messages = [
+  const messages: ChatMessage[] = [
     {
       id: `msg-${Date.now()}-1`,
       conversationId: conversationId,
@@ -244,7 +245,7 @@ const getDefaultConversationForUser = (userId: string, userName: string) => {
     conversations: [supportConversation],
     messages: {
       [conversationId]: messages
-    }
+    } as Record<string, ChatMessage[]>
   };
 };
 
@@ -340,12 +341,18 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         // Provide demo conversations for admin
         const demoData = getDefaultConversationsForAdmin(user.id);
         setConversations(demoData.conversations);
-        setChatMessages(demoData.messages);
+        setChatMessages(prevMessages => ({
+          ...prevMessages,
+          ...demoData.messages
+        }));
       } else {
         // Create a default support conversation for regular users
         const userData = getDefaultConversationForUser(user.id, user.name);
         setConversations(userData.conversations);
-        setChatMessages(userData.messages);
+        setChatMessages(prevMessages => ({
+          ...prevMessages,
+          ...userData.messages
+        }));
       }
     }
   }, [user, conversations.length]);
