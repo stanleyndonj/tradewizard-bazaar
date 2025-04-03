@@ -19,7 +19,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useBackend();
+  const { user, logoutUser } = useBackend();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,7 +60,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await logout();
+    await logoutUser();
   };
 
   // Get initials for avatar

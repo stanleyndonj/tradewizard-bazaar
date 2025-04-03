@@ -184,11 +184,12 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const logoutUser = async (): Promise<void> => {
     try {
       setLoading(true);
       await logoutUserAPI();
       setUser(null);
+      localStorage.removeItem('authToken');
       toast({
         title: "Logout successful",
         description: "You have successfully logged out.",
@@ -704,7 +705,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     loading,
     loginUser: login,
     registerUser: register,
-    logoutUser: logout,
+    logoutUser,
     submitRobotRequest,
     getUserRobotRequests,
     fetchAllRobotRequests,

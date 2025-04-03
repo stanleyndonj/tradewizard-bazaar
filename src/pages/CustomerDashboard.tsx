@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -14,7 +15,11 @@ import CustomerChat from '@/components/customer/CustomerChat';
 import { toast } from '@/hooks/use-toast';
 
 const CustomerDashboard = () => {
-  const { user, robotRequests, purchases, robots, fetchRobotRequests, fetchPurchases, isLoading } = useBackend();
+  const { user, getUserRobotRequests, getPurchases, getRobots } = useBackend();
+  const [robotRequests, setRobotRequests] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [robots, setRobots] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('robots');
@@ -30,23 +35,40 @@ const CustomerDashboard = () => {
     
     // Fetch fresh data
     const loadData = async () => {
-      await Promise.all([
-        fetchRobotRequests(),
-        fetchPurchases()
-      ]);
+      setLoading(true);
+      try {
+        const [requestsData, purchasesData, robotsData] = await Promise.all([
+          getUserRobotRequests(),
+          getPurchases(),
+          getRobots()
+        ]);
+        
+        setRobotRequests(requestsData || []);
+        setPurchases(purchasesData || []);
+        setRobots(robotsData || []);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        toast({
+          title: "Error loading data",
+          description: "Failed to load your dashboard data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
     };
     
     loadData();
-  }, [fetchRobotRequests, fetchPurchases, location.state]);
+  }, [getUserRobotRequests, getPurchases, getRobots, location.state]);
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!loading && !user) {
       navigate('/auth');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, loading, navigate]);
 
-  if (isLoading) {
+  if (loading) {
     return <TradingLoader text="Loading dashboard..." />;
   }
 
@@ -55,13 +77,14 @@ const CustomerDashboard = () => {
   }
 
   // Get robot name from id
-  const getRobotName = (robotId: string) => {
+  const getRobotName = (robotId) => {
     const robot = robots.find(r => r.id === robotId);
     return robot ? robot.name : 'Unknown Robot';
   };
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -70,7 +93,7 @@ const CustomerDashboard = () => {
   };
 
   // Map status to badge color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'completed':
         return 'bg-green-500';
@@ -87,7 +110,7 @@ const CustomerDashboard = () => {
     }
   };
 
-  const handleDownload = (request: any) => {
+  const handleDownload = (request) => {
     if (request.is_delivered && request.download_url) {
       // If there's a download URL, use it
       window.open(request.download_url, '_blank');
