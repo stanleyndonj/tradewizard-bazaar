@@ -18,7 +18,7 @@ const ChatInterface = () => {
     conversations, 
     chatMessages, 
     currentConversation, 
-    setCurrentConversation,
+    setCurrentConversationId,
     sendMessage,
     markMessageAsRead,
     createConversation
@@ -39,9 +39,9 @@ const ChatInterface = () => {
   // Automatically select first conversation for non-admin users
   useEffect(() => {
     if (user && !user.is_admin && conversations.length > 0 && !currentConversation) {
-      setCurrentConversation(conversations[0].id);
+      setCurrentConversationId(conversations[0].id);
     }
-  }, [user, conversations, currentConversation, setCurrentConversation]);
+  }, [user, conversations, currentConversation, setCurrentConversationId]);
   
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -91,7 +91,7 @@ const ChatInterface = () => {
   
   // Handle conversation selection
   const handleSelectConversation = (conversationId: string) => {
-    setCurrentConversation(conversationId);
+    setCurrentConversationId(conversationId);
   };
   
   // Format timestamp
@@ -240,7 +240,7 @@ const ChatInterface = () => {
                 variant="ghost" 
                 size="icon" 
                 className="md:hidden mr-2"
-                onClick={() => setCurrentConversation(null)}
+                onClick={() => setCurrentConversationId(null)}
               >
                 <ArrowLeft size={20} />
               </Button>

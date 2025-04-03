@@ -1,35 +1,44 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  User, 
-  Robot, 
-  RobotRequest, 
-  Purchase, 
-  TradingSignal,
-  MarketAnalysis,
-  registerUser,
-  loginUser,
-  logoutUser,
-  getCurrentUser,
-  getRobots,
-  getRobotById,
-  getRobotRequests,
-  getAllRobotRequests,
-  submitRobotRequest,
-  updateRobotRequest,
-  getUserPurchases,
-  makePurchase,
-  getTradingSignals,
-  analyzeMarket
-} from '@/lib/backend';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  registerUser as registerUserAPI,
+  loginUser as loginUserAPI,
+  logoutUser as logoutUserAPI,
+  getCurrentUser as getCurrentUserAPI,
+  getRobots as getRobotsAPI,
+  getRobotById as getRobotByIdAPI,
+  addRobot as addRobotAPI,
+  updateRobot as updateRobotAPI,
+  deleteRobot as deleteRobotAPI,
+  getRobotRequests as getRobotRequestsAPI,
+  getAllRobotRequests as getAllRobotRequestsAPI,
+  submitRobotRequest as submitRobotRequestAPI,
+  updateRobotRequest as updateRobotRequestAPI,
+  getUserPurchases as getUserPurchasesAPI,
+  makePurchase as makePurchaseAPI,
+  initiateMpesaPayment as initiateMpesaPaymentAPI,
+  verifyMpesaPayment as verifyMpesaPaymentAPI,
+} from '@/lib/backend';
+import {
+  User,
+  Robot,
+  RobotRequest,
+  Purchase,
+  RobotRequestParams,
+} from '@/lib/backend';
 import { toast } from '@/hooks/use-toast';
 
-// Types for chat functionality
+// Define the type for our chat-related state
 export interface ChatMessage {
   id: string;
   conversationId: string;
-  sender: string;
+  sender: string; // 'user' or 'admin'
   senderId: string;
   text: string;
   timestamp: string;
@@ -38,744 +47,697 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: string;
-  participants: string[];
-  title: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  lastMessage: string;
+  lastMessageTime: string;
   unreadCount: number;
 }
 
-// Context type
 interface BackendContextType {
-  // Auth
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isLoading: boolean;
-  
-  // Robots
-  robots: Robot[];
-  fetchRobots: () => Promise<void>;
-  fetchRobotById: (id: string) => Promise<Robot | null>;
-  addRobot: (robot: Omit<Robot, 'id' | 'created_at'>) => Promise<Robot>;
+  loading: boolean;
+  loginUser: (email: string, password: string) => Promise<User>;
+  registerUser: (name: string, email: string, password: string) => Promise<User>;
+  logoutUser: () => Promise<void>;
+  submitRobotRequest: (params: RobotRequestParams) => Promise<RobotRequest>;
+  getUserRobotRequests: () => Promise<RobotRequest[]>;
+  fetchAllRobotRequests: () => Promise<RobotRequest[]>;
+  updateRobotRequest: (requestId: string, updates: any) => Promise<RobotRequest>;
+  getRobots: () => Promise<Robot[]>;
+  getRobotById: (id: string) => Promise<Robot>;
+  addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>) => Promise<Robot>;
   updateRobot: (robot: Robot) => Promise<Robot>;
   deleteRobot: (id: string) => Promise<void>;
-  
-  // Robot Requests
-  robotRequests: RobotRequest[];
-  fetchRobotRequests: () => Promise<RobotRequest[]>;
-  fetchAllRobotRequests: () => Promise<RobotRequest[]>;
-  submitRequest: (requestData: any) => Promise<void>;
-  updateRequest: (requestId: string, updates: any) => Promise<void>;
-  
-  // Purchases
-  purchases: Purchase[];
-  fetchPurchases: () => Promise<Purchase[]>;
-  purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
-  
-  // Trading Signals
-  tradingSignals: TradingSignal[];
-  fetchTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
-  analyzeMarket: (symbol: string, timeframe?: string) => Promise<MarketAnalysis | null>;
-  
-  // Chat
+  makePurchase: (
+    robotId: string,
+    amount: number,
+    currency: string,
+    paymentMethod: string
+  ) => Promise<Purchase>;
+  getPurchases: () => Promise<Purchase[]>;
+  initiateMpesaPayment: (
+    phone: string,
+    amount: number,
+    robotId: string
+  ) => Promise<any>;
+  verifyMpesaPayment: (checkoutRequestId: string) => Promise<boolean>;
+  // Chat-related functions
   conversations: Conversation[];
   chatMessages: Record<string, ChatMessage[]>;
-  setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
-  setChatMessages: React.Dispatch<React.SetStateAction<Record<string, ChatMessage[]>>>;
-  sendMessage: (conversationId: string, text: string) => void;
-  markConversationAsRead: (conversationId: string) => void;
-  getUnreadCount: () => number;
+  currentConversation: string | null;
+  setCurrentConversationId: (conversationId: string | null) => void;
+  sendMessage: (conversationId: string, text: string) => Promise<void>;
+  markMessageAsRead: (messageId: string) => void;
+  createConversation: (userId: string, userName: string, userEmail: string) => Promise<string>;
 }
 
-// Create context
 const BackendContext = createContext<BackendContextType | undefined>(undefined);
 
-// Hook to use the context
+export const BackendProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedToken = localStorage.getItem('authToken');
+        if (!storedToken) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
+        const currentUser = await getCurrentUserAPI();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Error loading current user:', error);
+        localStorage.removeItem('authToken');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  const register = async (name: string, email: string, password: string): Promise<User> => {
+    try {
+      setLoading(true);
+      const user = await registerUserAPI(name, email, password);
+      setUser(user);
+      toast({
+        title: "Registration successful",
+        description: "You have successfully registered.",
+      });
+      navigate('/dashboard');
+      return user;
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      toast({
+        title: "Registration failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<User> => {
+    try {
+      setLoading(true);
+      const user = await loginUserAPI(email, password);
+      setUser(user);
+      toast({
+        title: "Login successful",
+        description: "You have successfully logged in.",
+      });
+      
+      // Redirect to dashboard or stored redirect URL
+      const redirectUrl = localStorage.getItem('redirectAfterAuth');
+      if (redirectUrl) {
+        localStorage.removeItem('redirectAfterAuth');
+        navigate(redirectUrl);
+      } else {
+        navigate('/dashboard');
+      }
+      
+      return user;
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      await logoutUserAPI();
+      setUser(null);
+      toast({
+        title: "Logout successful",
+        description: "You have successfully logged out.",
+      });
+      navigate('/auth');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast({
+        title: "Logout failed",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
+    try {
+      setLoading(true);
+      const request = await submitRobotRequestAPI(params);
+      toast({
+        title: "Request submitted",
+        description: "Your request has been submitted successfully.",
+      });
+      return request;
+    } catch (error: any) {
+      console.error('Request submission failed:', error);
+      toast({
+        title: "Request submission failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getUserRobotRequests = useCallback(async (): Promise<RobotRequest[]> => {
+    try {
+      if (!user) {
+        console.warn('User not logged in, cannot fetch robot requests.');
+        return [];
+      }
+      return await getRobotRequestsAPI(user.id);
+    } catch (error) {
+      console.error('Error fetching user robot requests:', error);
+      toast({
+        title: "Error fetching requests",
+        description: "Failed to load your robot requests. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [user]);
+
+  const fetchAllRobotRequests = useCallback(async (): Promise<RobotRequest[]> => {
+    try {
+      return await getAllRobotRequestsAPI();
+    } catch (error) {
+      console.error('Error fetching all robot requests:', error);
+      toast({
+        title: "Error fetching requests",
+        description: "Failed to load robot requests. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, []);
+
+  const updateRobotRequest = async (
+    requestId: string,
+    updates: any
+  ): Promise<RobotRequest> => {
+    try {
+      setLoading(true);
+      const updatedRequest = await updateRobotRequestAPI(requestId, updates);
+      toast({
+        title: "Request updated",
+        description: "The robot request has been updated successfully.",
+      });
+      return updatedRequest;
+    } catch (error: any) {
+      console.error('Request update failed:', error);
+      toast({
+        title: "Request update failed",
+        description: error.message || "Failed to update the request. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRobots = useCallback(async (): Promise<Robot[]> => {
+    try {
+      return await getRobotsAPI();
+    } catch (error) {
+      console.error('Error fetching robots:', error);
+      toast({
+        title: "Error fetching robots",
+        description: "Failed to load robots. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, []);
+
+  const getRobotById = useCallback(async (id: string): Promise<Robot> => {
+    try {
+      return await getRobotByIdAPI(id);
+    } catch (error: any) {
+      console.error(`Error fetching robot with ID ${id}:`, error);
+      toast({
+        title: "Error fetching robot",
+        description: error.message || "Failed to load robot. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  }, []);
+
+  const addRobot = async (robotData: Omit<Robot, 'id' | 'created_at'>): Promise<Robot> => {
+    try {
+      setLoading(true);
+      const newRobot = await addRobotAPI(robotData);
+      toast({
+        title: "Robot added",
+        description: "The robot has been added successfully.",
+      });
+      return newRobot;
+    } catch (error: any) {
+      console.error('Failed to add robot:', error);
+      toast({
+        title: "Failed to add robot",
+        description: error.message || "Failed to add the robot. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRobot = async (robot: Robot): Promise<Robot> => {
+    try {
+      setLoading(true);
+      const updatedRobot = await updateRobotAPI(robot);
+      toast({
+        title: "Robot updated",
+        description: "The robot has been updated successfully.",
+      });
+      return updatedRobot;
+    } catch (error: any) {
+      console.error('Failed to update robot:', error);
+      toast({
+        title: "Failed to update robot",
+        description: error.message || "Failed to update the robot. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRobot = async (id: string): Promise<void> => {
+    try {
+      setLoading(true);
+      await deleteRobotAPI(id);
+      toast({
+        title: "Robot deleted",
+        description: "The robot has been deleted successfully.",
+      });
+    } catch (error: any) {
+      console.error('Failed to delete robot:', error);
+      toast({
+        title: "Failed to delete robot",
+        description: error.message || "Failed to delete the robot. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPurchases = useCallback(async (): Promise<Purchase[]> => {
+    try {
+      if (!user) {
+        console.warn('User not logged in, cannot fetch purchases.');
+        return [];
+      }
+      return await getUserPurchasesAPI(user.id);
+    } catch (error) {
+      console.error('Error fetching user purchases:', error);
+      toast({
+        title: "Error fetching purchases",
+        description: "Failed to load your purchases. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [user]);
+
+  const makePurchase = async (
+    robotId: string,
+    amount: number,
+    currency: string,
+    paymentMethod: string
+  ): Promise<Purchase> => {
+    try {
+      setLoading(true);
+      if (!user) {
+        throw new Error('User not logged in.');
+      }
+      const purchase = await makePurchaseAPI(user.id, robotId, amount, currency, paymentMethod);
+       // Update user's robots_delivered status after a successful purchase
+       setUser(prevUser => {
+        if (prevUser) {
+          return { ...prevUser, robots_delivered: true };
+        }
+        return prevUser;
+      });
+      toast({
+        title: "Purchase successful",
+        description: "Thank you for your purchase!",
+      });
+      return purchase;
+    } catch (error: any) {
+      console.error('Purchase failed:', error);
+      toast({
+        title: "Purchase failed",
+        description: error.message || "Failed to complete the purchase. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initiateMpesaPayment = async (
+    phone: string,
+    amount: number,
+    robotId: string
+  ): Promise<any> => {
+    try {
+      setLoading(true);
+      const paymentResponse = await initiateMpesaPaymentAPI(phone, amount, robotId);
+      return paymentResponse;
+    } catch (error: any) {
+      console.error('Mpesa payment initiation failed:', error);
+      toast({
+        title: "Mpesa payment failed",
+        description: error.message || "Failed to initiate Mpesa payment. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      const verificationResult = await verifyMpesaPaymentAPI(checkoutRequestId);
+      return verificationResult;
+    } catch (error: any) {
+      console.error('Mpesa payment verification failed:', error);
+      toast({
+        title: "Mpesa payment verification failed",
+        description: error.message || "Failed to verify Mpesa payment. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set current conversation with proper naming
+  const setCurrentConversationId = (conversationId: string | null) => {
+    setCurrentConversation(conversationId);
+  };
+
+  // Chat-related functions
+  const sendMessage = async (conversationId: string, text: string): Promise<void> => {
+    // Check if this conversation exists
+    const conversation = conversations.find(c => c.id === conversationId);
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    // Create a new message
+    const newMessage: ChatMessage = {
+      id: `msg_${Date.now().toString()}`,
+      conversationId,
+      sender: user?.is_admin ? 'admin' : 'user',
+      senderId: user?.id || '',
+      text,
+      timestamp: new Date().toISOString(),
+      read: true,
+    };
+
+    // Add message to state
+    setChatMessages(prevMessages => {
+      const conversationMessages = [...(prevMessages[conversationId] || []), newMessage];
+      return {
+        ...prevMessages,
+        [conversationId]: conversationMessages,
+      };
+    });
+
+    // Update conversation last message and time
+    setConversations(prevConversations => 
+      prevConversations.map(c => {
+        if (c.id === conversationId) {
+          return {
+            ...c,
+            lastMessage: text,
+            lastMessageTime: new Date().toISOString(),
+          };
+        }
+        return c;
+      })
+    );
+
+    // In a real app, we would send this to the server
+    // For this mock, simulate a response after a delay
+    if (!user?.is_admin) {
+      setTimeout(() => {
+        const adminResponse: ChatMessage = {
+          id: `msg_${Date.now().toString()}`,
+          conversationId,
+          sender: 'admin',
+          senderId: 'admin',
+          text: 'Thank you for your message. Our team will get back to you soon.',
+          timestamp: new Date().toISOString(),
+          read: false,
+        };
+
+        setChatMessages(prevMessages => {
+          const conversationMessages = [...(prevMessages[conversationId] || []), adminResponse];
+          return {
+            ...prevMessages,
+            [conversationId]: conversationMessages,
+          };
+        });
+
+        // Update conversation last message and time
+        setConversations(prevConversations => 
+          prevConversations.map(c => {
+            if (c.id === conversationId) {
+              return {
+                ...c,
+                lastMessage: adminResponse.text,
+                lastMessageTime: adminResponse.timestamp,
+                unreadCount: c.unreadCount + 1,
+              };
+            }
+            return c;
+          })
+        );
+      }, 1000);
+    }
+  };
+
+  const markMessageAsRead = (messageId: string): void => {
+    setChatMessages(prevMessages => {
+      const newMessages = { ...prevMessages };
+      
+      // Find the conversation that contains this message
+      for (const conversationId in newMessages) {
+        const index = newMessages[conversationId].findIndex(m => m.id === messageId);
+        if (index !== -1) {
+          // Mark the message as read
+          newMessages[conversationId] = [...newMessages[conversationId]];
+          newMessages[conversationId][index] = {
+            ...newMessages[conversationId][index],
+            read: true,
+          };
+          
+          // Update unread count for this conversation
+          setConversations(prevConversations => 
+            prevConversations.map(c => {
+              if (c.id === conversationId && c.unreadCount > 0) {
+                return {
+                  ...c,
+                  unreadCount: c.unreadCount - 1,
+                };
+              }
+              return c;
+            })
+          );
+          
+          break;
+        }
+      }
+      
+      return newMessages;
+    });
+  };
+
+  const createConversation = async (userId: string, userName: string, userEmail: string): Promise<string> => {
+    const newConversationId = `conv_${Date.now().toString()}`;
+    
+    const newConversation: Conversation = {
+      id: newConversationId,
+      userId,
+      userName,
+      userEmail,
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      unreadCount: 0,
+    };
+    
+    setConversations(prev => [...prev, newConversation]);
+    setChatMessages(prev => ({ ...prev, [newConversationId]: [] }));
+    
+    return newConversationId;
+  };
+
+  // For demo purposes, add some mock conversations for admin users
+  useEffect(() => {
+    if (user?.is_admin && conversations.length === 0) {
+      // Add mock conversations
+      const mockConversations: Conversation[] = [
+        {
+          id: 'conv_1',
+          userId: 'user_1',
+          userName: 'John Doe',
+          userEmail: 'john@example.com',
+          lastMessage: 'Hello, I need help with my trading bot.',
+          lastMessageTime: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+          unreadCount: 2,
+        },
+        {
+          id: 'conv_2',
+          userId: 'user_2',
+          userName: 'Jane Smith',
+          userEmail: 'jane@example.com',
+          lastMessage: 'When will my robot be delivered?',
+          lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+          unreadCount: 0,
+        },
+      ];
+      
+      setConversations(mockConversations);
+      
+      // Add mock messages
+      const mockMessages: Record<string, ChatMessage[]> = {
+        'conv_1': [
+          {
+            id: 'msg_1',
+            conversationId: 'conv_1',
+            sender: 'user',
+            senderId: 'user_1',
+            text: 'Hello, I need help with my trading bot.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+            read: false,
+          },
+          {
+            id: 'msg_2',
+            conversationId: 'conv_1',
+            sender: 'user',
+            senderId: 'user_1',
+            text: 'It\'s not connecting to my exchange account.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 29).toISOString(),
+            read: false,
+          },
+        ],
+        'conv_2': [
+          {
+            id: 'msg_3',
+            conversationId: 'conv_2',
+            sender: 'user',
+            senderId: 'user_2',
+            text: 'Hi, I purchased a trading robot yesterday.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+            read: true,
+          },
+          {
+            id: 'msg_4',
+            conversationId: 'conv_2',
+            sender: 'admin',
+            senderId: 'admin',
+            text: 'Hello Jane, thank you for your purchase. We\'re preparing your robot now.',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2.5).toISOString(),
+            read: true,
+          },
+          {
+            id: 'msg_5',
+            conversationId: 'conv_2',
+            sender: 'user',
+            senderId: 'user_2',
+            text: 'When will my robot be delivered?',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            read: true,
+          },
+        ],
+      };
+      
+      setChatMessages(mockMessages);
+    }
+  }, [user, conversations.length]);
+
+  const value = {
+    user,
+    loading,
+    loginUser: login,
+    registerUser: register,
+    logoutUser: logout,
+    submitRobotRequest,
+    getUserRobotRequests,
+    fetchAllRobotRequests,
+    updateRobotRequest,
+    getRobots,
+    getRobotById,
+    addRobot,
+    updateRobot,
+    deleteRobot,
+    makePurchase,
+    getPurchases,
+    initiateMpesaPayment,
+    verifyMpesaPayment,
+    conversations,
+    chatMessages,
+    currentConversation,
+    setCurrentConversationId,
+    sendMessage,
+    markMessageAsRead,
+    createConversation,
+  };
+
+  return (
+    <BackendContext.Provider value={value}>
+      {children}
+    </BackendContext.Provider>
+  );
+};
+
 export const useBackend = () => {
   const context = useContext(BackendContext);
   if (context === undefined) {
     throw new Error('useBackend must be used within a BackendProvider');
   }
   return context;
-};
-
-// Demo data generators for chat
-const getDefaultConversationsForAdmin = (adminId: string) => {
-  const adminConversationId = `admin-support-${Date.now()}-1`;
-  const customerConversationId = `customer-support-${Date.now()}-2`;
-  
-  const adminConversation = {
-    id: adminConversationId,
-    participants: [adminId, 'system'],
-    title: "System Notifications",
-    lastMessage: "Welcome to the admin panel!",
-    lastMessageTime: new Date().toISOString(),
-    unreadCount: 0
-  };
-  
-  const customerConversation = {
-    id: customerConversationId,
-    participants: [adminId, 'customer-123'],
-    title: "John Doe",
-    lastMessage: "I'd like some help with my robot configuration",
-    lastMessageTime: new Date().toISOString(),
-    unreadCount: 1
-  };
-  
-  const adminMessages: ChatMessage[] = [
-    {
-      id: `msg-${Date.now()}-1`,
-      conversationId: adminConversationId,
-      sender: 'system',
-      senderId: 'system',
-      text: "Welcome to the admin panel! You'll receive system notifications here.",
-      timestamp: new Date().toISOString(),
-      read: true
-    },
-    {
-      id: `msg-${Date.now()}-2`,
-      conversationId: adminConversationId,
-      sender: 'system',
-      senderId: 'system',
-      text: "You have 2 new robot requests waiting for approval.",
-      timestamp: new Date().toISOString(),
-      read: true
-    },
-    {
-      id: `msg-${Date.now()}-3`,
-      conversationId: adminConversationId,
-      sender: 'system',
-      senderId: 'system',
-      text: "New user registered: sarah@example.com",
-      timestamp: new Date().toISOString(),
-      read: true
-    }
-  ];
-  
-  const customerMessages: ChatMessage[] = [
-    {
-      id: `msg-${Date.now()}-4`,
-      conversationId: customerConversationId,
-      sender: 'customer',
-      senderId: 'customer-123',
-      text: "Hello, I have a question about my trading robot.",
-      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      read: true
-    },
-    {
-      id: `msg-${Date.now()}-5`,
-      conversationId: customerConversationId,
-      sender: 'admin',
-      senderId: adminId,
-      text: "Hi there! How can I help you with your trading robot?",
-      timestamp: new Date(Date.now() - 3300000).toISOString(), // 55 minutes ago
-      read: true
-    },
-    {
-      id: `msg-${Date.now()}-6`,
-      conversationId: customerConversationId,
-      sender: 'customer',
-      senderId: 'customer-123',
-      text: "I'd like some help with my robot configuration. It's not working as expected.",
-      timestamp: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
-      read: false
-    }
-  ];
-  
-  return {
-    conversations: [adminConversation, customerConversation],
-    messages: {
-      [adminConversationId]: adminMessages,
-      [customerConversationId]: customerMessages
-    } as Record<string, ChatMessage[]>
-  };
-};
-
-const getDefaultConversationForUser = (userId: string, userName: string) => {
-  const conversationId = `support-${Date.now()}`;
-  
-  const supportConversation = {
-    id: conversationId,
-    participants: [userId, 'admin'],
-    title: "Support Chat",
-    lastMessage: "Hello! How can we help you today?",
-    lastMessageTime: new Date().toISOString(),
-    unreadCount: 0
-  };
-  
-  const messages: ChatMessage[] = [
-    {
-      id: `msg-${Date.now()}-1`,
-      conversationId: conversationId,
-      sender: 'admin',
-      senderId: 'admin',
-      text: `Hello ${userName}! How can we help you today?`,
-      timestamp: new Date().toISOString(),
-      read: true
-    }
-  ];
-  
-  return {
-    conversations: [supportConversation],
-    messages: {
-      [conversationId]: messages
-    } as Record<string, ChatMessage[]>
-  };
-};
-
-// Provider component
-export const BackendProvider: React.FC<{children: ReactNode}> = ({ children }) => {
-  const navigate = useNavigate();
-  
-  // State
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [robots, setRobots] = useState<Robot[]>([]);
-  const [robotRequests, setRobotRequests] = useState<RobotRequest[]>([]);
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
-  
-  // Chat state
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
-  
-  // Check auth status on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-        
-        if (currentUser) {
-          // Load initial data
-          await Promise.all([
-            fetchRobots(),
-            fetchRobotRequests(),
-            fetchPurchases()
-          ]);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
-  
-  // Initialize chat data when user is available
-  useEffect(() => {
-    if (user && conversations.length === 0) {
-      if (user.is_admin) {
-        // Provide demo conversations for admin
-        const demoData = getDefaultConversationsForAdmin(user.id);
-        setConversations(demoData.conversations);
-        setChatMessages(prevMessages => ({
-          ...prevMessages,
-          ...demoData.messages
-        }));
-      } else {
-        // Create a default support conversation for regular users
-        const userData = getDefaultConversationForUser(user.id, user.name);
-        setConversations(userData.conversations);
-        setChatMessages(prevMessages => ({
-          ...prevMessages,
-          ...userData.messages
-        }));
-      }
-    }
-  }, [user, conversations.length]);
-  
-  // Auth methods
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const userData = await loginUser(email, password);
-      setUser(userData);
-      
-      // Load initial data
-      await Promise.all([
-        fetchRobots(),
-        fetchRobotRequests(),
-        fetchPurchases()
-      ]);
-      
-      // Redirect based on role
-      if (userData.is_admin) {
-        navigate('/admin-dashboard');
-      } else {
-        // Check if there's a saved redirect
-        const redirectPath = localStorage.getItem('redirectAfterAuth');
-        if (redirectPath) {
-          localStorage.removeItem('redirectAfterAuth');
-          navigate(redirectPath);
-        } else {
-          navigate('/customer-dashboard');
-        }
-      }
-      
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${userData.name}!`,
-      });
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An error occurred during login.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const userData = await registerUser(name, email, password);
-      setUser(userData);
-      
-      // Redirect to dashboard
-      navigate('/customer-dashboard');
-      
-      toast({
-        title: "Registration successful",
-        description: `Welcome to TradeWizard, ${name}!`,
-      });
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "An error occurred during registration.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      await logoutUser();
-      setUser(null);
-      setRobots([]);
-      setRobotRequests([]);
-      setPurchases([]);
-      setTradingSignals([]);
-      setConversations([]);
-      setChatMessages({});
-      
-      navigate('/');
-      
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Robot methods
-  const fetchRobots = async () => {
-    try {
-      const robotsData = await getRobots();
-      setRobots(robotsData);
-      return robotsData;
-    } catch (error) {
-      console.error('Error fetching robots:', error);
-      return [];
-    }
-  };
-  
-  const fetchRobotById = async (id: string) => {
-    try {
-      const robot = await getRobotById(id);
-      return robot;
-    } catch (error) {
-      console.error(`Error fetching robot ${id}:`, error);
-      return null;
-    }
-  };
-  
-  // New function to add a robot
-  const addRobot = async (robot: Omit<Robot, 'id' | 'created_at'>) => {
-    try {
-      // This would be a real API call in production
-      const newRobot: Robot = {
-        id: `robot-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        ...robot
-      };
-      
-      setRobots(prevRobots => [...prevRobots, newRobot]);
-      return newRobot;
-    } catch (error) {
-      console.error('Error adding robot:', error);
-      throw error;
-    }
-  };
-  
-  // New function to update a robot
-  const updateRobot = async (robot: Robot) => {
-    try {
-      // This would be a real API call in production
-      setRobots(prevRobots => 
-        prevRobots.map(r => r.id === robot.id ? {...robot} : r)
-      );
-      return robot;
-    } catch (error) {
-      console.error('Error updating robot:', error);
-      throw error;
-    }
-  };
-  
-  // New function to delete a robot
-  const deleteRobot = async (id: string) => {
-    try {
-      // This would be a real API call in production
-      setRobots(prevRobots => prevRobots.filter(r => r.id !== id));
-    } catch (error) {
-      console.error('Error deleting robot:', error);
-      throw error;
-    }
-  };
-  
-  // Robot request methods
-  const fetchRobotRequests = async () => {
-    if (!user) return [];
-    
-    try {
-      const requests = await getRobotRequests(user.id);
-      setRobotRequests(requests);
-      return requests;
-    } catch (error) {
-      console.error('Error fetching robot requests:', error);
-      return [];
-    }
-  };
-  
-  const fetchAllRobotRequests = async () => {
-    if (!user || !user.is_admin) return [];
-    
-    try {
-      const requests = await getAllRobotRequests();
-      return requests;
-    } catch (error) {
-      console.error('Error fetching all robot requests:', error);
-      return [];
-    }
-  };
-  
-  const submitRequest = async (requestData: any) => {
-    try {
-      await submitRobotRequest(requestData);
-      
-      toast({
-        title: "Request submitted",
-        description: "Your robot request has been submitted successfully. We'll notify you once it's processed.",
-      });
-      
-      await fetchRobotRequests();
-    } catch (error) {
-      toast({
-        title: "Request failed",
-        description: error instanceof Error ? error.message : "An error occurred while submitting your request.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const updateRequest = async (requestId: string, updates: any) => {
-    try {
-      await updateRobotRequest(requestId, updates);
-      
-      // Refresh the requests list
-      if (user?.is_admin) {
-        await fetchAllRobotRequests();
-      } else {
-        await fetchRobotRequests();
-      }
-      
-      toast({
-        title: "Request updated",
-        description: "The robot request has been updated successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Update failed",
-        description: error instanceof Error ? error.message : "An error occurred while updating the request.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Purchase methods
-  const fetchPurchases = async () => {
-    if (!user) return [];
-    
-    try {
-      const purchases = await getUserPurchases(user.id);
-      setPurchases(purchases);
-      return purchases;
-    } catch (error) {
-      console.error('Error fetching purchases:', error);
-      return [];
-    }
-  };
-  
-  const purchaseRobot = async (robotId: string, amount: number, currency: string, paymentMethod: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to purchase robots.",
-        variant: "destructive",
-      });
-      navigate('/auth');
-      return;
-    }
-    
-    try {
-      await makePurchase(user.id, robotId, amount, currency, paymentMethod);
-      
-      // Refresh purchases
-      await fetchPurchases();
-      
-      toast({
-        title: "Purchase successful",
-        description: "Your robot has been purchased successfully. You can download it from your dashboard.",
-      });
-    } catch (error) {
-      toast({
-        title: "Purchase failed",
-        description: error instanceof Error ? error.message : "An error occurred during the purchase.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Trading signals methods
-  const fetchTradingSignals = async (market: string = 'forex', timeframe: string = '1h', count: number = 10) => {
-    try {
-      // If user is admin, bypass subscription check
-      if (user && user.is_admin) {
-        const signals = await getTradingSignals(market, timeframe, count);
-        setTradingSignals(signals);
-        return signals;
-      } else {
-        // For regular users, check subscription
-        if (!user || !user.robots_delivered) {
-          // For demo purposes, still return some signals but fewer
-          // In a real app, you'd throw an error or return empty array
-          const demoSignals = await getTradingSignals(market, timeframe, 3);
-          setTradingSignals(demoSignals);
-          return demoSignals;
-        }
-        
-        const signals = await getTradingSignals(market, timeframe, count);
-        setTradingSignals(signals);
-        return signals;
-      }
-    } catch (error) {
-      console.error('Error fetching trading signals:', error);
-      if (error instanceof Error && error.message.includes('Subscription required')) {
-        // This is expected for non-subscribed users
-        return [];
-      }
-      
-      toast({
-        title: "Error loading signals",
-        description: "Failed to load trading signals. Please try again later.",
-        variant: "destructive",
-      });
-      return [];
-    }
-  };
-  
-  const analyzeMarket = async (symbol: string, timeframe: string = '1h') => {
-    try {
-      // If user is admin, bypass subscription check
-      if (user && user.is_admin) {
-        const analysis = await analyzeMarket(symbol, timeframe);
-        return analysis;
-      } else {
-        // For regular users, check subscription
-        if (!user || !user.robots_delivered) {
-          throw new Error('Subscription required to access AI market analysis');
-        }
-        
-        const analysis = await analyzeMarket(symbol, timeframe);
-        return analysis;
-      }
-    } catch (error) {
-      console.error('Error analyzing market:', error);
-      if (error instanceof Error && error.message.includes('Subscription required')) {
-        // This is expected for non-subscribed users
-        toast({
-          title: "Subscription required",
-          description: "You need to purchase a robot to access the full AI market analysis.",
-          variant: "destructive",
-        });
-        return null;
-      }
-      
-      toast({
-        title: "Analysis failed",
-        description: "Failed to analyze the market. Please try again later.",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-  
-  // Chat methods
-  const sendMessage = (conversationId: string, text: string) => {
-    if (!user) return;
-    
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      conversationId,
-      sender: user.is_admin ? 'admin' : 'customer',
-      senderId: user.id,
-      text,
-      timestamp: new Date().toISOString(),
-      read: true
-    };
-    
-    // Add to messages
-    setChatMessages(prev => {
-      const conversationMessages = prev[conversationId] || [];
-      return {
-        ...prev,
-        [conversationId]: [...conversationMessages, newMessage]
-      };
-    });
-    
-    // Update conversation
-    setConversations(prev => 
-      prev.map(conv => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            lastMessage: text,
-            lastMessageTime: newMessage.timestamp
-          };
-        }
-        return conv;
-      })
-    );
-    
-    // In a real app, send to backend/API
-    // For demo, simulate admin response after delay
-    if (!user.is_admin) {
-      setTimeout(() => {
-        const adminReply: ChatMessage = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          conversationId,
-          sender: 'admin',
-          senderId: 'admin',
-          text: "Thanks for your message! An admin will respond to you shortly.",
-          timestamp: new Date().toISOString(),
-          read: false
-        };
-        
-        setChatMessages(prev => {
-          const conversationMessages = prev[conversationId] || [];
-          return {
-            ...prev,
-            [conversationId]: [...conversationMessages, adminReply]
-          };
-        });
-        
-        setConversations(prev => 
-          prev.map(conv => {
-            if (conv.id === conversationId) {
-              return {
-                ...conv,
-                lastMessage: adminReply.text,
-                lastMessageTime: adminReply.timestamp,
-                unreadCount: conv.unreadCount + 1
-              };
-            }
-            return conv;
-          })
-        );
-      }, 1000);
-    }
-  };
-  
-  const markConversationAsRead = (conversationId: string) => {
-    // Mark all messages as read
-    setChatMessages(prev => {
-      const conversationMessages = prev[conversationId] || [];
-      return {
-        ...prev,
-        [conversationId]: conversationMessages.map(msg => ({
-          ...msg,
-          read: true
-        }))
-      };
-    });
-    
-    // Reset unread count
-    setConversations(prev => 
-      prev.map(conv => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            unreadCount: 0
-          };
-        }
-        return conv;
-      })
-    );
-  };
-  
-  const getUnreadCount = () => {
-    return conversations.reduce((count, conv) => count + conv.unreadCount, 0);
-  };
-  
-  // Context value
-  const value: BackendContextType = {
-    user,
-    login,
-    register,
-    logout,
-    isLoading,
-    robots,
-    fetchRobots,
-    fetchRobotById,
-    addRobot,
-    updateRobot,
-    deleteRobot,
-    robotRequests,
-    fetchRobotRequests,
-    fetchAllRobotRequests,
-    submitRequest,
-    updateRequest,
-    purchases,
-    fetchPurchases,
-    purchaseRobot,
-    tradingSignals,
-    fetchTradingSignals,
-    analyzeMarket,
-    conversations,
-    chatMessages,
-    setConversations,
-    setChatMessages,
-    sendMessage,
-    markConversationAsRead,
-    getUnreadCount
-  };
-  
-  return (
-    <BackendContext.Provider value={value}>
-      {children}
-    </BackendContext.Provider>
-  );
 };
