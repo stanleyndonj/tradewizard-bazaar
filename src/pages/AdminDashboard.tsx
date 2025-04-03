@@ -6,6 +6,7 @@ import { useBackend } from '@/context/BackendContext';
 import RobotRequestManagement from '@/components/admin/RobotRequestManagement';
 import AIPricingManager from '@/components/admin/AIPricingManager';
 import UserManagement from '@/components/admin/UserManagement';
+import RobotManagement from '@/components/admin/RobotManagement';
 import { TradingLoader } from '@/components/ui/loader';
 import Navbar from '@/components/layout/Navbar';
 
@@ -51,6 +52,7 @@ const AdminDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-8">
             <TabsTrigger value="robot-requests">Robot Requests</TabsTrigger>
+            <TabsTrigger value="robot-management">Robot Marketplace</TabsTrigger>
             <TabsTrigger value="ai-pricing">AI Pricing</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
@@ -66,6 +68,10 @@ const AdminDashboard = () => {
                 onRefresh={loadData} 
               />
             )}
+          </TabsContent>
+          
+          <TabsContent value="robot-management">
+            <RobotManagement />
           </TabsContent>
           
           <TabsContent value="ai-pricing">

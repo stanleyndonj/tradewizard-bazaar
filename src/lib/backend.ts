@@ -265,6 +265,77 @@ export const getRobotById = async (id: string): Promise<Robot> => {
   }
 };
 
+export const addRobot = async (robotData: Omit<Robot, 'id' | 'created_at'>): Promise<Robot> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOTS, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: robotData.name,
+        description: robotData.description,
+        type: robotData.type,
+        price: Number(robotData.price),
+        currency: robotData.currency || 'USD',
+        category: robotData.category,
+        features: robotData.features,
+        image_url: robotData.imageUrl || robotData.image_url
+      }),
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error adding robot:', error);
+    throw error;
+  }
+};
+
+export const updateRobot = async (robot: Robot): Promise<Robot> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_BY_ID(robot.id), {
+      method: 'PUT',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: robot.name,
+        description: robot.description,
+        type: robot.type,
+        price: Number(robot.price),
+        currency: robot.currency,
+        category: robot.category,
+        features: robot.features,
+        image_url: robot.imageUrl || robot.image_url
+      }),
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error updating robot:', error);
+    throw error;
+  }
+};
+
+export const deleteRobot = async (id: string): Promise<void> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.ROBOT_BY_ID(id), {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error deleting robot:', error);
+    throw error;
+  }
+};
+
 // Robot requests functions
 export interface RobotRequestParams {
   robotType: string;
