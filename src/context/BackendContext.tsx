@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -24,6 +25,8 @@ import {
   makePurchase as makePurchaseAPI,
   initiateMpesaPayment as initiateMpesaPaymentAPI,
   verifyMpesaPayment as verifyMpesaPaymentAPI,
+  getTradingSignals as getTradingSignalsAPI,
+  analyzeMarket as analyzeMarketAPI,
 } from '@/lib/backend';
 import {
   User,
@@ -31,6 +34,8 @@ import {
   RobotRequest,
   Purchase,
   RobotRequestParams,
+  TradingSignal,
+  MarketAnalysis,
 } from '@/lib/backend';
 import { toast } from '@/hooks/use-toast';
 
@@ -55,17 +60,33 @@ export interface Conversation {
   unreadCount: number;
 }
 
+// PricingPlan interface for subscription pricing
+export interface PricingPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: 'monthly' | 'yearly';
+  features: string[];
+}
+
 interface BackendContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean; // Alias for loading
   loginUser: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User>; // Alias for loginUser
   registerUser: (name: string, email: string, password: string) => Promise<User>;
+  register: (name: string, email: string, password: string) => Promise<User>; // Alias for registerUser
   logoutUser: () => Promise<void>;
   submitRobotRequest: (params: RobotRequestParams) => Promise<RobotRequest>;
+  submitRequest: (params: RobotRequestParams) => Promise<RobotRequest>; // Alias for submitRobotRequest
   getUserRobotRequests: () => Promise<RobotRequest[]>;
   fetchAllRobotRequests: () => Promise<RobotRequest[]>;
   updateRobotRequest: (requestId: string, updates: any) => Promise<RobotRequest>;
+  updateRobotRequestStatus: (requestId: string, updates: any) => Promise<RobotRequest>; // Alias for updateRobotRequest
   getRobots: () => Promise<Robot[]>;
+  robots: Robot[]; // Local state for robots
   getRobotById: (id: string) => Promise<Robot>;
   addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>) => Promise<Robot>;
   updateRobot: (robot: Robot) => Promise<Robot>;
@@ -76,6 +97,12 @@ interface BackendContextType {
     currency: string,
     paymentMethod: string
   ) => Promise<Purchase>;
+  purchaseRobot: (
+    robotId: string,
+    amount: number,
+    currency: string,
+    paymentMethod: string
+  ) => Promise<Purchase>; // Alias for makePurchase
   getPurchases: () => Promise<Purchase[]>;
   initiateMpesaPayment: (
     phone: string,
@@ -83,14 +110,28 @@ interface BackendContextType {
     robotId: string
   ) => Promise<any>;
   verifyMpesaPayment: (checkoutRequestId: string) => Promise<boolean>;
+  verifyPayment: (checkoutRequestId: string) => Promise<boolean>; // Alias for verifyMpesaPayment
+  
   // Chat-related functions
   conversations: Conversation[];
   chatMessages: Record<string, ChatMessage[]>;
   currentConversation: string | null;
+  setCurrentConversation: (conversationId: string | null) => void; // Renamed for consistency
   setCurrentConversationId: (conversationId: string | null) => void;
   sendMessage: (conversationId: string, text: string) => Promise<void>;
   markMessageAsRead: (messageId: string) => void;
   createConversation: (userId: string, userName: string, userEmail: string) => Promise<string>;
+  
+  // Pricing-related functions
+  getSubscriptionPrices: () => Promise<PricingPlan[]>;
+  updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
+  
+  // User management
+  getUsers: () => Promise<User[]>;
+  
+  // AI Trading Signals
+  getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
+  analyzeMarket: (symbol: string, timeframe?: string) => Promise<MarketAnalysis>;
 }
 
 const BackendContext = createContext<BackendContextType | undefined>(undefined);
@@ -98,6 +139,7 @@ const BackendContext = createContext<BackendContextType | undefined>(undefined);
 export const BackendProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [robots, setRobots] = useState<Robot[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
@@ -125,6 +167,20 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     loadUser();
+  }, []);
+
+  // Load robots on mount
+  useEffect(() => {
+    const loadRobots = async () => {
+      try {
+        const fetchedRobots = await getRobotsAPI();
+        setRobots(fetchedRobots);
+      } catch (error) {
+        console.error('Error loading robots:', error);
+      }
+    };
+    
+    loadRobots();
   }, []);
 
   const register = async (name: string, email: string, password: string): Promise<User> => {
@@ -288,7 +344,9 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
 
   const getRobots = useCallback(async (): Promise<Robot[]> => {
     try {
-      return await getRobotsAPI();
+      const fetchedRobots = await getRobotsAPI();
+      setRobots(fetchedRobots);
+      return fetchedRobots;
     } catch (error) {
       console.error('Error fetching robots:', error);
       toast({
@@ -318,6 +376,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       setLoading(true);
       const newRobot = await addRobotAPI(robotData);
+      await getRobots(); // Refresh the robots list
       toast({
         title: "Robot added",
         description: "The robot has been added successfully.",
@@ -340,6 +399,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       setLoading(true);
       const updatedRobot = await updateRobotAPI(robot);
+      await getRobots(); // Refresh the robots list
       toast({
         title: "Robot updated",
         description: "The robot has been updated successfully.",
@@ -362,6 +422,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     try {
       setLoading(true);
       await deleteRobotAPI(id);
+      await getRobots(); // Refresh the robots list
       toast({
         title: "Robot deleted",
         description: "The robot has been deleted successfully.",
@@ -529,12 +590,13 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
           id: `msg_${Date.now().toString()}`,
           conversationId,
           sender: 'admin',
-          senderId: 'admin',
-          text: 'Thank you for your message. Our team will get back to you soon.',
+          senderId: 'admin_user_id',
+          text: 'Thank you for your message. An advisor will get back to you soon.',
           timestamp: new Date().toISOString(),
           read: false,
         };
 
+        // Add admin response to state
         setChatMessages(prevMessages => {
           const conversationMessages = [...(prevMessages[conversationId] || []), adminResponse];
           return {
@@ -543,15 +605,15 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
           };
         });
 
-        // Update conversation last message and time
-        setConversations(prevConversations => 
+        // Update conversation with new message
+        setConversations(prevConversations =>
           prevConversations.map(c => {
             if (c.id === conversationId) {
               return {
                 ...c,
                 lastMessage: adminResponse.text,
                 lastMessageTime: adminResponse.timestamp,
-                unreadCount: c.unreadCount + 1,
+                unreadCount: c.unreadCount + 1
               };
             }
             return c;
@@ -563,173 +625,223 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
 
   const markMessageAsRead = (messageId: string): void => {
     setChatMessages(prevMessages => {
-      const newMessages = { ...prevMessages };
-      
-      // Find the conversation that contains this message
-      for (const conversationId in newMessages) {
-        const index = newMessages[conversationId].findIndex(m => m.id === messageId);
-        if (index !== -1) {
-          // Mark the message as read
-          newMessages[conversationId] = [...newMessages[conversationId]];
-          newMessages[conversationId][index] = {
-            ...newMessages[conversationId][index],
-            read: true,
-          };
-          
-          // Update unread count for this conversation
-          setConversations(prevConversations => 
-            prevConversations.map(c => {
-              if (c.id === conversationId && c.unreadCount > 0) {
-                return {
-                  ...c,
-                  unreadCount: c.unreadCount - 1,
-                };
-              }
-              return c;
-            })
-          );
-          
+      const updatedMessages = { ...prevMessages };
+
+      // Find the message in all conversations
+      for (const conversationId in updatedMessages) {
+        const messages = updatedMessages[conversationId];
+        const messageIndex = messages.findIndex(msg => msg.id === messageId);
+
+        if (messageIndex !== -1) {
+          // Update the message
+          const updatedMessage = { ...messages[messageIndex], read: true };
+          updatedMessages[conversationId] = [
+            ...messages.slice(0, messageIndex),
+            updatedMessage,
+            ...messages.slice(messageIndex + 1)
+          ];
+
+          // Update unread count in the conversation
+          if (messages[messageIndex].sender === 'admin') {
+            setConversations(prevConversations =>
+              prevConversations.map(c => {
+                if (c.id === conversationId && c.unreadCount > 0) {
+                  return { ...c, unreadCount: c.unreadCount - 1 };
+                }
+                return c;
+              })
+            );
+          }
+
           break;
         }
       }
-      
-      return newMessages;
+
+      return updatedMessages;
     });
   };
 
-  const createConversation = async (userId: string, userName: string, userEmail: string): Promise<string> => {
-    const newConversationId = `conv_${Date.now().toString()}`;
-    
+  const createConversation = async (
+    userId: string,
+    userName: string,
+    userEmail: string
+  ): Promise<string> => {
+    // In a real app, this would make an API call to create a conversation
     const newConversation: Conversation = {
-      id: newConversationId,
+      id: `conv_${Date.now()}`,
       userId,
       userName,
       userEmail,
       lastMessage: '',
       lastMessageTime: new Date().toISOString(),
-      unreadCount: 0,
+      unreadCount: 0
     };
-    
+
     setConversations(prev => [...prev, newConversation]);
-    setChatMessages(prev => ({ ...prev, [newConversationId]: [] }));
-    
-    return newConversationId;
+    setCurrentConversation(newConversation.id);
+
+    // In a real app, we would return the ID from the server
+    return newConversation.id;
   };
 
-  // For demo purposes, add some mock conversations for admin users
-  useEffect(() => {
-    if (user?.is_admin && conversations.length === 0) {
-      // Add mock conversations
-      const mockConversations: Conversation[] = [
-        {
-          id: 'conv_1',
-          userId: 'user_1',
-          userName: 'John Doe',
-          userEmail: 'john@example.com',
-          lastMessage: 'Hello, I need help with my trading bot.',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-          unreadCount: 2,
-        },
-        {
-          id: 'conv_2',
-          userId: 'user_2',
-          userName: 'Jane Smith',
-          userEmail: 'jane@example.com',
-          lastMessage: 'When will my robot be delivered?',
-          lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          unreadCount: 0,
-        },
-      ];
-      
-      setConversations(mockConversations);
-      
-      // Add mock messages
-      const mockMessages: Record<string, ChatMessage[]> = {
-        'conv_1': [
-          {
-            id: 'msg_1',
-            conversationId: 'conv_1',
-            sender: 'user',
-            senderId: 'user_1',
-            text: 'Hello, I need help with my trading bot.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            read: false,
-          },
-          {
-            id: 'msg_2',
-            conversationId: 'conv_1',
-            sender: 'user',
-            senderId: 'user_1',
-            text: 'It\'s not connecting to my exchange account.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 29).toISOString(),
-            read: false,
-          },
-        ],
-        'conv_2': [
-          {
-            id: 'msg_3',
-            conversationId: 'conv_2',
-            sender: 'user',
-            senderId: 'user_2',
-            text: 'Hi, I purchased a trading robot yesterday.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-            read: true,
-          },
-          {
-            id: 'msg_4',
-            conversationId: 'conv_2',
-            sender: 'admin',
-            senderId: 'admin',
-            text: 'Hello Jane, thank you for your purchase. We\'re preparing your robot now.',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2.5).toISOString(),
-            read: true,
-          },
-          {
-            id: 'msg_5',
-            conversationId: 'conv_2',
-            sender: 'user',
-            senderId: 'user_2',
-            text: 'When will my robot be delivered?',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            read: true,
-          },
-        ],
-      };
-      
-      setChatMessages(mockMessages);
-    }
-  }, [user, conversations.length]);
+  // Mock implementation for getSubscriptionPrices
+  const getSubscriptionPrices = async (): Promise<PricingPlan[]> => {
+    // In a real app, this would be an API call
+    // For now, return mock data
+    return [
+      {
+        id: 'basic-monthly',
+        name: 'Basic AI Trading Signals',
+        price: 29.99,
+        currency: 'USD',
+        interval: 'monthly',
+        features: [
+          'Access to AI trading signals',
+          'Basic market analysis',
+          'Daily signal updates',
+          'Email notifications'
+        ]
+      },
+      {
+        id: 'premium-monthly',
+        name: 'Premium AI Trading Signals',
+        price: 99.99,
+        currency: 'USD',
+        interval: 'monthly',
+        features: [
+          'All Basic features',
+          'Advanced market analysis',
+          'Real-time signal updates',
+          'Direct AI chat support',
+          'Custom alerts and notifications'
+        ]
+      }
+    ];
+  };
 
-  const value = {
+  // Mock implementation for updateSubscriptionPrice
+  const updateSubscriptionPrice = async (planId: string, price: number): Promise<void> => {
+    // In a real app, this would be an API call to update the price
+    console.log(`Updating subscription price for plan ${planId} to ${price}`);
+    // Mock successful update
+    toast({
+      title: "Price updated",
+      description: `The price for plan ${planId} has been updated to ${price}`,
+    });
+  };
+
+  // Mock implementation for getUsers
+  const getUsers = async (): Promise<User[]> => {
+    // In a real app, this would be an API call to get all users
+    // For now, return mock data
+    return [
+      {
+        id: 'user1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        is_admin: false,
+        robots_delivered: true,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'user2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        is_admin: false,
+        robots_delivered: false,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'admin1',
+        name: 'Admin User',
+        email: 'admin@example.com',
+        is_admin: true,
+        created_at: new Date().toISOString()
+      }
+    ];
+  };
+
+  // Implementation for getTradingSignals
+  const getTradingSignals = async (
+    market: string = 'forex',
+    timeframe: string = '1h',
+    count: number = 10
+  ): Promise<TradingSignal[]> => {
+    try {
+      return await getTradingSignalsAPI(market, timeframe, count);
+    } catch (error) {
+      console.error('Error fetching trading signals:', error);
+      toast({
+        title: "Error fetching signals",
+        description: "Failed to load trading signals. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // Implementation for analyzeMarket
+  const analyzeMarket = async (
+    symbol: string,
+    timeframe: string = '1h'
+  ): Promise<MarketAnalysis> => {
+    try {
+      return await analyzeMarketAPI(symbol, timeframe);
+    } catch (error) {
+      console.error('Error analyzing market:', error);
+      toast({
+        title: "Error analyzing market",
+        description: "Failed to analyze market. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const contextValue: BackendContextType = {
     user,
     loading,
+    isLoading: loading, // Alias for loading
     loginUser: login,
+    login,
     registerUser: register,
+    register,
     logoutUser,
     submitRobotRequest,
+    submitRequest: submitRobotRequest, // Alias
     getUserRobotRequests,
     fetchAllRobotRequests,
     updateRobotRequest,
+    updateRobotRequestStatus: updateRobotRequest, // Alias
     getRobots,
+    robots,
     getRobotById,
     addRobot,
     updateRobot,
     deleteRobot,
     makePurchase,
+    purchaseRobot: makePurchase, // Alias
     getPurchases,
     initiateMpesaPayment,
     verifyMpesaPayment,
+    verifyPayment: verifyMpesaPayment, // Alias
     conversations,
     chatMessages,
     currentConversation,
+    setCurrentConversation,
     setCurrentConversationId,
     sendMessage,
     markMessageAsRead,
     createConversation,
+    getSubscriptionPrices,
+    updateSubscriptionPrice,
+    getUsers,
+    getTradingSignals,
+    analyzeMarket
   };
 
   return (
-    <BackendContext.Provider value={value}>
+    <BackendContext.Provider value={contextValue}>
       {children}
     </BackendContext.Provider>
   );
