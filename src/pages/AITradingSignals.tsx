@@ -215,7 +215,7 @@ const AITradingSignals = () => {
                   className="max-w-[200px]"
                 />
                 <Button onClick={handleMarketAnalysis} disabled={loadingAnalysis}>
-                  {loadingAnalysis ? <TradingLoader size="sm" /> : 'Analyze Market'}
+                  {loadingAnalysis ? <TradingLoader text="Analyzing market..." /> : 'Analyze Market'}
                 </Button>
               </div>
             </div>
