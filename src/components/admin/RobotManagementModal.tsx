@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,18 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-
-interface Robot {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  type: 'MT5' | 'Binary';
-  category: 'free' | 'paid';
-  features: string[];
-  imageUrl: string;
-}
+import { Robot } from '@/lib/backend'; // Import Robot type from backend
 
 interface RobotManagementModalProps {
   isOpen: boolean;
@@ -44,10 +32,10 @@ const RobotManagementModal = ({ isOpen, onClose, onSave, robot }: RobotManagemen
       setDescription(robot.description);
       setPrice(robot.price);
       setCurrency(robot.currency);
-      setType(robot.type);
+      setType(robot.type as 'MT5' | 'Binary'); // Cast to the expected type
       setCategory(robot.category);
       setFeaturesText(robot.features.join('\n'));
-      setImageUrl(robot.imageUrl);
+      setImageUrl(robot.imageUrl || robot.image_url || '/placeholder.svg');
     } else {
       // Reset form for new robot
       setName('');
@@ -77,7 +65,8 @@ const RobotManagementModal = ({ isOpen, onClose, onSave, robot }: RobotManagemen
       type,
       category,
       features,
-      imageUrl
+      imageUrl,
+      created_at: robot?.created_at || new Date().toISOString(),
     };
 
     onSave(robotData);
