@@ -1,116 +1,70 @@
-// Type Definitions
+
+// Types for user management
 export interface User {
   id: string;
   name: string;
   email: string;
   is_admin: boolean;
   role?: string;
+  has_requested_robot?: boolean;
   robots_delivered?: boolean;
   created_at: string;
   updated_at?: string;
 }
 
+// Types for robot management
 export interface Robot {
   id: string;
   name: string;
   description: string;
-  type: 'MT5' | 'Binary' | string;
   price: number;
-  features: string[];
-  image_url?: string;
-  imageUrl?: string;
   currency: string;
+  type: 'MT5' | 'Binary' | string;
   category: 'free' | 'paid';
+  features: string[];
+  imageUrl: string;
+  image_url?: string;
   created_at: string;
   updated_at?: string;
-  download_url?: string;
 }
 
+// Types for robot requests
 export interface RobotRequest {
   id: string;
   user_id: string;
   user_name?: string;
   user_email?: string;
-  request_title?: string;
-  description?: string;
-  requirements?: string[];
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress' | 'delivered';
-  budget?: number;
-  currency?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'rejected';
+  type: 'MT5' | 'Binary';
   created_at: string;
   updated_at?: string;
   
-  // Fields from backend Python schema
+  // Fields for request details
   robot_type?: string;
   trading_pairs?: string;
   timeframe?: string;
-  risk_level?: number;
+  risk_level?: string;
   bot_name?: string;
   market?: string;
-  stake_amount?: number;
+  trading_strategy?: string;
+  volume?: string;
+  order_type?: string;
+  stop_loss?: string;
+  take_profit?: string;
+  stake_amount?: string;
   contract_type?: string;
   duration?: string;
   prediction?: string;
-  trading_strategy?: string;
-  account_credentials?: string;
-  volume?: number;
-  order_type?: string;
-  stop_loss?: number;
-  take_profit?: number;
-  entry_rules?: string;
-  exit_rules?: string;
-  risk_management?: string;
-  additional_parameters?: string;
   
-  // UI fields
+  // Fields for delivery tracking
   is_delivered?: boolean;
   delivery_date?: string;
   download_url?: string;
-  notes?: string;
   progress?: number;
+  notes?: string;
 }
 
-export interface RobotRequestParams {
-  title?: string;
-  description?: string;
-  requirements?: string[];
-  budget?: number;
-  currency?: string;
-  
-  // New fields for robot configuration
-  robotType?: string;
-  tradingPairs?: string;
-  timeframe?: string;
-  riskLevel?: number;
-  botName?: string;
-  market?: string;
-  stake_amount?: number;
-  stakeAmount?: number;
-  contract_type?: string;
-  contractType?: string;
-  duration?: string;
-  prediction?: string;
-  trading_strategy?: string;
-  tradingStrategy?: string;
-  account_credentials?: string;
-  accountCredentials?: string;
-  volume?: number;
-  order_type?: string;
-  orderType?: string;
-  stop_loss?: number;
-  stopLoss?: number;
-  take_profit?: number;
-  takeProfit?: number;
-  entry_rules?: string;
-  entryRules?: string;
-  exit_rules?: string;
-  exitRules?: string;
-  risk_management?: string;
-  riskManagement?: string;
-  additional_parameters?: string;
-  additionalParameters?: string;
-}
-
+// Types for purchases
 export interface Purchase {
   id: string;
   user_id: string;
@@ -119,472 +73,381 @@ export interface Purchase {
   amount: number;
   currency: string;
   payment_method: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'pending' | 'completed' | 'failed';
   created_at: string;
 }
 
+// Types for request parameters
+export interface RobotRequestParams {
+  userId: string;
+  type: 'MT5' | 'Binary';
+  tradingPairs?: string;
+  timeframe?: string;
+  riskLevel?: string;
+  botName?: string;
+  market?: string;
+  tradingStrategy?: string;
+  volume?: string;
+  orderType?: string;
+  stopLoss?: string;
+  takeProfit?: string;
+  stakeAmount?: string;
+  contractType?: string;
+  duration?: string;
+  prediction?: string;
+  accountCredentials?: {
+    username: string;
+    password: string;
+    server?: string;
+  };
+}
+
+// Types for AI trading signals
 export interface TradingSignal {
   id: string;
   symbol: string;
-  market: string;
-  direction: 'BUY' | 'SELL';
+  direction: 'buy' | 'sell';
   entry_price: number;
   stop_loss: number;
   take_profit: number;
   timeframe: string;
   confidence: number;
-  strength: 'Strong' | 'Moderate' | 'Weak';
-  timestamp: string;
+  created_at: string;
+  expires_at: string;
+  status: 'active' | 'closed' | 'expired';
+  result?: 'win' | 'loss' | null;
+  pip_gain?: number;
+  profit_loss?: number;
 }
 
-export interface MarketAnalysis {
-  symbol: string;
-  direction: 'BUY' | 'SELL' | 'NEUTRAL';
-  confidence: number;
-  analysis_summary: string;
-  entry_price: number;
-  stop_loss: number;
-  take_profit: number;
-  market_sentiment: string;
-  technical_indicators: {
-    rsi: number;
-    macd: string;
-    moving_averages: {
-      sma_50: number;
-      sma_200: number;
-    }
-  };
-  timestamp: string;
+// Mock API functions for backend operations
+export function loginUser(email: string, password: string): Promise<{ user: User; token: string }> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    user: {
+      id: '1',
+      name: 'Admin User',
+      email: email,
+      is_admin: true,
+      created_at: new Date().toISOString(),
+    },
+    token: 'mock-jwt-token',
+  });
 }
 
-// Mock API functions
-export const registerUser = async (name: string, email: string, password: string): Promise<User> => {
-  console.log('Registering user:', { name, email });
-  // Simulate API call
-  return {
-    id: `user_${Date.now()}`,
-    name,
-    email,
-    is_admin: false,
-    robots_delivered: false,
-    created_at: new Date().toISOString()
-  };
-};
-
-export const loginUser = async (email: string, password: string): Promise<User> => {
-  console.log('Logging in user:', email);
-  // Simulate API call
-  // For testing, you can make an admin user with specific email
-  const isAdmin = email.includes('admin');
-  return {
-    id: `user_${Date.now()}`,
-    name: email.split('@')[0],
-    email,
-    is_admin: isAdmin,
-    robots_delivered: false,
-    created_at: new Date().toISOString()
-  };
-};
-
-export const logoutUser = async (): Promise<void> => {
-  console.log('Logging out user');
-  // Simulate API call
-  return;
-};
-
-export const getCurrentUser = async (): Promise<User> => {
-  console.log('Getting current user');
-  // Simulate API call
-  return {
-    id: `user_${Date.now()}`,
-    name: 'Current User',
-    email: 'user@example.com',
-    is_admin: false,
-    robots_delivered: false,
-    created_at: new Date().toISOString()
-  };
-};
-
-export const getRobots = async (): Promise<Robot[]> => {
-  console.log('Getting robots');
-  // Simulate API call
-  return [
-    {
-      id: 'robot1',
-      name: 'MT5 Scalper Pro',
-      description: 'Advanced scalping robot for MT5',
-      type: 'MT5',
-      price: 199.99,
-      features: ['Automated scalping', '24/7 trading', 'Advanced risk management'],
-      currency: 'USD',
-      category: 'paid',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'robot2',
-      name: 'Binary Options Helper',
-      description: 'AI-powered binary options trading assistant',
-      type: 'Binary',
-      price: 99.99,
-      features: ['Signal alerts', 'Market analysis', 'Win rate tracker'],
-      currency: 'USD',
-      category: 'paid',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'robot3',
-      name: 'Forex Trend Finder',
-      description: 'Free trend identification tool for forex markets',
-      type: 'MT5',
-      price: 0,
-      features: ['Trend detection', 'Basic alerts'],
-      currency: 'USD',
-      category: 'free',
-      created_at: new Date().toISOString()
-    }
-  ];
-};
-
-export const getRobotById = async (id: string): Promise<Robot> => {
-  console.log('Getting robot by ID:', id);
-  const robots = await getRobots();
-  const robot = robots.find(r => r.id === id);
-  if (!robot) {
-    throw new Error(`Robot with ID ${id} not found`);
-  }
-  return robot;
-};
-
-export const addRobot = async (robotData: Omit<Robot, 'id' | 'created_at'>): Promise<Robot> => {
-  console.log('Adding robot:', robotData);
-  // Simulate API call
-  return {
-    ...robotData,
-    id: `robot_${Date.now()}`,
-    created_at: new Date().toISOString()
-  };
-};
-
-export const updateRobot = async (robot: Robot): Promise<Robot> => {
-  console.log('Updating robot:', robot);
-  // Simulate API call
-  return {
-    ...robot,
-    updated_at: new Date().toISOString()
-  };
-};
-
-export const deleteRobot = async (id: string): Promise<void> => {
-  console.log('Deleting robot with ID:', id);
-  // Simulate API call
-  return;
-};
-
-export const getRobotRequests = async (userId: string): Promise<RobotRequest[]> => {
-  console.log('Getting robot requests for user:', userId);
-  // Simulate API call
-  return [
-    {
-      id: 'request1',
-      user_id: userId,
-      user_name: 'John Doe',
-      user_email: 'john@example.com',
-      request_title: 'Custom MT5 EA for Gold',
-      description: 'Looking for a custom EA that trades gold during New York session',
-      requirements: ['Must use ATR for stop loss', 'Target 1:2 risk-reward ratio'],
-      status: 'pending',
-      budget: 300,
-      currency: 'USD',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
-};
-
-export const getAllRobotRequests = async (): Promise<RobotRequest[]> => {
-  console.log('Getting all robot requests');
-  // Simulate API call
-  return [
-    {
-      id: 'request1',
-      user_id: 'user1',
-      user_name: 'John Doe',
-      user_email: 'john@example.com',
-      request_title: 'Custom MT5 EA for Gold',
-      description: 'Looking for a custom EA that trades gold during New York session',
-      requirements: ['Must use ATR for stop loss', 'Target 1:2 risk-reward ratio'],
-      status: 'pending',
-      budget: 300,
-      currency: 'USD',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'request2',
-      user_id: 'user2',
-      user_name: 'Jane Smith',
-      user_email: 'jane@example.com',
-      request_title: 'Binary Options Signal Tool',
-      description: 'Need a tool that can generate signals for binary options',
-      requirements: ['At least 70% accuracy', 'Visual alerts', 'Email notifications'],
-      status: 'approved',
-      budget: 150,
-      currency: 'USD',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
-};
-
-export const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
-  console.log('Submitting robot request:', params);
-  // Simulate API call
-  return {
-    id: `request_${Date.now()}`,
-    user_id: 'current_user_id',
-    user_name: 'Current User',
-    user_email: 'user@example.com',
-    request_title: params.title,
-    description: params.description,
-    requirements: params.requirements,
-    status: 'pending',
-    budget: params.budget,
-    currency: params.currency,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-};
-
-export const updateRobotRequest = async (requestId: string, updates: any): Promise<RobotRequest> => {
-  console.log('Updating robot request:', requestId, updates);
-  // Simulate API call
-  return {
-    id: requestId,
-    user_id: 'user1',
-    user_name: 'John Doe',
-    user_email: 'john@example.com',
-    request_title: 'Custom MT5 EA for Gold',
-    description: 'Looking for a custom EA that trades gold during New York session',
-    requirements: ['Must use ATR for stop loss', 'Target 1:2 risk-reward ratio'],
-    ...updates,
-    updated_at: new Date().toISOString(),
-    created_at: new Date().toISOString() // This would normally not change
-  };
-};
-
-export const updateRobotRequestStatus = async (requestId: string, updates: any): Promise<RobotRequest> => {
-  console.log('Updating robot request status:', requestId, updates);
-  // Simulate API call
-  return {
-    id: requestId,
-    user_id: 'user1',
-    user_name: 'John Doe',
-    user_email: 'john@example.com',
-    request_title: 'Custom MT5 EA for Gold',
-    robot_type: 'MT5',
-    trading_pairs: 'XAUUSD',
-    timeframe: '1h',
-    risk_level: 3,
-    description: 'Looking for a custom EA that trades gold during New York session',
-    requirements: ['Must use ATR for stop loss', 'Target 1:2 risk-reward ratio'],
-    status: updates.status || 'pending',
-    is_delivered: updates.is_delivered || false,
-    notes: updates.notes || '',
-    download_url: updates.download_url || '',
-    progress: updates.progress || 0,
-    budget: 300,
-    currency: 'USD',
-    updated_at: new Date().toISOString(),
-    created_at: new Date().toISOString() // This would normally not change
-  };
-};
-
-export const getUserPurchases = async (userId: string): Promise<Purchase[]> => {
-  console.log('Getting purchases for user:', userId);
-  // Simulate API call
-  return [
-    {
-      id: 'purchase1',
-      user_id: userId,
-      robot_id: 'robot1',
-      robot_name: 'MT5 Scalper Pro',
-      amount: 199.99,
-      currency: 'USD',
-      payment_method: 'credit_card',
-      status: 'completed',
-      created_at: new Date().toISOString()
-    }
-  ];
-};
-
-export const makePurchase = async (
-  userId: string,
-  robotId: string,
-  amount: number,
-  currency: string,
-  paymentMethod: string
-): Promise<Purchase> => {
-  console.log('Making purchase:', { userId, robotId, amount, currency, paymentMethod });
-  // Simulate API call
-  return {
-    id: `purchase_${Date.now()}`,
-    user_id: userId,
-    robot_id: robotId,
-    robot_name: 'Some Robot', // In real implementation, would fetch robot name
-    amount,
-    currency,
-    payment_method: paymentMethod,
-    status: 'completed',
-    created_at: new Date().toISOString()
-  };
-};
-
-export const purchaseRobot = async (
-  userId: string,
-  robotId: string,
-  amount: number,
-  currency: string,
-  paymentMethod: string
-): Promise<Purchase> => {
-  console.log('Purchasing robot:', { userId, robotId, amount, currency, paymentMethod });
-  // Simulate API call - delegate to makePurchase
-  return makePurchase(userId, robotId, amount, currency, paymentMethod);
-};
-
-export const initiateMpesaPayment = async (
-  phone: string,
-  amount: number,
-  robotId: string
-): Promise<any> => {
-  console.log('Initiating M-Pesa payment:', { phone, amount, robotId });
-  // Simulate API call
-  return {
-    checkoutRequestId: `mpesa_${Date.now()}`,
-    responseCode: '0',
-    responseDescription: 'Success. Request accepted for processing',
-    customerMessage: 'Please enter your M-Pesa PIN to complete the transaction'
-  };
-};
-
-export const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boolean> => {
-  console.log('Verifying M-Pesa payment:', checkoutRequestId);
-  // Simulate API call - in real app would check backend
-  return true; // Simulating successful payment
-};
-
-export const verifyPayment = async (paymentId: string): Promise<boolean> => {
-  console.log('Verifying payment:', paymentId);
-  // Simulate API call - in real app would check backend
-  return true; // Simulating successful payment
-};
-
-export const getTradingSignals = async (
-  market: string = 'forex',
-  timeframe: string = '1h',
-  count: number = 10
-): Promise<TradingSignal[]> => {
-  console.log('Getting trading signals:', { market, timeframe, count });
-  // Simulate API call - in real app would fetch from AI service
-  return [
-    {
-      id: 'signal1',
-      symbol: 'EURUSD',
-      market: 'forex',
-      direction: 'BUY',
-      entry_price: 1.0950,
-      stop_loss: 1.0900,
-      take_profit: 1.1050,
-      timeframe: '1h',
-      confidence: 85,
-      strength: 'Strong',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'signal2',
-      symbol: 'BTCUSD',
-      market: 'crypto',
-      direction: 'SELL',
-      entry_price: 55000,
-      stop_loss: 56000,
-      take_profit: 53000,
-      timeframe: '4h',
-      confidence: 70,
-      strength: 'Moderate',
-      timestamp: new Date().toISOString()
-    }
-  ];
-};
-
-export const analyzeMarket = async (
-  symbol: string,
-  timeframe: string = '1h'
-): Promise<MarketAnalysis> => {
-  console.log('Analyzing market:', { symbol, timeframe });
-  // Simulate API call - in real app would fetch from AI service
-  return {
-    symbol,
-    direction: 'BUY',
-    confidence: 75,
-    analysis_summary: 'Bullish momentum with potential for continuation. RSI showing oversold conditions and price is above key moving averages.',
-    entry_price: symbol.includes('BTC') ? 54000 : 1.0950,
-    stop_loss: symbol.includes('BTC') ? 53000 : 1.0900,
-    take_profit: symbol.includes('BTC') ? 56000 : 1.1050,
-    market_sentiment: 'Bullish',
-    technical_indicators: {
-      rsi: 65,
-      macd: 'Bullish Crossover',
-      moving_averages: {
-        sma_50: symbol.includes('BTC') ? 52000 : 1.0900,
-        sma_200: symbol.includes('BTC') ? 48000 : 1.0800
-      }
-    },
-    timestamp: new Date().toISOString()
-  };
-};
-
-export const getSubscriptionPrices = async (): Promise<any> => {
-  console.log('Getting subscription prices');
-  // Simulate API call
-  return {
-    basic: { monthly: 9.99, yearly: 99.99 },
-    premium: { monthly: 19.99, yearly: 199.99 },
-    professional: { monthly: 49.99, yearly: 499.99 }
-  };
-};
-
-export const updateSubscriptionPrice = async (tier: string, period: string, price: number): Promise<any> => {
-  console.log('Updating subscription price:', { tier, period, price });
-  // Simulate API call
-  return { success: true, message: `Updated ${tier} ${period} price to ${price}` };
-};
-
-export const getUsers = async (): Promise<User[]> => {
-  console.log('Getting users');
-  // Simulate API call
-  return [
-    {
-      id: 'user1',
-      name: 'John Doe',
-      email: 'john@example.com',
+export function registerUser(name: string, email: string, password: string): Promise<{ user: User; token: string }> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    user: {
+      id: '1',
+      name: name,
+      email: email,
       is_admin: false,
-      role: 'customer',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     },
+    token: 'mock-jwt-token',
+  });
+}
+
+export function getUsers(): Promise<User[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
     {
-      id: 'user2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      is_admin: false,
-      role: 'customer',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 'admin1',
+      id: '1',
       name: 'Admin User',
       email: 'admin@example.com',
       is_admin: true,
       role: 'admin',
-      created_at: new Date().toISOString()
-    }
-  ];
-};
+      has_requested_robot: false,
+      robots_delivered: true,
+      created_at: '2023-01-01T00:00:00.000Z',
+    },
+    {
+      id: '2',
+      name: 'Regular User',
+      email: 'user@example.com',
+      is_admin: false,
+      role: 'user',
+      has_requested_robot: true,
+      robots_delivered: true,
+      created_at: '2023-01-02T00:00:00.000Z',
+    },
+  ]);
+}
+
+export function requestRobot(params: RobotRequestParams): Promise<RobotRequest> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id: '1',
+    user_id: params.userId,
+    status: 'pending',
+    type: params.type,
+    created_at: new Date().toISOString(),
+    robot_type: params.type,
+    trading_pairs: params.tradingPairs,
+    timeframe: params.timeframe,
+    risk_level: params.riskLevel,
+    bot_name: params.botName,
+    market: params.market,
+    trading_strategy: params.tradingStrategy,
+    volume: params.volume,
+    order_type: params.orderType,
+    stop_loss: params.stopLoss,
+    take_profit: params.takeProfit,
+    stake_amount: params.stakeAmount,
+    contract_type: params.contractType,
+    duration: params.duration,
+    prediction: params.prediction,
+  });
+}
+
+export function getUserRobotRequests(userId: string): Promise<RobotRequest[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
+    {
+      id: '1',
+      user_id: userId,
+      status: 'pending',
+      type: 'MT5',
+      created_at: '2023-03-01T00:00:00.000Z',
+      robot_type: 'MT5',
+      trading_pairs: 'EURUSD',
+      timeframe: 'H1',
+      risk_level: 'Medium',
+      progress: 20,
+    },
+    {
+      id: '2',
+      user_id: userId,
+      status: 'in_progress',
+      type: 'Binary',
+      created_at: '2023-03-05T00:00:00.000Z',
+      robot_type: 'Binary',
+      market: 'Forex',
+      trading_strategy: 'Support/Resistance',
+      progress: 60,
+    },
+  ]);
+}
+
+export function getAllRobotRequests(): Promise<RobotRequest[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
+    {
+      id: '1',
+      user_id: '2',
+      user_name: 'John Doe',
+      user_email: 'john@example.com',
+      status: 'pending',
+      type: 'MT5',
+      created_at: '2023-03-01T00:00:00.000Z',
+      robot_type: 'MT5',
+      trading_pairs: 'EURUSD',
+      timeframe: 'H1',
+      risk_level: 'Medium',
+      progress: 20,
+    },
+    {
+      id: '2',
+      user_id: '3',
+      user_name: 'Jane Smith',
+      user_email: 'jane@example.com',
+      status: 'in_progress',
+      type: 'Binary',
+      created_at: '2023-03-05T00:00:00.000Z',
+      robot_type: 'Binary',
+      market: 'Forex',
+      trading_strategy: 'Support/Resistance',
+      progress: 60,
+    },
+  ]);
+}
+
+export function updateRobotRequest(requestId: string, updateData: Partial<RobotRequest>): Promise<RobotRequest> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id: requestId,
+    user_id: '2',
+    status: updateData.status || 'in_progress',
+    type: 'MT5',
+    created_at: '2023-03-01T00:00:00.000Z',
+    updated_at: new Date().toISOString(),
+    robot_type: 'MT5',
+    trading_pairs: 'EURUSD',
+    timeframe: 'H1',
+    risk_level: 'Medium',
+    progress: updateData.progress || 50,
+    notes: updateData.notes || '',
+    is_delivered: updateData.is_delivered || false,
+    download_url: updateData.download_url || '',
+  });
+}
+
+export function getRobots(): Promise<Robot[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
+    {
+      id: '1',
+      name: 'MT5 Pro Scalper',
+      description: 'Advanced scalping robot for MT5 platform',
+      price: 199,
+      currency: 'USD',
+      type: 'MT5',
+      category: 'paid',
+      features: ['Scalping strategy', 'Low drawdown', 'Works on all pairs'],
+      imageUrl: '/placeholder.svg',
+      created_at: '2023-01-10T00:00:00.000Z',
+    },
+    {
+      id: '2',
+      name: 'Binary Options Master',
+      description: 'High-precision binary options robot',
+      price: 149,
+      currency: 'USD',
+      type: 'Binary',
+      category: 'paid',
+      features: ['60-second trades', 'Signal filtering', 'Auto risk management'],
+      imageUrl: '/placeholder.svg',
+      created_at: '2023-01-15T00:00:00.000Z',
+    },
+    {
+      id: '3',
+      name: 'MT5 Trend Follower',
+      description: 'Free trend following robot for MT5',
+      price: 0,
+      currency: 'USD',
+      type: 'MT5',
+      category: 'free',
+      features: ['Trend detection', 'Simple interface', 'Email alerts'],
+      imageUrl: '/placeholder.svg',
+      created_at: '2023-01-20T00:00:00.000Z',
+    },
+  ]);
+}
+
+export function addRobot(robot: Robot): Promise<Robot> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    ...robot,
+    id: robot.id || Math.random().toString(36).substr(2, 9),
+    created_at: new Date().toISOString(),
+  });
+}
+
+export function updateRobot(robotId: string, robotData: Partial<Robot>): Promise<Robot> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id: robotId,
+    name: robotData.name || 'Updated Robot',
+    description: robotData.description || 'Description updated',
+    price: robotData.price || 99,
+    currency: robotData.currency || 'USD',
+    type: robotData.type || 'MT5',
+    category: robotData.category || 'paid',
+    features: robotData.features || [],
+    imageUrl: robotData.imageUrl || '/placeholder.svg',
+    created_at: '2023-01-10T00:00:00.000Z',
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export function deleteRobot(robotId: string): Promise<{ success: boolean }> {
+  // Implementation would call the backend API
+  return Promise.resolve({ success: true });
+}
+
+export function purchaseRobot(userId: string, robotId: string, paymentDetails: any): Promise<Purchase> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id: Math.random().toString(36).substr(2, 9),
+    user_id: userId,
+    robot_id: robotId,
+    robot_name: 'MT5 Pro Scalper',
+    amount: 199,
+    currency: 'USD',
+    payment_method: paymentDetails.method || 'card',
+    status: 'completed',
+    created_at: new Date().toISOString(),
+  });
+}
+
+export function getUserPurchases(userId: string): Promise<Purchase[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
+    {
+      id: '1',
+      user_id: userId,
+      robot_id: '1',
+      robot_name: 'MT5 Pro Scalper',
+      amount: 199,
+      currency: 'USD',
+      payment_method: 'card',
+      status: 'completed',
+      created_at: '2023-02-15T00:00:00.000Z',
+    },
+    {
+      id: '2',
+      user_id: userId,
+      robot_id: '2',
+      robot_name: 'Binary Options Master',
+      amount: 149,
+      currency: 'USD',
+      payment_method: 'paypal',
+      status: 'completed',
+      created_at: '2023-02-20T00:00:00.000Z',
+    },
+  ]);
+}
+
+export function getTradingSignals(): Promise<TradingSignal[]> {
+  // Implementation would call the backend API
+  return Promise.resolve([
+    {
+      id: '1',
+      symbol: 'EURUSD',
+      direction: 'buy',
+      entry_price: 1.0850,
+      stop_loss: 1.0800,
+      take_profit: 1.0950,
+      timeframe: 'H4',
+      confidence: 85,
+      created_at: '2023-04-01T00:00:00.000Z',
+      expires_at: '2023-04-02T00:00:00.000Z',
+      status: 'active',
+    },
+    {
+      id: '2',
+      symbol: 'GBPJPY',
+      direction: 'sell',
+      entry_price: 155.50,
+      stop_loss: 156.20,
+      take_profit: 154.00,
+      timeframe: 'H1',
+      confidence: 75,
+      created_at: '2023-04-01T06:00:00.000Z',
+      expires_at: '2023-04-02T06:00:00.000Z',
+      status: 'active',
+    },
+    {
+      id: '3',
+      symbol: 'XAUUSD',
+      direction: 'buy',
+      entry_price: 1910.25,
+      stop_loss: 1900.00,
+      take_profit: 1940.50,
+      timeframe: 'D1',
+      confidence: 90,
+      created_at: '2023-03-30T00:00:00.000Z',
+      expires_at: '2023-04-06T00:00:00.000Z',
+      status: 'closed',
+      result: 'win',
+      pip_gain: 303,
+      profit_loss: 1515,
+    },
+  ]);
+}
+
+export function getAIResponse(message: string): Promise<string> {
+  // Implementation would call the backend API
+  return Promise.resolve("I'm the AI trading assistant. Based on your query about trading strategies, I recommend considering multiple timeframe analysis for better confirmation of trends. Would you like me to explain more about this approach?");
+}
