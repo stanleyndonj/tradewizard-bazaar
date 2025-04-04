@@ -236,6 +236,24 @@ const AITradingSignals = () => {
                         <p className="text-sm font-medium text-muted-foreground">Take Profit</p>
                         <p className="font-medium">{signal.take_profit}</p>
                       </div>
+                      {signal.market && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Market</p>
+                          <p className="font-medium">{signal.market}</p>
+                        </div>
+                      )}
+                      {signal.timestamp && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Time</p>
+                          <p className="font-medium">{new Date(signal.timestamp).toLocaleTimeString()}</p>
+                        </div>
+                      )}
+                      {signal.strength !== undefined && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Strength</p>
+                          <p className="font-medium">{signal.strength}/10</p>
+                        </div>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Created at: {new Date(signal.created_at).toLocaleDateString()}

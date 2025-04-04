@@ -1,322 +1,370 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBackend } from '@/context/BackendContext';
 import { RobotRequestParams } from '@/lib/backend';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from '@/hooks/use-toast';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import SectionHeader from '@/components/ui-elements/SectionHeader';
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { TradingLoader } from '@/components/ui/loader';
+import SectionHeader from '@/components/ui-elements/SectionHeader';
 
 const RobotConfiguration = () => {
-  const { type } = useParams<{ type: string }>();
-  const { user, submitRobotRequest, loading } = useBackend();
+  const { submitRobotRequest, user, loading } = useBackend();
   const navigate = useNavigate();
-  const [formValues, setFormValues] = useState({
-    botName: '',
-    tradingPairs: '',
-    timeframe: '',
-    riskLevel: '5',
-    tradingStrategy: '',
-    volume: '0.1',
-    orderType: 'Market',
-    stopLoss: '50',
-    takeProfit: '100',
-    stakeAmount: '10',
-    contractType: 'Call/Put',
-    duration: '60',
-    prediction: 'Up',
-    username: '',
-    password: '',
-    server: '',
-    market: ''
-  });
 
+  // Ensure user is logged in
   useEffect(() => {
-    // Set page title
-    document.title = `Configure ${type} Robot | TradeWizard`;
-    
-    if (!user && !loading) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to configure your robot.",
-        variant: "destructive",
-      });
-      localStorage.setItem('redirectAfterAuth', `/configure-robot/${type}`);
-      navigate('/auth');
-    }
-  }, [user, loading, navigate, type]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { id, value } = e.target;
-    setFormValues(prev => ({ ...prev, [id]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
     if (!user) {
+      // Store the current URL to redirect back after login
+      localStorage.setItem('redirectAfterAuth', window.location.pathname);
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  const userId = user?.id || ''; // Get user ID
+
+  // Form state variables
+  const [robotType, setRobotType] = useState<'MT5' | 'Binary'>('MT5');
+  const [tradingPairs, setTradingPairs] = useState('');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
+  const [riskLevel, setRiskLevel] = useState('');
+  const [botName, setBotName] = useState('');
+  const [selectedMarket, setSelectedMarket] = useState('');
+  const [strategy, setStrategy] = useState('');
+  const [volume, setVolume] = useState(0);
+  const [orderType, setOrderType] = useState('');
+  const [stopLoss, setStopLoss] = useState(0);
+  const [takeProfit, setTakeProfit] = useState(0);
+  const [accountUsername, setAccountUsername] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [accountServer, setAccountServer] = useState('');
+
+  // Binary options specific fields
+  const [stakeAmount, setStakeAmount] = useState(0);
+  const [contractType, setContractType] = useState('');
+  const [duration, setDuration] = useState('');
+  const [prediction, setPrediction] = useState('');
+  const [currency, setCurrency] = useState('');
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    
+    // Convert numeric inputs to strings where required by the type
+    const requestParams: RobotRequestParams = {
+      userId: userId,
+      type: robotType as 'MT5' | 'Binary',
+      tradingPairs: tradingPairs,
+      timeframe: selectedTimeframe,
+      riskLevel: riskLevel,
+      botName: botName,
+      market: selectedMarket,
+      tradingStrategy: strategy,
+      volume: volume.toString(), // Convert to string
+      orderType: orderType,
+      stopLoss: stopLoss.toString(), // Convert to string
+      takeProfit: takeProfit.toString(), // Convert to string
+      accountCredentials: {
+        username: accountUsername,
+        password: accountPassword,
+        server: accountServer
+      },
+      // Binary options specific fields
+      ...(robotType === 'Binary' && {
+        stakeAmount: stakeAmount.toString(), // Convert to string
+        contractType: contractType,
+        duration: duration,
+        prediction: prediction,
+        currency: currency
+      })
+    };
+
+    try {
+      await submitRobotRequest(requestParams);
       toast({
-        title: "Authentication required",
-        description: "Please sign in to submit your robot request.",
+        title: "Request submitted",
+        description: "Your robot configuration request has been submitted successfully.",
+      });
+      navigate('/dashboard'); // Redirect to dashboard after successful submission
+    } catch (error: any) {
+      console.error("Failed to submit robot request:", error);
+      toast({
+        title: "Request submission failed",
+        description: error.message || "Please check the form and try again.",
         variant: "destructive",
       });
-      navigate('/auth');
-      return;
-    }
-
-    if (type?.toLowerCase() === 'mt5') {
-      // For MT5 configuration, change numeric values to strings and fix accountCredentials format
-      const mt5RequestParams: RobotRequestParams = {
-        userId: user?.id || '',
-        type: 'MT5',
-        botName: formValues.botName,
-        tradingPairs: formValues.tradingPairs,
-        timeframe: formValues.timeframe,
-        riskLevel: formValues.riskLevel,
-        tradingStrategy: formValues.tradingStrategy,
-        volume: formValues.volume,
-        orderType: formValues.orderType,
-        stopLoss: formValues.stopLoss,
-        takeProfit: formValues.takeProfit,
-        stakeAmount: formValues.stakeAmount.toString(),
-        accountCredentials: {
-          username: formValues.username,
-          password: formValues.password,
-          server: formValues.server
-        },
-        market: formValues.market,
-        duration: formValues.duration.toString(),
-        prediction: formValues.prediction,
-        contractType: formValues.contractType
-      };
-      
-      try {
-        await submitRobotRequest(mt5RequestParams);
-        toast({
-          title: "MT5 Robot Request Submitted",
-          description: "Your MT5 robot request has been submitted successfully!",
-        });
-        navigate('/customer-dashboard', { state: { tab: 'robots' } });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to submit MT5 robot request. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else if (type?.toLowerCase() === 'binary') {
-      // For Binary Bot configuration
-      const binaryRequestParams: RobotRequestParams = {
-        userId: user?.id || '',
-        type: 'Binary',
-        botName: formValues.botName,
-        tradingPairs: formValues.tradingPairs,
-        timeframe: formValues.timeframe,
-        riskLevel: formValues.riskLevel,
-        tradingStrategy: formValues.tradingStrategy,
-        volume: formValues.volume,
-        orderType: formValues.orderType,
-        stopLoss: formValues.stopLoss,
-        takeProfit: formValues.takeProfit,
-        stakeAmount: formValues.stakeAmount.toString(),
-        accountCredentials: {
-          username: formValues.username,
-          password: formValues.password,
-          server: formValues.server
-        },
-        market: formValues.market,
-        duration: formValues.duration.toString(),
-        prediction: formValues.prediction,
-        contractType: formValues.contractType
-      };
-      
-      try {
-        await submitRobotRequest(binaryRequestParams);
-        toast({
-          title: "Binary Robot Request Submitted",
-          description: "Your Binary robot request has been submitted successfully!",
-        });
-        navigate('/customer-dashboard', { state: { tab: 'robots' } });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to submit Binary robot request. Please try again.",
-          variant: "destructive",
-        });
-      }
     }
   };
 
   if (loading) {
-    return <TradingLoader text="Loading configuration..." />;
-  }
-
-  if (!user) {
-    return null; // Will redirect in useEffect
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TradingLoader text="Submitting Robot Configuration..." />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow pt-24">
-        <div className="section-container py-10">
-          <SectionHeader
-            subtitle="Configure Your Robot"
-            title={`${type} Robot Configuration`}
-            description={`Customize your ${type} trading robot by providing the specifications below.`}
-            centered
-          />
-          
-          <div className="max-w-3xl mx-auto mt-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Configuration */}
-              <div>
-                <Label htmlFor="botName">Bot Name</Label>
-                <Input type="text" id="botName" value={formValues.botName} onChange={handleChange} placeholder="e.g., TrendMaster" />
-              </div>
-              
-              <div>
-                <Label htmlFor="tradingPairs">Trading Pairs</Label>
-                <Input type="text" id="tradingPairs" value={formValues.tradingPairs} onChange={handleChange} placeholder="e.g., EURUSD, GBPJPY" />
-              </div>
-              
-              <div>
-                <Label htmlFor="timeframe">Timeframe</Label>
-                <Select value={formValues.timeframe} onValueChange={(value) => setFormValues(prev => ({ ...prev, timeframe: value }))}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a timeframe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M1">M1</SelectItem>
-                    <SelectItem value="M5">M5</SelectItem>
-                    <SelectItem value="M15">M15</SelectItem>
-                    <SelectItem value="M30">M30</SelectItem>
-                    <SelectItem value="H1">H1</SelectItem>
-                    <SelectItem value="H4">H4</SelectItem>
-                    <SelectItem value="D1">D1</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="riskLevel">Risk Level (%)</Label>
-                <Input type="number" id="riskLevel" value={formValues.riskLevel} onChange={handleChange} placeholder="e.g., 5" />
-              </div>
-              
-              <div>
-                <Label htmlFor="tradingStrategy">Trading Strategy</Label>
-                <Textarea id="tradingStrategy" value={formValues.tradingStrategy} onChange={handleChange} placeholder="Describe your trading strategy..." />
-              </div>
+    <div className="container py-24">
+      <SectionHeader
+        title="Configure Your Robot"
+        description="Customize your robot settings to match your trading preferences."
+        subtitle="Robot Configuration"
+        centered
+      />
+      <Card className="max-w-4xl mx-auto mt-8">
+        <CardHeader>
+          <CardTitle>Robot Configuration Form</CardTitle>
+          <CardDescription>Fill in the details below to configure your robot.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div>
+              <Label htmlFor="robotType">Robot Type</Label>
+              <Select value={robotType} onValueChange={(value) => setRobotType(value as 'MT5' | 'Binary')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Robot Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MT5">MetaTrader 5 (MT5)</SelectItem>
+                  <SelectItem value="Binary">Binary Options</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* MT5 Specific Configuration */}
-              {type?.toLowerCase() === 'mt5' && (
-                <>
-                  <div>
-                    <Label htmlFor="volume">Volume</Label>
-                    <Input type="number" id="volume" value={formValues.volume} onChange={handleChange} placeholder="e.g., 0.01" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="orderType">Order Type</Label>
-                    <Select value={formValues.orderType} onValueChange={(value) => setFormValues(prev => ({ ...prev, orderType: value }))}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select order type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Market">Market Order</SelectItem>
-                        <SelectItem value="Pending">Pending Order</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="stopLoss">Stop Loss (pips)</Label>
-                    <Input type="number" id="stopLoss" value={formValues.stopLoss} onChange={handleChange} placeholder="e.g., 50" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="takeProfit">Take Profit (pips)</Label>
-                    <Input type="number" id="takeProfit" value={formValues.takeProfit} onChange={handleChange} placeholder="e.g., 100" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="username">Account Username</Label>
-                    <Input type="text" id="username" value={formValues.username} onChange={handleChange} placeholder="MT5 Account Username" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="password">Account Password</Label>
-                    <Input type="password" id="password" value={formValues.password} onChange={handleChange} placeholder="MT5 Account Password" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="server">Server</Label>
-                    <Input type="text" id="server" value={formValues.server} onChange={handleChange} placeholder="MT5 Server Address" />
-                  </div>
-                </>
-              )}
+            <div>
+              <Label htmlFor="tradingPairs">Trading Pairs</Label>
+              <Input
+                type="text"
+                id="tradingPairs"
+                placeholder="e.g., EURUSD, GBPJPY"
+                value={tradingPairs}
+                onChange={(e) => setTradingPairs(e.target.value)}
+              />
+            </div>
 
-              {/* Binary Bot Specific Configuration */}
-              {type?.toLowerCase() === 'binary' && (
-                <>
-                  <div>
-                    <Label htmlFor="market">Market</Label>
-                    <Input type="text" id="market" value={formValues.market} onChange={handleChange} placeholder="e.g., Forex, Indices" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="stakeAmount">Stake Amount</Label>
-                    <Input type="number" id="stakeAmount" value={formValues.stakeAmount} onChange={handleChange} placeholder="e.g., 10" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="contractType">Contract Type</Label>
-                    <Select value={formValues.contractType} onValueChange={(value) => setFormValues(prev => ({ ...prev, contractType: value }))}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select contract type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Call/Put">Call/Put</SelectItem>
-                        <SelectItem value="Higher/Lower">Higher/Lower</SelectItem>
-                        <SelectItem value="Touch/No Touch">Touch/No Touch</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="duration">Duration (seconds)</Label>
-                    <Input type="number" id="duration" value={formValues.duration} onChange={handleChange} placeholder="e.g., 60" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="prediction">Prediction</Label>
-                    <Select value={formValues.prediction} onValueChange={(value) => setFormValues(prev => ({ ...prev, prediction: value }))}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select prediction" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Up">Up</SelectItem>
-                        <SelectItem value="Down">Down</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
+            <div>
+              <Label htmlFor="timeframe">Timeframe</Label>
+              <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Timeframe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 Minute</SelectItem>
+                  <SelectItem value="5m">5 Minutes</SelectItem>
+                  <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="30m">30 Minutes</SelectItem>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="4h">4 Hours</SelectItem>
+                  <SelectItem value="1d">1 Day</SelectItem>
+                  <SelectItem value="1w">1 Week</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <Button type="submit" className="w-full">Submit Request</Button>
-            </form>
-          </div>
-        </div>
-      </main>
-      
-      <Footer />
+            <div>
+              <Label htmlFor="riskLevel">Risk Level</Label>
+              <Input
+                type="text"
+                id="riskLevel"
+                placeholder="e.g., High, Medium, Low"
+                value={riskLevel}
+                onChange={(e) => setRiskLevel(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="botName">Bot Name</Label>
+              <Input
+                type="text"
+                id="botName"
+                placeholder="Enter Bot Name"
+                value={botName}
+                onChange={(e) => setBotName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="market">Market</Label>
+              <Input
+                type="text"
+                id="selectedMarket"
+                placeholder="e.g., Forex, Crypto"
+                value={selectedMarket}
+                onChange={(e) => setSelectedMarket(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="strategy">Trading Strategy</Label>
+              <Input
+                type="text"
+                id="strategy"
+                placeholder="e.g., Trend Following, Scalping"
+                value={strategy}
+                onChange={(e) => setStrategy(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="volume">Volume</Label>
+              <Input
+                type="number"
+                id="volume"
+                placeholder="Enter Volume"
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="orderType">Order Type</Label>
+              <Input
+                type="text"
+                id="orderType"
+                placeholder="e.g., Market, Limit"
+                value={orderType}
+                onChange={(e) => setOrderType(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="stopLoss">Stop Loss</Label>
+              <Input
+                type="number"
+                id="stopLoss"
+                placeholder="Enter Stop Loss"
+                value={stopLoss}
+                onChange={(e) => setStopLoss(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="takeProfit">Take Profit</Label>
+              <Input
+                type="number"
+                id="takeProfit"
+                placeholder="Enter Take Profit"
+                value={takeProfit}
+                onChange={(e) => setTakeProfit(Number(e.target.value))}
+              />
+            </div>
+
+            <Separator />
+
+            <div>
+              <Label htmlFor="accountUsername">Account Username</Label>
+              <Input
+                type="text"
+                id="accountUsername"
+                placeholder="Enter Account Username"
+                value={accountUsername}
+                onChange={(e) => setAccountUsername(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="accountPassword">Account Password</Label>
+              <Input
+                type="password"
+                id="accountPassword"
+                placeholder="Enter Account Password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="accountServer">Account Server</Label>
+              <Input
+                type="text"
+                id="accountServer"
+                placeholder="Enter Account Server"
+                value={accountServer}
+                onChange={(e) => setAccountServer(e.target.value)}
+              />
+            </div>
+
+            {robotType === 'Binary' && (
+              <>
+                <Separator />
+
+                <div>
+                  <Label htmlFor="stakeAmount">Stake Amount</Label>
+                  <Input
+                    type="number"
+                    id="stakeAmount"
+                    placeholder="Enter Stake Amount"
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(Number(e.target.value))}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="contractType">Contract Type</Label>
+                  <Input
+                    type="text"
+                    id="contractType"
+                    placeholder="e.g., Call, Put"
+                    value={contractType}
+                    onChange={(e) => setContractType(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="duration">Duration</Label>
+                  <Input
+                    type="text"
+                    id="duration"
+                    placeholder="e.g., 60 seconds, 5 minutes"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="prediction">Prediction</Label>
+                  <Input
+                    type="text"
+                    id="prediction"
+                    placeholder="e.g., Up, Down"
+                    value={prediction}
+                    onChange={(e) => setPrediction(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    type="text"
+                    id="currency"
+                    placeholder="e.g., USD, EUR"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            <Button type="submit">Submit Configuration</Button>
+          </form>
+        </CardContent>
+        <CardFooter>
+          <p className="text-sm text-muted-foreground">
+            Please review your configuration before submitting.
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

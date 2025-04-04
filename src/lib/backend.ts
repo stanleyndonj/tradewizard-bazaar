@@ -1,4 +1,3 @@
-
 // Types for user management
 export interface User {
   id: string;
@@ -469,7 +468,7 @@ export function verifyMpesaPayment(checkoutRequestId: string): Promise<boolean> 
   return Promise.resolve(true);
 }
 
-export function getTradingSignals(): Promise<TradingSignal[]> {
+export function getTradingSignals(market?: string, timeframe?: string, count?: number): Promise<TradingSignal[]> {
   // Implementation would call the backend API
   return Promise.resolve([
     {
