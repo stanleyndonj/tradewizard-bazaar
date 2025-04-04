@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -83,11 +82,6 @@ const RobotRequestManagement = () => {
         download_url: downloadUrl,
         is_delivered: status === "delivered"
       };
-      
-      // If status changed to delivered, set delivery date
-      if (status === "delivered" && selectedRequest.status !== "delivered") {
-        updates.delivery_date = new Date().toISOString();
-      }
       
       await updateRobotRequest(selectedRequest.id, updates);
       await loadRobotRequests();

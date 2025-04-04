@@ -251,10 +251,10 @@ const RobotManagement = () => {
 
       {isModalOpen && (
         <RobotManagementModal 
-          isOpen={isModalOpen}
+          open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveRobot}
           robot={currentRobot}
+          isEdit={!!currentRobot}
         />
       )}
     </div>

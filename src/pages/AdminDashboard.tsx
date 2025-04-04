@@ -14,7 +14,6 @@ import { toast } from '@/hooks/use-toast';
 const AdminDashboard = () => {
   const { user, fetchAllRobotRequests } = useBackend();
   const [isLoading, setIsLoading] = useState(true);
-  const [requests, setRequests] = useState([]);
   const [activeTab, setActiveTab] = useState('robot-requests');
 
   useEffect(() => {
@@ -26,8 +25,7 @@ const AdminDashboard = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const robotRequests = await fetchAllRobotRequests();
-      setRequests(robotRequests || []);
+      await fetchAllRobotRequests();
     } catch (error) {
       console.error('Error loading admin data:', error);
       toast({
@@ -74,10 +72,7 @@ const AdminDashboard = () => {
                 <TradingLoader text="Loading robot requests..." />
               </div>
             ) : (
-              <RobotRequestManagement 
-                requests={requests} 
-                onRefresh={loadData} 
-              />
+              <RobotRequestManagement />
             )}
           </TabsContent>
           

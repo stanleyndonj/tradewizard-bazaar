@@ -83,7 +83,7 @@ const AITradingSignals = () => {
   };
 
   if (!hasAccess) {
-    return <SubscriptionRequired feature="AI Trading Signals" />;
+    return <SubscriptionRequired message="You need to subscribe to access AI Trading Signals" />;
   }
 
   return (
