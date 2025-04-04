@@ -117,10 +117,12 @@ const RobotManagement = () => {
           const isZip = fileExtension === 'zip';
           const fileType = isZip ? 'zip' : 'xml';
           
-          updateRobot({
+          const updatedRobot: Robot = {
             ...robot,
             download_url: `/uploads/${file.name}`, // This would be a real URL in production
-          });
+          };
+          
+          updateRobot(updatedRobot);
           
           toast({
             title: "File uploaded",

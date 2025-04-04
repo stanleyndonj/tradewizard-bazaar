@@ -1,3 +1,4 @@
+
 import { Robot, RobotRequest } from "./backend";
 
 // Mock data for robots
@@ -17,7 +18,7 @@ export const ROBOTS: Robot[] = [
     currency: "USD",
     category: "paid",
     image_url: "/placeholder.svg",
-    imageUrl: "/placeholder.svg", // Added this property
+    imageUrl: "/placeholder.svg",
     created_at: "2023-01-10T12:00:00Z",
   },
   {
@@ -35,7 +36,7 @@ export const ROBOTS: Robot[] = [
     currency: "USD",
     category: "paid",
     image_url: "/placeholder.svg",
-    imageUrl: "/placeholder.svg", // Added this property
+    imageUrl: "/placeholder.svg",
     created_at: "2023-01-15T12:00:00Z",
   },
   {
@@ -53,7 +54,7 @@ export const ROBOTS: Robot[] = [
     currency: "USD",
     category: "free",
     image_url: "/placeholder.svg",
-    imageUrl: "/placeholder.svg", // Added this property
+    imageUrl: "/placeholder.svg",
     created_at: "2023-01-20T12:00:00Z",
   },
 ];
@@ -72,21 +73,21 @@ export const ROBOT_REQUESTS: RobotRequest[] = [
     trading_pairs: "EURUSD",
     timeframe: "H1",
     risk_level: "Medium",
-    currency: "USD" // Added currency property
+    currency: "USD"
   },
   {
     id: "2",
     user_id: "user2",
     user_name: "Jane Smith",
     user_email: "jane@example.com",
-    status: "in_progress", // Changed from "approved" to match allowed status values
+    status: "in_progress",
     type: "Binary",
     created_at: "2023-01-26T12:00:00Z",
     progress: 50,
     market: "Forex",
     trading_strategy: "RSI + MACD",
-    stake_amount: "100", // Changed from number to string
-    currency: "USD" // Added currency property
+    stake_amount: "100",
+    currency: "USD"
   },
 ];
 

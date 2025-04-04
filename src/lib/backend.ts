@@ -1,3 +1,4 @@
+
 // Types for user management
 export interface User {
   id: string;

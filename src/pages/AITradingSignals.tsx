@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useBackend } from '@/context/BackendContext';
-import { TradingSignal } from '@/lib/backend';
+import { TradingSignal, MarketAnalysis } from '@/lib/backend';
 import { 
   Card, 
   CardHeader, 
@@ -28,7 +29,7 @@ const AITradingSignals = () => {
   const [marketFilter, setMarketFilter] = useState('forex');
   const [timeframeFilter, setTimeframeFilter] = useState('1h');
   const [symbolToAnalyze, setSymbolToAnalyze] = useState('');
-  const [marketAnalysis, setMarketAnalysis] = useState(null);
+  const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysis | null>(null);
 
   useEffect(() => {
     document.title = 'AI Trading Signals | TradeWizard';
