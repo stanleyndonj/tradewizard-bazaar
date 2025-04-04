@@ -1,19 +1,20 @@
-
 // Type Definitions
 export interface User {
   id: string;
   name: string;
   email: string;
   is_admin: boolean;
+  role?: string;
   robots_delivered?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Robot {
   id: string;
   name: string;
   description: string;
-  type: 'MT5' | 'Binary';
+  type: 'MT5' | 'Binary' | string;
   price: number;
   features: string[];
   image_url?: string;
@@ -21,30 +22,93 @@ export interface Robot {
   currency: string;
   category: 'free' | 'paid';
   created_at: string;
+  updated_at?: string;
   download_url?: string;
 }
 
 export interface RobotRequest {
   id: string;
   user_id: string;
-  user_name: string;
-  user_email: string;
-  request_title: string;
-  description: string;
-  requirements: string[];
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
-  budget: number;
-  currency: string;
+  user_name?: string;
+  user_email?: string;
+  request_title?: string;
+  description?: string;
+  requirements?: string[];
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'in_progress' | 'delivered';
+  budget?: number;
+  currency?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+  
+  // Fields from backend Python schema
+  robot_type?: string;
+  trading_pairs?: string;
+  timeframe?: string;
+  risk_level?: number;
+  bot_name?: string;
+  market?: string;
+  stake_amount?: number;
+  contract_type?: string;
+  duration?: string;
+  prediction?: string;
+  trading_strategy?: string;
+  account_credentials?: string;
+  volume?: number;
+  order_type?: string;
+  stop_loss?: number;
+  take_profit?: number;
+  entry_rules?: string;
+  exit_rules?: string;
+  risk_management?: string;
+  additional_parameters?: string;
+  
+  // UI fields
+  is_delivered?: boolean;
+  delivery_date?: string;
+  download_url?: string;
+  notes?: string;
+  progress?: number;
 }
 
 export interface RobotRequestParams {
-  title: string;
-  description: string;
-  requirements: string[];
-  budget: number;
-  currency: string;
+  title?: string;
+  description?: string;
+  requirements?: string[];
+  budget?: number;
+  currency?: string;
+  
+  // New fields for robot configuration
+  robotType?: string;
+  tradingPairs?: string;
+  timeframe?: string;
+  riskLevel?: number;
+  botName?: string;
+  market?: string;
+  stake_amount?: number;
+  stakeAmount?: number;
+  contract_type?: string;
+  contractType?: string;
+  duration?: string;
+  prediction?: string;
+  trading_strategy?: string;
+  tradingStrategy?: string;
+  account_credentials?: string;
+  accountCredentials?: string;
+  volume?: number;
+  order_type?: string;
+  orderType?: string;
+  stop_loss?: number;
+  stopLoss?: number;
+  take_profit?: number;
+  takeProfit?: number;
+  entry_rules?: string;
+  entryRules?: string;
+  exit_rules?: string;
+  exitRules?: string;
+  risk_management?: string;
+  riskManagement?: string;
+  additional_parameters?: string;
+  additionalParameters?: string;
 }
 
 export interface Purchase {
@@ -308,6 +372,33 @@ export const updateRobotRequest = async (requestId: string, updates: any): Promi
   };
 };
 
+export const updateRobotRequestStatus = async (requestId: string, updates: any): Promise<RobotRequest> => {
+  console.log('Updating robot request status:', requestId, updates);
+  // Simulate API call
+  return {
+    id: requestId,
+    user_id: 'user1',
+    user_name: 'John Doe',
+    user_email: 'john@example.com',
+    request_title: 'Custom MT5 EA for Gold',
+    robot_type: 'MT5',
+    trading_pairs: 'XAUUSD',
+    timeframe: '1h',
+    risk_level: 3,
+    description: 'Looking for a custom EA that trades gold during New York session',
+    requirements: ['Must use ATR for stop loss', 'Target 1:2 risk-reward ratio'],
+    status: updates.status || 'pending',
+    is_delivered: updates.is_delivered || false,
+    notes: updates.notes || '',
+    download_url: updates.download_url || '',
+    progress: updates.progress || 0,
+    budget: 300,
+    currency: 'USD',
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString() // This would normally not change
+  };
+};
+
 export const getUserPurchases = async (userId: string): Promise<Purchase[]> => {
   console.log('Getting purchases for user:', userId);
   // Simulate API call
@@ -348,6 +439,18 @@ export const makePurchase = async (
   };
 };
 
+export const purchaseRobot = async (
+  userId: string,
+  robotId: string,
+  amount: number,
+  currency: string,
+  paymentMethod: string
+): Promise<Purchase> => {
+  console.log('Purchasing robot:', { userId, robotId, amount, currency, paymentMethod });
+  // Simulate API call - delegate to makePurchase
+  return makePurchase(userId, robotId, amount, currency, paymentMethod);
+};
+
 export const initiateMpesaPayment = async (
   phone: string,
   amount: number,
@@ -365,6 +468,12 @@ export const initiateMpesaPayment = async (
 
 export const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boolean> => {
   console.log('Verifying M-Pesa payment:', checkoutRequestId);
+  // Simulate API call - in real app would check backend
+  return true; // Simulating successful payment
+};
+
+export const verifyPayment = async (paymentId: string): Promise<boolean> => {
+  console.log('Verifying payment:', paymentId);
   // Simulate API call - in real app would check backend
   return true; // Simulating successful payment
 };
@@ -431,4 +540,51 @@ export const analyzeMarket = async (
     },
     timestamp: new Date().toISOString()
   };
+};
+
+export const getSubscriptionPrices = async (): Promise<any> => {
+  console.log('Getting subscription prices');
+  // Simulate API call
+  return {
+    basic: { monthly: 9.99, yearly: 99.99 },
+    premium: { monthly: 19.99, yearly: 199.99 },
+    professional: { monthly: 49.99, yearly: 499.99 }
+  };
+};
+
+export const updateSubscriptionPrice = async (tier: string, period: string, price: number): Promise<any> => {
+  console.log('Updating subscription price:', { tier, period, price });
+  // Simulate API call
+  return { success: true, message: `Updated ${tier} ${period} price to ${price}` };
+};
+
+export const getUsers = async (): Promise<User[]> => {
+  console.log('Getting users');
+  // Simulate API call
+  return [
+    {
+      id: 'user1',
+      name: 'John Doe',
+      email: 'john@example.com',
+      is_admin: false,
+      role: 'customer',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'user2',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      is_admin: false,
+      role: 'customer',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'admin1',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      is_admin: true,
+      role: 'admin',
+      created_at: new Date().toISOString()
+    }
+  ];
 };
