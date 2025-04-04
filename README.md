@@ -53,6 +53,7 @@ M_PESA_LIPA_NA_MPESA_PASSKEY=your_passkey
 ### 4. Set Up Database
 ```bash
 # Run database migrations
+alembic revision --autogenerate -m "your message here"
 alembic upgrade head
 ```
 
