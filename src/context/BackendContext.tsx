@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -186,14 +185,15 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const register = async (name: string, email: string, password: string): Promise<User> => {
     try {
       setLoading(true);
-      const user = await registerUserAPI(name, email, password);
-      setUser(user);
+      const response = await registerUserAPI(name, email, password);
+      setUser(response.user);
+      localStorage.setItem('authToken', response.token);
       toast({
         title: "Registration successful",
         description: "You have successfully registered.",
       });
       navigate('/dashboard');
-      return user;
+      return response.user;
     } catch (error: any) {
       console.error('Registration failed:', error);
       toast({
@@ -210,8 +210,9 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const login = async (email: string, password: string): Promise<User> => {
     try {
       setLoading(true);
-      const user = await loginUserAPI(email, password);
-      setUser(user);
+      const response = await loginUserAPI(email, password);
+      setUser(response.user);
+      localStorage.setItem('authToken', response.token);
       toast({
         title: "Login successful",
         description: "You have successfully logged in.",
@@ -226,7 +227,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
         navigate('/dashboard');
       }
       
-      return user;
+      return response.user;
     } catch (error: any) {
       console.error('Login failed:', error);
       toast({

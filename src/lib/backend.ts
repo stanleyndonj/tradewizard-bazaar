@@ -24,6 +24,7 @@ export interface Robot {
   features: string[];
   imageUrl: string;
   image_url?: string;
+  download_url?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -55,6 +56,7 @@ export interface RobotRequest {
   contract_type?: string;
   duration?: string;
   prediction?: string;
+  currency?: string;
   
   // Fields for delivery tracking
   is_delivered?: boolean;
@@ -118,6 +120,36 @@ export interface TradingSignal {
   result?: 'win' | 'loss' | null;
   pip_gain?: number;
   profit_loss?: number;
+  market?: string;
+  timestamp?: string;
+  strength?: number;
+}
+
+// Market Analysis interface
+export interface MarketAnalysis {
+  symbol: string;
+  timeframe: string;
+  trend: 'bullish' | 'bearish' | 'neutral';
+  strength: number;
+  resistance_levels: number[];
+  support_levels: number[];
+  indicators: {
+    rsi: number;
+    macd: {
+      histogram: number;
+      signal: number;
+      line: number;
+    };
+    moving_averages: {
+      sma_20: number;
+      ema_50: number;
+      sma_200: number;
+    };
+  };
+  recommendation: string;
+  summary: string;
+  next_price_target?: number;
+  stop_loss_suggestion?: number;
 }
 
 // Mock API functions for backend operations
@@ -149,6 +181,22 @@ export function registerUser(name: string, email: string, password: string): Pro
   });
 }
 
+export function getCurrentUser(): Promise<User> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id: '1',
+    name: 'Current User',
+    email: 'user@example.com',
+    is_admin: true,
+    created_at: new Date().toISOString(),
+  });
+}
+
+export function logoutUser(): Promise<void> {
+  // Implementation would call the backend API
+  return Promise.resolve();
+}
+
 export function getUsers(): Promise<User[]> {
   // Implementation would call the backend API
   return Promise.resolve([
@@ -175,7 +223,7 @@ export function getUsers(): Promise<User[]> {
   ]);
 }
 
-export function requestRobot(params: RobotRequestParams): Promise<RobotRequest> {
+export function submitRobotRequest(params: RobotRequestParams): Promise<RobotRequest> {
   // Implementation would call the backend API
   return Promise.resolve({
     id: '1',
@@ -201,7 +249,7 @@ export function requestRobot(params: RobotRequestParams): Promise<RobotRequest> 
   });
 }
 
-export function getUserRobotRequests(userId: string): Promise<RobotRequest[]> {
+export function getRobotRequests(userId: string): Promise<RobotRequest[]> {
   // Implementation would call the backend API
   return Promise.resolve([
     {
@@ -325,28 +373,35 @@ export function getRobots(): Promise<Robot[]> {
   ]);
 }
 
-export function addRobot(robot: Robot): Promise<Robot> {
+export function getRobotById(id: string): Promise<Robot> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    id,
+    name: 'MT5 Pro Scalper',
+    description: 'Advanced scalping robot for MT5 platform',
+    price: 199,
+    currency: 'USD',
+    type: 'MT5',
+    category: 'paid',
+    features: ['Scalping strategy', 'Low drawdown', 'Works on all pairs'],
+    imageUrl: '/placeholder.svg',
+    created_at: '2023-01-10T00:00:00.000Z',
+  });
+}
+
+export function addRobot(robot: Omit<Robot, 'id' | 'created_at'>): Promise<Robot> {
   // Implementation would call the backend API
   return Promise.resolve({
     ...robot,
-    id: robot.id || Math.random().toString(36).substr(2, 9),
+    id: Math.random().toString(36).substr(2, 9),
     created_at: new Date().toISOString(),
   });
 }
 
-export function updateRobot(robotId: string, robotData: Partial<Robot>): Promise<Robot> {
+export function updateRobot(robot: Robot): Promise<Robot> {
   // Implementation would call the backend API
   return Promise.resolve({
-    id: robotId,
-    name: robotData.name || 'Updated Robot',
-    description: robotData.description || 'Description updated',
-    price: robotData.price || 99,
-    currency: robotData.currency || 'USD',
-    type: robotData.type || 'MT5',
-    category: robotData.category || 'paid',
-    features: robotData.features || [],
-    imageUrl: robotData.imageUrl || '/placeholder.svg',
-    created_at: '2023-01-10T00:00:00.000Z',
+    ...robot,
     updated_at: new Date().toISOString(),
   });
 }
@@ -356,16 +411,16 @@ export function deleteRobot(robotId: string): Promise<{ success: boolean }> {
   return Promise.resolve({ success: true });
 }
 
-export function purchaseRobot(userId: string, robotId: string, paymentDetails: any): Promise<Purchase> {
+export function makePurchase(userId: string, robotId: string, amount: number, currency: string, paymentMethod: string): Promise<Purchase> {
   // Implementation would call the backend API
   return Promise.resolve({
     id: Math.random().toString(36).substr(2, 9),
     user_id: userId,
     robot_id: robotId,
     robot_name: 'MT5 Pro Scalper',
-    amount: 199,
-    currency: 'USD',
-    payment_method: paymentDetails.method || 'card',
+    amount: amount,
+    currency: currency,
+    payment_method: paymentMethod,
     status: 'completed',
     created_at: new Date().toISOString(),
   });
@@ -399,6 +454,21 @@ export function getUserPurchases(userId: string): Promise<Purchase[]> {
   ]);
 }
 
+export function initiateMpesaPayment(phone: string, amount: number, robotId: string): Promise<any> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    checkoutRequestId: 'ws_CO_123456789',
+    responseCode: '0',
+    responseDescription: 'Success. Request accepted for processing',
+    customerMessage: 'Success. Request accepted for processing'
+  });
+}
+
+export function verifyMpesaPayment(checkoutRequestId: string): Promise<boolean> {
+  // Implementation would call the backend API
+  return Promise.resolve(true);
+}
+
 export function getTradingSignals(): Promise<TradingSignal[]> {
   // Implementation would call the backend API
   return Promise.resolve([
@@ -414,6 +484,9 @@ export function getTradingSignals(): Promise<TradingSignal[]> {
       created_at: '2023-04-01T00:00:00.000Z',
       expires_at: '2023-04-02T00:00:00.000Z',
       status: 'active',
+      market: 'forex',
+      timestamp: '2023-04-01T00:00:00.000Z',
+      strength: 8
     },
     {
       id: '2',
@@ -427,6 +500,9 @@ export function getTradingSignals(): Promise<TradingSignal[]> {
       created_at: '2023-04-01T06:00:00.000Z',
       expires_at: '2023-04-02T06:00:00.000Z',
       status: 'active',
+      market: 'forex',
+      timestamp: '2023-04-01T06:00:00.000Z',
+      strength: 7
     },
     {
       id: '3',
@@ -443,8 +519,40 @@ export function getTradingSignals(): Promise<TradingSignal[]> {
       result: 'win',
       pip_gain: 303,
       profit_loss: 1515,
+      market: 'commodities',
+      timestamp: '2023-03-30T00:00:00.000Z',
+      strength: 9
     },
   ]);
+}
+
+export function analyzeMarket(symbol: string, timeframe?: string): Promise<MarketAnalysis> {
+  // Implementation would call the backend API
+  return Promise.resolve({
+    symbol: symbol,
+    timeframe: timeframe || 'H1',
+    trend: 'bullish',
+    strength: 7,
+    resistance_levels: [1.1050, 1.1100, 1.1150],
+    support_levels: [1.0950, 1.0900, 1.0850],
+    indicators: {
+      rsi: 58,
+      macd: {
+        histogram: 0.0012,
+        signal: 0.0008,
+        line: 0.0020
+      },
+      moving_averages: {
+        sma_20: 1.0980,
+        ema_50: 1.0950,
+        sma_200: 1.0900
+      }
+    },
+    recommendation: 'Buy',
+    summary: 'The market shows bullish momentum with strong support at 1.0950.',
+    next_price_target: 1.1050,
+    stop_loss_suggestion: 1.0920
+  });
 }
 
 export function getAIResponse(message: string): Promise<string> {

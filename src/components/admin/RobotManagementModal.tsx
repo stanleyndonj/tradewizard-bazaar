@@ -68,6 +68,8 @@ const RobotManagementModal = ({ isOpen, onClose, onSave, robot }: RobotManagemen
       features,
       imageUrl,
       created_at: robot?.created_at || new Date().toISOString(),
+      // Include download_url if it exists in the original robot
+      ...(robot?.download_url ? { download_url: robot.download_url } : {})
     };
 
     onSave(robotData);

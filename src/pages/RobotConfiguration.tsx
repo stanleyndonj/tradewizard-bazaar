@@ -1,849 +1,317 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useBackend } from '@/context/BackendContext';
+import { RobotRequestParams } from '@/lib/backend';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from '@/hooks/use-toast';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { useToast } from '@/hooks/use-toast';
-import { useBackend } from '@/context/BackendContext';
-import { Loader } from '@/components/ui/loader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from '@/components/ui/checkbox';
-
-const timeframes = [
-  { value: '1m', label: '1 Minute' },
-  { value: '5m', label: '5 Minutes' },
-  { value: '15m', label: '15 Minutes' },
-  { value: '30m', label: '30 Minutes' },
-  { value: '1h', label: '1 Hour' },
-  { value: '4h', label: '4 Hours' },
-  { value: '1d', label: '1 Day' },
-  { value: '1w', label: '1 Week' }
-];
-
-const orderTypes = [
-  { value: 'market', label: 'Market Order' },
-  { value: 'limit', label: 'Limit Order' },
-  { value: 'stop', label: 'Stop Order' },
-  { value: 'stop_limit', label: 'Stop Limit Order' }
-];
-
-const contractTypes = [
-  { value: 'rise', label: 'Rise' },
-  { value: 'fall', label: 'Fall' },
-  { value: 'touch', label: 'Touch' },
-  { value: 'no_touch', label: 'No Touch' },
-  { value: 'in', label: 'In' },
-  { value: 'out', label: 'Out' }
-];
-
-const currencies = [
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'GBP', label: 'GBP' },
-  { value: 'JPY', label: 'JPY' },
-  { value: 'BTC', label: 'BTC' },
-  { value: 'ETH', label: 'ETH' }
-];
-
-const markets = [
-  { value: 'forex', label: 'Forex' },
-  { value: 'crypto', label: 'Cryptocurrencies' },
-  { value: 'stocks', label: 'Stocks' },
-  { value: 'commodities', label: 'Commodities' },
-  { value: 'indices', label: 'Indices' }
-];
-
-const predictions = [
-  { value: 'up', label: 'Up' },
-  { value: 'down', label: 'Down' }
-];
-
-const tradingStrategies = [
-  { value: 'martingale', label: 'Martingale' },
-  { value: 'trend_following', label: 'Trend Following' },
-  { value: 'grid', label: 'Grid Trading' },
-  { value: 'scalping', label: 'Scalping' },
-  { value: 'arbitrage', label: 'Arbitrage' },
-  { value: 'mean_reversion', label: 'Mean Reversion' },
-  { value: 'custom', label: 'Custom' }
-];
-
-// Common form schema fields
-const commonFormSchema = {
-  botName: z.string().min(3, "Bot name must be at least 3 characters"),
-  tradingPairs: z.string().min(3, "Please enter at least one trading pair"),
-  timeframe: z.string().min(1, "Please select a timeframe"),
-  riskLevel: z.number().min(1).max(5),
-  market: z.string().optional(),
-  currency: z.string().optional(),
-  tradingStrategy: z.string().optional(),
-};
-
-// MT5 Bot form schema
-const mt5FormSchema = z.object({
-  ...commonFormSchema,
-  accountCredentials: z.string().optional(),
-  volume: z.number().min(0.01).optional(),
-  orderType: z.string().optional(),
-  stopLoss: z.number().min(0).optional(),
-  takeProfit: z.number().min(0).optional(),
-  entryRules: z.string().optional(),
-  exitRules: z.string().optional(),
-  riskManagement: z.string().optional(),
-  additionalParameters: z.string().optional(),
-});
-
-// Binary Bot form schema
-const binaryFormSchema = z.object({
-  ...commonFormSchema,
-  stakeAmount: z.number().min(1).optional(),
-  contractType: z.string().optional(),
-  duration: z.string().optional(),
-  prediction: z.string().optional(),
-});
+import SectionHeader from '@/components/ui-elements/SectionHeader';
+import { TradingLoader } from '@/components/ui/loader';
 
 const RobotConfiguration = () => {
   const { type } = useParams<{ type: string }>();
+  const { user, submitRobotRequest, loading } = useBackend();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user, submitRequest, isLoading } = useBackend();
-
-  const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
-
-  // Initialize form based on robot type
-  const isBinary = type?.toLowerCase().includes('binary');
-  const formSchema = isBinary ? binaryFormSchema : mt5FormSchema;
-  
-  // Types for the form data
-  type BinaryFormValues = z.infer<typeof binaryFormSchema>;
-  type MT5FormValues = z.infer<typeof mt5FormSchema>;
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      botName: "",
-      tradingPairs: "",
-      timeframe: "1h",
-      riskLevel: 3,
-      market: "",
-      currency: "USD",
-      tradingStrategy: "",
-      // MT5 specific defaults
-      ...(isBinary ? {} : {
-        volume: 0.01,
-        stopLoss: 0,
-        takeProfit: 0,
-      }),
-      // Binary specific defaults
-      ...(isBinary ? {
-        stakeAmount: 10,
-        duration: "60", // 60 seconds
-      } : {}),
-    },
+  const [formValues, setFormValues] = useState({
+    botName: '',
+    tradingPairs: '',
+    timeframe: '',
+    riskLevel: '5',
+    tradingStrategy: '',
+    volume: '0.1',
+    orderType: 'Market',
+    stopLoss: '50',
+    takeProfit: '100',
+    stakeAmount: '10',
+    contractType: 'Call/Put',
+    duration: '60',
+    prediction: 'Up',
+    username: '',
+    password: '',
+    server: '',
+    market: ''
   });
 
   useEffect(() => {
+    // Set page title
     document.title = `Configure ${type} Robot | TradeWizard`;
     
-    if (!isLoading && !user) {
+    if (!user && !loading) {
       toast({
         title: "Authentication required",
-        description: "Please sign in to configure your robot",
+        description: "Please sign in to configure your robot.",
         variant: "destructive",
       });
-      
       localStorage.setItem('redirectAfterAuth', `/configure-robot/${type}`);
       navigate('/auth');
     }
-  }, [type, user, isLoading, navigate, toast]);
+  }, [user, loading, navigate, type]);
 
-  const robotTypes: Record<string, string> = {
-    mt5: 'MT5',
-    binary: 'Binary Options',
-    forex: 'Forex',
-    crypto: 'Cryptocurrency'
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormValues(prev => ({ ...prev, [id]: value }));
   };
 
-  const getRobotType = () => {
-    if (!type) return 'Unknown';
-    return robotTypes[type.toLowerCase()] || type;
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    setSubmitting(true);
-    
-    try {
-      console.log("Form data to submit:", data);
-      
-      // Convert form data to the request format
-      const requestData = {
-        robotType: getRobotType(),
-        tradingPairs: data.tradingPairs,
-        timeframe: data.timeframe,
-        riskLevel: data.riskLevel,
-        botName: data.botName,
-        market: data.market,
-        currency: data.currency,
-        tradingStrategy: data.tradingStrategy,
-      };
-
-      // Add type-specific fields based on the robot type
-      if (isBinary) {
-        // Safe to cast since we've checked isBinary
-        const binaryData = data as BinaryFormValues;
-        const response = await submitRequest({
-          ...requestData,
-          stakeAmount: binaryData.stakeAmount,
-          contractType: binaryData.contractType,
-          duration: binaryData.duration,
-          prediction: binaryData.prediction,
-        });
-        console.log("Robot request created:", response);
-      } else {
-        // Safe to cast since we've checked !isBinary
-        const mt5Data = data as MT5FormValues;
-        const response = await submitRequest({
-          ...requestData,
-          accountCredentials: mt5Data.accountCredentials,
-          volume: mt5Data.volume,
-          orderType: mt5Data.orderType,
-          stopLoss: mt5Data.stopLoss,
-          takeProfit: mt5Data.takeProfit,
-          entryRules: mt5Data.entryRules,
-          exitRules: mt5Data.exitRules,
-          riskManagement: mt5Data.riskManagement,
-          additionalParameters: mt5Data.additionalParameters,
-        });
-        console.log("Robot request created:", response);
-      }
-      
+    if (!user) {
       toast({
-        title: "Request submitted",
-        description: "Your custom robot request has been submitted successfully",
-      });
-      
-      navigate('/customer-dashboard');
-    } catch (error) {
-      let message = "Failed to submit your request";
-      
-      if (error instanceof Error) {
-        message = error.message;
-      }
-      
-      toast({
-        title: "Submission failed",
-        description: message,
+        title: "Authentication required",
+        description: "Please sign in to submit your robot request.",
         variant: "destructive",
       });
-    } finally {
-      setSubmitting(false);
+      navigate('/auth');
+      return;
+    }
+
+    if (type?.toLowerCase() === 'mt5') {
+      // For MT5 configuration, change numeric values to strings and fix accountCredentials format
+      const mt5RequestParams: RobotRequestParams = {
+        userId: user?.id || '',
+        type: 'MT5',
+        botName: formValues.botName,
+        tradingPairs: formValues.tradingPairs,
+        timeframe: formValues.timeframe,
+        riskLevel: formValues.riskLevel,
+        tradingStrategy: formValues.tradingStrategy,
+        volume: formValues.volume,
+        orderType: formValues.orderType,
+        stopLoss: formValues.stopLoss,
+        takeProfit: formValues.takeProfit,
+        stakeAmount: formValues.stakeAmount.toString(),
+        accountCredentials: {
+          username: formValues.username,
+          password: formValues.password,
+          server: formValues.server
+        },
+        market: formValues.market,
+        duration: formValues.duration.toString(),
+        prediction: formValues.prediction,
+        contractType: formValues.contractType
+      };
+      
+      try {
+        await submitRobotRequest(mt5RequestParams);
+        toast({
+          title: "MT5 Robot Request Submitted",
+          description: "Your MT5 robot request has been submitted successfully!",
+        });
+        navigate('/customer-dashboard', { state: { tab: 'robots' } });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to submit MT5 robot request. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else if (type?.toLowerCase() === 'binary') {
+      // For Binary Bot configuration
+      const binaryRequestParams: RobotRequestParams = {
+        userId: user?.id || '',
+        type: 'Binary',
+        botName: formValues.botName,
+        tradingPairs: formValues.tradingPairs,
+        timeframe: formValues.timeframe,
+        riskLevel: formValues.riskLevel,
+        tradingStrategy: formValues.tradingStrategy,
+        volume: formValues.volume,
+        orderType: formValues.orderType,
+        stopLoss: formValues.stopLoss,
+        takeProfit: formValues.takeProfit,
+        stakeAmount: formValues.stakeAmount.toString(),
+        accountCredentials: {
+          username: formValues.username,
+          password: formValues.password,
+          server: formValues.server
+        },
+        market: formValues.market,
+        duration: formValues.duration.toString(),
+        prediction: formValues.prediction,
+        contractType: formValues.contractType
+      };
+      
+      try {
+        await submitRobotRequest(binaryRequestParams);
+        toast({
+          title: "Binary Robot Request Submitted",
+          description: "Your Binary robot request has been submitted successfully!",
+        });
+        navigate('/customer-dashboard', { state: { tab: 'robots' } });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to submit Binary robot request. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  if (isLoading) {
-    return <Loader text="Loading robot configuration..." />;
+  if (loading) {
+    return <TradingLoader text="Loading configuration..." />;
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow pt-24 pb-16">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold mb-2">Configure Your {getRobotType()} Robot</h1>
-            <p className="text-muted-foreground mb-8">Fill out the form below to request your custom trading robot.</p>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Robot Specifications</CardTitle>
-                <CardDescription>
-                  Tell us what you need and our experts will create a custom robot for you
-                </CardDescription>
-              </CardHeader>
+      <main className="flex-grow pt-24">
+        <div className="section-container py-10">
+          <SectionHeader
+            subtitle="Configure Your Robot"
+            title={`${type} Robot Configuration`}
+            description={`Customize your ${type} trading robot by providing the specifications below.`}
+            centered
+          />
+          
+          <div className="max-w-3xl mx-auto mt-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Basic Configuration */}
+              <div>
+                <Label htmlFor="botName">Bot Name</Label>
+                <Input type="text" id="botName" value={formValues.botName} onChange={handleChange} placeholder="e.g., TrendMaster" />
+              </div>
               
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <Tabs defaultValue="basic" value={activeTab} onValueChange={setActiveTab}>
-                    <div className="px-6">
-                      <TabsList className="grid w-full grid-cols-3 mb-6">
-                        <TabsTrigger value="basic">Basic Details</TabsTrigger>
-                        <TabsTrigger value="strategy">Strategy</TabsTrigger>
-                        <TabsTrigger value="advanced">Advanced</TabsTrigger>
-                      </TabsList>
-                    </div>
-                    
-                    <CardContent>
-                      <TabsContent value="basic" className="space-y-4 mt-0">
-                        <FormField
-                          control={form.control}
-                          name="botName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Bot Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="My Trading Bot" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="tradingPairs"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trading Pairs</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g. EURUSD, GBPUSD, BTCUSD" {...field} />
-                              </FormControl>
-                              <p className="text-sm text-muted-foreground">
-                                Comma separated list of currency pairs you want to trade
-                              </p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="timeframe"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Timeframe</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select a timeframe" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {timeframes.map((tf) => (
-                                      <SelectItem key={tf.value} value={tf.value}>
-                                        {tf.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="market"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Market</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select a market" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {markets.map((market) => (
-                                      <SelectItem key={market.value} value={market.value}>
-                                        {market.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="currency"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Currency</FormLabel>
-                                <Select 
-                                  onValueChange={field.onChange} 
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select a currency" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {currencies.map((currency) => (
-                                      <SelectItem key={currency.value} value={currency.value}>
-                                        {currency.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          {isBinary && (
-                            <FormField
-                              control={form.control}
-                              name="stakeAmount"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Stake Amount</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                          
-                          {!isBinary && (
-                            <FormField
-                              control={form.control}
-                              name="volume"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Volume</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min="0.01" 
-                                      step="0.01"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </div>
-                        
-                        <FormField
-                          control={form.control}
-                          name="riskLevel"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="flex justify-between">
-                                <FormLabel>Risk Level: {field.value}</FormLabel>
-                                <span className="text-sm font-medium">
-                                  {field.value <= 2 ? 'Low' : field.value <= 4 ? 'Medium' : 'High'}
-                                </span>
-                              </div>
-                              <FormControl>
-                                <Slider
-                                  min={1}
-                                  max={5}
-                                  step={1}
-                                  value={[field.value]}
-                                  onValueChange={(vals) => field.onChange(vals[0])}
-                                  className="py-4"
-                                />
-                              </FormControl>
-                              <p className="text-sm text-muted-foreground">
-                                Higher risk means potentially higher returns but more risk of losses
-                              </p>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="strategy" className="space-y-4 mt-0">
-                        <FormField
-                          control={form.control}
-                          name="tradingStrategy"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Trading Strategy</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a trading strategy" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {tradingStrategies.map((strategy) => (
-                                    <SelectItem key={strategy.value} value={strategy.value}>
-                                      {strategy.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        {isBinary && (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="contractType"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Contract Type</FormLabel>
-                                    <Select 
-                                      onValueChange={field.onChange} 
-                                      defaultValue={field.value}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select contract type" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {contractTypes.map((type) => (
-                                          <SelectItem key={type.value} value={type.value}>
-                                            {type.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={form.control}
-                                name="prediction"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Prediction</FormLabel>
-                                    <Select 
-                                      onValueChange={field.onChange} 
-                                      defaultValue={field.value}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select prediction" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {predictions.map((pred) => (
-                                          <SelectItem key={pred.value} value={pred.value}>
-                                            {pred.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            
-                            <FormField
-                              control={form.control}
-                              name="duration"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Duration (seconds)</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="text" 
-                                      placeholder="60" 
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </>
-                        )}
-                        
-                        {!isBinary && (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="orderType"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Order Type</FormLabel>
-                                    <Select 
-                                      onValueChange={field.onChange} 
-                                      defaultValue={field.value}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Select order type" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {orderTypes.map((type) => (
-                                          <SelectItem key={type.value} value={type.value}>
-                                            {type.label}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={form.control}
-                                name="accountCredentials"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Account Credentials (optional)</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="text" 
-                                        placeholder="MT5 account ID" 
-                                        {...field} 
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="stopLoss"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Stop Loss (pips)</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        min="0"
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={form.control}
-                                name="takeProfit"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Take Profit (pips)</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        min="0" 
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </TabsContent>
-                      
-                      <TabsContent value="advanced" className="space-y-4 mt-0">
-                        {!isBinary && (
-                          <>
-                            <FormField
-                              control={form.control}
-                              name="entryRules"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Entry Rules</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Describe your entry rules..." 
-                                      className="min-h-[80px]"
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="exitRules"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Exit Rules</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Describe your exit rules..." 
-                                      className="min-h-[80px]"
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="riskManagement"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Risk Management</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Describe your risk management parameters..." 
-                                      className="min-h-[80px]"
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="additionalParameters"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Additional Parameters</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Any other parameters or instructions..." 
-                                      className="min-h-[80px]"
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </>
-                        )}
-                        
-                        {isBinary && (
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium">Additional Settings</h3>
-                            <p className="text-muted-foreground">
-                              Binary bots have simpler configuration. Please use the notes section below for any additional requirements.
-                            </p>
-                            
-                            <FormField
-                              control={form.control}
-                              name="additionalParameters"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Special Requirements or Notes</FormLabel>
-                                  <FormControl>
-                                    <Textarea 
-                                      placeholder="Any special requirements or notes about your binary bot..." 
-                                      className="min-h-[150px]"
-                                      {...field} 
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        )}
-                      </TabsContent>
-                    </CardContent>
-                    
-                    <CardFooter className="flex justify-between border-t p-6">
-                      <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => {
-                            if (activeTab === "basic") {
-                              navigate('/');
-                            } else if (activeTab === "strategy") {
-                              setActiveTab("basic");
-                            } else if (activeTab === "advanced") {
-                              setActiveTab("strategy");
-                            }
-                          }}
-                        >
-                          {activeTab === "basic" ? "Cancel" : "Back"}
-                        </Button>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        {activeTab !== "advanced" ? (
-                          <Button 
-                            type="button" 
-                            onClick={() => {
-                              if (activeTab === "basic") {
-                                setActiveTab("strategy");
-                              } else if (activeTab === "strategy") {
-                                setActiveTab("advanced");
-                              }
-                            }}
-                          >
-                            Next
-                          </Button>
-                        ) : (
-                          <Button type="submit" disabled={submitting}>
-                            {submitting ? (
-                              <>
-                                <Loader size="sm" className="mr-2" />
-                                Submitting...
-                              </>
-                            ) : (
-                              'Submit Request'
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </CardFooter>
-                  </Tabs>
-                </form>
-              </Form>
-            </Card>
+              <div>
+                <Label htmlFor="tradingPairs">Trading Pairs</Label>
+                <Input type="text" id="tradingPairs" value={formValues.tradingPairs} onChange={handleChange} placeholder="e.g., EURUSD, GBPJPY" />
+              </div>
+              
+              <div>
+                <Label htmlFor="timeframe">Timeframe</Label>
+                <Select value={formValues.timeframe} onValueChange={(value) => setFormValues(prev => ({ ...prev, timeframe: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a timeframe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M1">M1</SelectItem>
+                    <SelectItem value="M5">M5</SelectItem>
+                    <SelectItem value="M15">M15</SelectItem>
+                    <SelectItem value="M30">M30</SelectItem>
+                    <SelectItem value="H1">H1</SelectItem>
+                    <SelectItem value="H4">H4</SelectItem>
+                    <SelectItem value="D1">D1</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="riskLevel">Risk Level (%)</Label>
+                <Input type="number" id="riskLevel" value={formValues.riskLevel} onChange={handleChange} placeholder="e.g., 5" />
+              </div>
+              
+              <div>
+                <Label htmlFor="tradingStrategy">Trading Strategy</Label>
+                <Textarea id="tradingStrategy" value={formValues.tradingStrategy} onChange={handleChange} placeholder="Describe your trading strategy..." />
+              </div>
+
+              {/* MT5 Specific Configuration */}
+              {type?.toLowerCase() === 'mt5' && (
+                <>
+                  <div>
+                    <Label htmlFor="volume">Volume</Label>
+                    <Input type="number" id="volume" value={formValues.volume} onChange={handleChange} placeholder="e.g., 0.01" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="orderType">Order Type</Label>
+                    <Select value={formValues.orderType} onValueChange={(value) => setFormValues(prev => ({ ...prev, orderType: value }))}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select order type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Market">Market Order</SelectItem>
+                        <SelectItem value="Pending">Pending Order</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="stopLoss">Stop Loss (pips)</Label>
+                    <Input type="number" id="stopLoss" value={formValues.stopLoss} onChange={handleChange} placeholder="e.g., 50" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="takeProfit">Take Profit (pips)</Label>
+                    <Input type="number" id="takeProfit" value={formValues.takeProfit} onChange={handleChange} placeholder="e.g., 100" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="username">Account Username</Label>
+                    <Input type="text" id="username" value={formValues.username} onChange={handleChange} placeholder="MT5 Account Username" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="password">Account Password</Label>
+                    <Input type="password" id="password" value={formValues.password} onChange={handleChange} placeholder="MT5 Account Password" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="server">Server</Label>
+                    <Input type="text" id="server" value={formValues.server} onChange={handleChange} placeholder="MT5 Server Address" />
+                  </div>
+                </>
+              )}
+
+              {/* Binary Bot Specific Configuration */}
+              {type?.toLowerCase() === 'binary' && (
+                <>
+                  <div>
+                    <Label htmlFor="market">Market</Label>
+                    <Input type="text" id="market" value={formValues.market} onChange={handleChange} placeholder="e.g., Forex, Indices" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="stakeAmount">Stake Amount</Label>
+                    <Input type="number" id="stakeAmount" value={formValues.stakeAmount} onChange={handleChange} placeholder="e.g., 10" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="contractType">Contract Type</Label>
+                    <Select value={formValues.contractType} onValueChange={(value) => setFormValues(prev => ({ ...prev, contractType: value }))}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select contract type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Call/Put">Call/Put</SelectItem>
+                        <SelectItem value="Higher/Lower">Higher/Lower</SelectItem>
+                        <SelectItem value="Touch/No Touch">Touch/No Touch</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="duration">Duration (seconds)</Label>
+                    <Input type="number" id="duration" value={formValues.duration} onChange={handleChange} placeholder="e.g., 60" />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="prediction">Prediction</Label>
+                    <Select value={formValues.prediction} onValueChange={(value) => setFormValues(prev => ({ ...prev, prediction: value }))}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select prediction" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Up">Up</SelectItem>
+                        <SelectItem value="Down">Down</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              <Button type="submit" className="w-full">Submit Request</Button>
+            </form>
           </div>
         </div>
       </main>

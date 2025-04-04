@@ -1,414 +1,252 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import SectionHeader from '@/components/ui-elements/SectionHeader';
+import { useBackend } from '@/context/BackendContext';
+import { TradingSignal } from '@/lib/backend';
 import { 
   Card, 
   CardHeader, 
   CardTitle, 
   CardDescription, 
-  CardContent,
+  CardContent, 
   CardFooter 
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
-  Eye, 
-  AlertTriangle, 
-  BarChart, 
-  LineChart,
-  Plus,
-  X
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowUp, ArrowDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { TradingLoader } from '@/components/ui/loader';
-import { useBackend } from '@/context/BackendContext';
-import { TradingSignal, MarketAnalysis } from '@/lib/backend';
+import { toast } from '@/hooks/use-toast';
+import SectionHeader from '@/components/ui-elements/SectionHeader';
 
 const AITradingSignals = () => {
-  const navigate = useNavigate();
-  const { user, getTradingSignals, analyzeMarket } = useBackend();
+  const { getTradingSignals, analyzeMarket } = useBackend();
   const [signals, setSignals] = useState<TradingSignal[]>([]);
-  const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysis | null>(null);
-  const [loadingSignals, setLoadingSignals] = useState(false);
-  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
-  const [selectedMarket, setSelectedMarket] = useState('forex');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
-  const [analysisSymbol, setAnalysisSymbol] = useState('BTCUSD');
-  const [watchlist, setWatchlist] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [marketFilter, setMarketFilter] = useState('forex');
+  const [timeframeFilter, setTimeframeFilter] = useState('1h');
+  const [symbolToAnalyze, setSymbolToAnalyze] = useState('');
+  const [marketAnalysis, setMarketAnalysis] = useState(null);
 
   useEffect(() => {
     document.title = 'AI Trading Signals | TradeWizard';
-    
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to access AI Trading Signals",
-        variant: "destructive",
-      });
-      localStorage.setItem('redirectAfterAuth', '/ai-trading-signals');
-      navigate('/auth');
-    } else {
-      loadTradingSignals();
-    }
-  }, [user, navigate]);
+    loadSignals();
+  }, [marketFilter, timeframeFilter]);
 
-  const loadTradingSignals = useCallback(async () => {
-    setLoadingSignals(true);
-    setError(null);
+  const loadSignals = async () => {
+    setLoading(true);
     try {
-      const fetchedSignals = await getTradingSignals(selectedMarket, selectedTimeframe);
+      const fetchedSignals = await getTradingSignals(marketFilter, timeframeFilter);
       setSignals(fetchedSignals);
-    } catch (err: any) {
-      console.error('Error fetching trading signals:', err);
-      setError(err.message || 'Failed to load trading signals.');
+    } catch (error) {
+      console.error('Error fetching trading signals:', error);
       toast({
-        title: "Error",
-        description: err.message || "Failed to load trading signals. Please try again.",
+        title: "Error fetching signals",
+        description: "Failed to load trading signals. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoadingSignals(false);
+      setLoading(false);
     }
-  }, [getTradingSignals, selectedMarket, selectedTimeframe]);
+  };
 
-  const handleMarketAnalysis = async () => {
-    setLoadingAnalysis(true);
-    setError(null);
+  const handleAnalyzeMarket = async () => {
+    if (!symbolToAnalyze) {
+      toast({
+        title: "Error",
+        description: "Please enter a symbol to analyze.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
-      const analysis = await analyzeMarket(analysisSymbol, selectedTimeframe);
+      const analysis = await analyzeMarket(symbolToAnalyze);
       setMarketAnalysis(analysis);
-    } catch (err: any) {
-      console.error('Error analyzing market:', err);
-      setError(err.message || 'Failed to analyze market.');
+    } catch (error) {
+      console.error('Error analyzing market:', error);
       toast({
-        title: "Error",
-        description: err.message || "Failed to analyze market. Please try again.",
+        title: "Error analyzing market",
+        description: "Failed to analyze market. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setLoadingAnalysis(false);
+      setLoading(false);
     }
   };
 
-  const getSignalStrengthColor = (strength: string) => {
-    switch (strength) {
-      case 'Strong':
-        return 'text-green-500';
-      case 'Moderate':
-        return 'text-yellow-500';
-      case 'Weak':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
+  const getTrendIndicator = (trend: string) => {
+    if (trend === 'bullish') {
+      return <TrendingUp className="text-green-500 w-5 h-5" />;
+    } else if (trend === 'bearish') {
+      return <TrendingDown className="text-red-500 w-5 h-5" />;
+    } else {
+      return null;
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-  };
-
-  const addToWatchlist = (signalId: string) => {
-    setWatchlist(prev => {
-      if (prev.includes(signalId)) {
-        toast({
-          title: "Info",
-          description: "Signal already in watchlist",
-        });
-        return prev;
-      }
-      toast({
-        title: "Success",
-        description: "Signal added to watchlist",
-        variant: "default"
-      });
-      return [...prev, signalId];
-    });
-  };
-
-  const removeFromWatchlist = (signalId: string) => {
-    setWatchlist(prev => {
-      const newList = prev.filter(id => id !== signalId);
-      toast({
-        title: "Success",
-        description: "Signal removed from watchlist",
-        variant: "default"
-      });
-      return newList;
-    });
-  };
-
-  const isInWatchlist = (signalId: string) => {
-    return watchlist.includes(signalId);
-  };
-
-  if (!user) {
-    return null; // Will redirect in useEffect
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TradingLoader text="Loading AI Trading Signals..." />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow pt-24 pb-20">
+      <main className="flex-grow pt-24">
         <div className="section-container py-10">
           <SectionHeader
-            subtitle="Data-Driven Decisions"
+            subtitle="AI Insights"
             title="AI Trading Signals"
-            description="Make informed trading decisions with our AI-powered trading signals and market analysis."
+            description="Get AI-powered trading signals to enhance your trading strategy."
             centered
           />
           
-          <div className="mt-10 max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-              {/* Market and Timeframe Selection */}
+          <div className="max-w-6xl mx-auto mt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
               <div className="flex items-center gap-4">
-                <Select value={selectedMarket} onValueChange={(value) => {
-                  setSelectedMarket(value);
-                  loadTradingSignals();
-                }}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Market" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="forex">Forex</SelectItem>
-                    <SelectItem value="crypto">Crypto</SelectItem>
-                    {/* Add more markets as needed */}
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label htmlFor="market-filter">Market:</Label>
+                  <Select value={marketFilter} onValueChange={setMarketFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select Market" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="forex">Forex</SelectItem>
+                      <SelectItem value="crypto">Crypto</SelectItem>
+                      <SelectItem value="stocks">Stocks</SelectItem>
+                      <SelectItem value="commodities">Commodities</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <Select value={selectedTimeframe} onValueChange={(value) => {
-                  setSelectedTimeframe(value);
-                  loadTradingSignals();
-                }}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select Timeframe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1m">1 Minute</SelectItem>
-                    <SelectItem value="5m">5 Minutes</SelectItem>
-                    <SelectItem value="15m">15 Minutes</SelectItem>
-                    <SelectItem value="30m">30 Minutes</SelectItem>
-                    <SelectItem value="1h">1 Hour</SelectItem>
-                    <SelectItem value="4h">4 Hours</SelectItem>
-                    <SelectItem value="1d">1 Day</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label htmlFor="timeframe-filter">Timeframe:</Label>
+                  <Select value={timeframeFilter} onValueChange={setTimeframeFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select Timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1m">1 Minute</SelectItem>
+                      <SelectItem value="5m">5 Minutes</SelectItem>
+                      <SelectItem value="15m">15 Minutes</SelectItem>
+                      <SelectItem value="30m">30 Minutes</SelectItem>
+                      <SelectItem value="1h">1 Hour</SelectItem>
+                      <SelectItem value="4h">4 Hours</SelectItem>
+                      <SelectItem value="1d">1 Day</SelectItem>
+                      <SelectItem value="1w">1 Week</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
-              {/* Market Analysis Input and Button */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Input
                   type="text"
-                  placeholder="Enter Symbol (e.g., BTCUSD)"
-                  value={analysisSymbol}
-                  onChange={(e) => setAnalysisSymbol(e.target.value)}
-                  className="max-w-[200px]"
+                  placeholder="Enter symbol to analyze"
+                  value={symbolToAnalyze}
+                  onChange={(e) => setSymbolToAnalyze(e.target.value)}
                 />
-                <Button onClick={handleMarketAnalysis} disabled={loadingAnalysis}>
-                  {loadingAnalysis ? <TradingLoader text="Analyzing market..." /> : 'Analyze Market'}
-                </Button>
+                <Button onClick={handleAnalyzeMarket}>Analyze Market</Button>
               </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="text-red-500 text-center mb-4">
-                <AlertTriangle className="inline-block h-5 w-5 mr-2 align-middle" />
-                {error}
-              </div>
+            
+            {marketAnalysis && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Market Analysis for {marketAnalysis.symbol}</CardTitle>
+                  <CardDescription>Timeframe: {marketAnalysis.timeframe}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Trend</p>
+                      <div className="flex items-center">
+                        {getTrendIndicator(marketAnalysis.trend)}
+                        <span className="font-medium ml-1">{marketAnalysis.trend}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Recommendation</p>
+                      <p className="font-medium">{marketAnalysis.recommendation}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Next Price Target</p>
+                      <p className="font-medium">{marketAnalysis.next_price_target}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Stop Loss Suggestion</p>
+                      <p className="font-medium">{marketAnalysis.stop_loss_suggestion}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-muted-foreground">Summary</p>
+                    <p>{marketAnalysis.summary}</p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
             
-            {/* Trading Signals Section */}
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Trading Signals ({signals.length})
-              </h2>
-              
-              {loadingSignals ? (
-                <div className="flex justify-center">
-                  <TradingLoader text="Loading signals..." />
-                </div>
-              ) : signals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {signals.map((signal) => (
-                    <Card key={signal.id} className="bg-muted/50">
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          {signal.symbol}
-                          <Badge variant="secondary">{signal.market}</Badge>
-                        </CardTitle>
-                        <CardDescription className="flex items-center space-x-2 text-xs">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatTimestamp(signal.timestamp)}</span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          {signal.direction === 'BUY' ? (
-                            <TrendingUp className="text-green-500 h-5 w-5" />
-                          ) : (
-                            <TrendingDown className="text-red-500 h-5 w-5" />
-                          )}
-                          <p>
-                            {signal.direction} -{' '}
-                            <span className={getSignalStrengthColor(signal.strength)}>
-                              {signal.strength}
-                            </span>
-                          </p>
-                        </div>
-                        <p className="text-sm">Confidence: {signal.confidence}%</p>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Entry:</p>
-                            <p>{signal.entry_price}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Stop Loss:</p>
-                            <p>{signal.stop_loss}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Take Profit:</p>
-                            <p>{signal.take_profit}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Timeframe:</p>
-                            <p>{signal.timeframe}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between items-center">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() =>
-                            isInWatchlist(signal.id)
-                              ? removeFromWatchlist(signal.id)
-                              : addToWatchlist(signal.id)
-                          }
-                        >
-                          {isInWatchlist(signal.id) ? (
-                            <>
-                              <X className="h-4 w-4 mr-2" />
-                              Remove Watchlist
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Watchlist
-                            </>
-                          )}
-                        </Button>
-                        <a href={`https://www.tradingview.com/chart/?symbol=${signal.symbol}`} target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Chart
-                          </Button>
-                        </a>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">No trading signals available for the selected market and timeframe.</p>
-                </div>
-              )}
-            </section>
-            
-            {/* Market Analysis Section */}
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Market Analysis</h2>
-              
-              {loadingAnalysis ? (
-                <div className="flex justify-center">
-                  <TradingLoader text="Analyzing market..." />
-                </div>
-              ) : marketAnalysis ? (
-                <Card className="bg-muted/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {signals.map((signal) => (
+                <Card key={signal.id} className="hover:shadow-md transition-shadow duration-300">
                   <CardHeader>
-                    <CardTitle>{marketAnalysis.symbol} Analysis</CardTitle>
-                    <CardDescription className="flex items-center space-x-2 text-xs">
-                      <Clock className="h-4 w-4" />
-                      <span>{formatTimestamp(marketAnalysis.timestamp)}</span>
-                    </CardDescription>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-xl">{signal.symbol}</CardTitle>
+                        <CardDescription>Timeframe: {signal.timeframe}</CardDescription>
+                      </div>
+                      <Badge>{signal.status}</Badge>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <p>
-                      <span className="font-semibold">Summary:</span>{' '}
-                      {marketAnalysis.analysis_summary}
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Direction</p>
+                        {signal.direction === 'buy' ? (
+                          <div className="text-green-500 font-semibold flex items-center">
+                            <ArrowUp className="w-4 h-4 mr-1" /> BUY
+                          </div>
+                        ) : (
+                          <div className="text-red-500 font-semibold flex items-center">
+                            <ArrowDown className="w-4 h-4 mr-1" /> SELL
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Confidence</p>
+                        <p className="font-medium">{signal.confidence}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Entry Price</p>
+                        <p className="font-medium">{signal.entry_price}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Stop Loss</p>
+                        <p className="font-medium">{signal.stop_loss}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Take Profit</p>
+                        <p className="font-medium">{signal.take_profit}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Created at: {new Date(signal.created_at).toLocaleDateString()}
                     </p>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Direction:</p>
-                        <p>{marketAnalysis.direction}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Confidence:</p>
-                        <p>{marketAnalysis.confidence}%</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Entry Price:</p>
-                        <p>{marketAnalysis.entry_price}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Stop Loss:</p>
-                        <p>{marketAnalysis.stop_loss}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Take Profit:</p>
-                        <p>{marketAnalysis.take_profit}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Market Sentiment:</p>
-                        <p>{marketAnalysis.market_sentiment}</p>
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-lg font-semibold mt-4">Technical Indicators</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">RSI:</p>
-                        <p>{marketAnalysis.technical_indicators.rsi}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">MACD:</p>
-                        <p>{marketAnalysis.technical_indicators.macd}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">SMA 50:</p>
-                        <p>{marketAnalysis.technical_indicators.moving_averages.sma_50}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">SMA 200:</p>
-                        <p>{marketAnalysis.technical_indicators.moving_averages.sma_200}</p>
-                      </div>
-                    </div>
                   </CardContent>
                   <CardFooter>
-                    <a href={`https://www.tradingview.com/chart/?symbol=${marketAnalysis.symbol}`} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline">
-                        <BarChart className="h-4 w-4 mr-2" />
-                        View Chart on TradingView
-                      </Button>
-                    </a>
+                    <Button className="w-full">Trade Now</Button>
                   </CardFooter>
                 </Card>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">Enter a symbol and click "Analyze Market" to view market analysis.</p>
-                </div>
-              )}
-            </section>
+              ))}
+            </div>
           </div>
         </div>
       </main>
