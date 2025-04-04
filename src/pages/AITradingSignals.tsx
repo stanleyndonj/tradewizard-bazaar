@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Card,
@@ -14,14 +13,15 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUp, ArrowDown, TrendingUp, Loader2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, TrendingUp, Loader2, Home, MessageCircle, Settings, Bell } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { TradingSignal, MarketAnalysis } from '@/lib/backend';
 import SubscriptionRequired from '@/components/trading/SubscriptionRequired';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import AITradingChat from '@/components/trading/AITradingChat';
 import MarketDataWidget from '@/components/trading/MarketDataWidget';
 import NewsWidget from '@/components/trading/NewsWidget';
+import Navbar from '@/components/layout/Navbar';
 
 const AITradingSignals = () => {
   const { user, getTradingSignals, analyzeMarket } = useBackend();
@@ -79,7 +79,7 @@ const AITradingSignals = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    navigate(`/ai-trading-signals/${value}`);
+    navigate(`/ai-trading-signals/${value !== 'signals' ? value : ''}`);
   };
 
   if (!hasAccess) {
@@ -87,161 +87,217 @@ const AITradingSignals = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <h1 className="text-3xl font-bold mb-6">AI Trading Signals</h1>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
       
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-5 mb-8">
-          <TabsTrigger value="signals">Trading Signals</TabsTrigger>
-          <TabsTrigger value="analysis">Market Analysis</TabsTrigger>
-          <TabsTrigger value="chat">AI Trading Chat</TabsTrigger>
-          <TabsTrigger value="market-data">Market Data</TabsTrigger>
-          <TabsTrigger value="news">Market News</TabsTrigger>
-        </TabsList>
+      {/* Fixed top navigation for quick access */}
+      <div className="sticky top-16 z-10 bg-background border-b px-4 py-2 shadow-sm flex items-center justify-between">
+        <div className="flex space-x-2 overflow-x-auto hide-scrollbar">
+          <Button 
+            variant={activeTab === 'signals' ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handleTabChange('signals')}
+          >
+            <TrendingUp className="h-4 w-4 mr-1" />
+            Signals
+          </Button>
+          <Button 
+            variant={activeTab === 'analysis' ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handleTabChange('analysis')}
+          >
+            <ArrowUp className="h-4 w-4 mr-1" />
+            Analysis
+          </Button>
+          <Button 
+            variant={activeTab === 'chat' ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handleTabChange('chat')}
+          >
+            <MessageCircle className="h-4 w-4 mr-1" />
+            AI Chat
+          </Button>
+          <Button 
+            variant={activeTab === 'market-data' ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handleTabChange('market-data')}
+          >
+            <Bell className="h-4 w-4 mr-1" />
+            Market Data
+          </Button>
+          <Button 
+            variant={activeTab === 'news' ? "default" : "outline"} 
+            size="sm"
+            onClick={() => handleTabChange('news')}
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            News
+          </Button>
+        </div>
         
-        <TabsContent value="signals">
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Latest Trading Signals</CardTitle>
-              <CardDescription>
-                AI-generated trading signals with high accuracy based on market analysis
-              </CardDescription>
-              <div className="flex flex-wrap gap-4 mt-4">
-                <div className="w-full sm:w-auto">
-                  <Label htmlFor="market">Market</Label>
-                  <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Select market" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="forex">Forex</SelectItem>
-                      <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                      <SelectItem value="stocks">Stocks</SelectItem>
-                      <SelectItem value="indices">Indices</SelectItem>
-                      <SelectItem value="commodities">Commodities</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-full sm:w-auto">
-                  <Label htmlFor="timeframe">Timeframe</Label>
-                  <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M5">5 Minutes</SelectItem>
-                      <SelectItem value="M15">15 Minutes</SelectItem>
-                      <SelectItem value="M30">30 Minutes</SelectItem>
-                      <SelectItem value="H1">1 Hour</SelectItem>
-                      <SelectItem value="H4">4 Hours</SelectItem>
-                      <SelectItem value="D1">Daily</SelectItem>
-                      <SelectItem value="W1">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-full sm:w-auto flex items-end">
-                  <Button onClick={fetchSignals} className="w-full sm:w-auto">
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      'Refresh Signals'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center items-center py-12">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-              ) : signals.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  No trading signals available for the selected criteria.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {signals.map((signal) => (
-                    <Card key={signal.id} className={`border-l-4 ${
-                      signal.direction === 'buy' ? 'border-l-green-500' : 'border-l-red-500'
-                    }`}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            <h3 className="text-lg font-bold">{signal.symbol}</h3>
-                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                              signal.direction === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {signal.timeframe || 'H1'}
-                            </span>
-                          </div>
-                          {signal.status && (
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
-                              signal.status === 'active' ? 'bg-blue-100 text-blue-800' : 
-                              signal.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {signal.status}
-                            </span>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center mb-4">
-                          {signal.direction === 'buy' ? (
-                            <ArrowUp className="h-6 w-6 text-green-500 mr-2" />
-                          ) : (
-                            <ArrowDown className="h-6 w-6 text-red-500 mr-2" />
-                          )}
-                          <span className="text-lg font-semibold">
-                            {signal.direction.toUpperCase()}
-                          </span>
-                          <div className="ml-auto flex flex-col items-end">
-                            <span className="text-sm text-muted-foreground">Confidence</span>
-                            <span className="text-sm font-medium">
-                              {signal.confidence ? `${Math.round(signal.confidence * 100)}%` : 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-y-2 text-sm">
-                          <div className="text-muted-foreground">Entry Price</div>
-                          <div className="text-right font-medium">{signal.entry_price}</div>
-                          
-                          {signal.stop_loss && (
-                            <>
-                              <div className="text-muted-foreground">Stop Loss</div>
-                              <div className="text-right font-medium text-red-600">{signal.stop_loss}</div>
-                            </>
-                          )}
-                          
-                          {signal.take_profit && (
-                            <>
-                              <div className="text-muted-foreground">Take Profit</div>
-                              <div className="text-right font-medium text-green-600">{signal.take_profit}</div>
-                            </>
-                          )}
-                          
-                          <div className="text-muted-foreground">Time</div>
-                          <div className="text-right font-medium">
-                            {signal.timestamp ? new Date(signal.timestamp).toLocaleString() : 
-                             new Date(signal.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        <Button variant="secondary" size="sm" asChild>
+          <Link to="/dashboard">
+            <Home className="h-4 w-4 mr-1" />
+            Dashboard
+          </Link>
+        </Button>
+      </div>
+      
+      <div className="container mx-auto px-4 py-8 max-w-7xl flex-grow">
+        <h1 className="text-3xl font-bold mb-6">AI Trading Signals</h1>
         
-        <TabsContent value="analysis">
-          <Card className="mb-8">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid grid-cols-5 mb-8">
+            <TabsTrigger value="signals">Trading Signals</TabsTrigger>
+            <TabsTrigger value="analysis">Market Analysis</TabsTrigger>
+            <TabsTrigger value="chat">AI Trading Chat</TabsTrigger>
+            <TabsTrigger value="market-data">Market Data</TabsTrigger>
+            <TabsTrigger value="news">Market News</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="signals">
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Latest Trading Signals</CardTitle>
+                <CardDescription>
+                  AI-generated trading signals with high accuracy based on market analysis
+                </CardDescription>
+                <div className="flex flex-wrap gap-4 mt-4">
+                  <div className="w-full sm:w-auto">
+                    <Label htmlFor="market">Market</Label>
+                    <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+                      <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select market" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="forex">Forex</SelectItem>
+                        <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                        <SelectItem value="stocks">Stocks</SelectItem>
+                        <SelectItem value="indices">Indices</SelectItem>
+                        <SelectItem value="commodities">Commodities</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full sm:w-auto">
+                    <Label htmlFor="timeframe">Timeframe</Label>
+                    <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                      <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select timeframe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M5">5 Minutes</SelectItem>
+                        <SelectItem value="M15">15 Minutes</SelectItem>
+                        <SelectItem value="M30">30 Minutes</SelectItem>
+                        <SelectItem value="H1">1 Hour</SelectItem>
+                        <SelectItem value="H4">4 Hours</SelectItem>
+                        <SelectItem value="D1">Daily</SelectItem>
+                        <SelectItem value="W1">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full sm:w-auto flex items-end">
+                    <Button onClick={fetchSignals} className="w-full sm:w-auto">
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Refresh Signals'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  </div>
+                ) : signals.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No trading signals available for the selected criteria.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {signals.map((signal) => (
+                      <Card key={signal.id} className={`border-l-4 ${
+                        signal.direction === 'buy' ? 'border-l-green-500' : 'border-l-red-500'
+                      }`}>
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center">
+                              <h3 className="text-lg font-bold">{signal.symbol}</h3>
+                              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                                signal.direction === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {signal.timeframe || 'H1'}
+                              </span>
+                            </div>
+                            {signal.status && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                signal.status === 'active' ? 'bg-blue-100 text-blue-800' : 
+                                signal.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {signal.status}
+                              </span>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center mb-4">
+                            {signal.direction === 'buy' ? (
+                              <ArrowUp className="h-6 w-6 text-green-500 mr-2" />
+                            ) : (
+                              <ArrowDown className="h-6 w-6 text-red-500 mr-2" />
+                            )}
+                            <span className="text-lg font-semibold">
+                              {signal.direction.toUpperCase()}
+                            </span>
+                            <div className="ml-auto flex flex-col items-end">
+                              <span className="text-sm text-muted-foreground">Confidence</span>
+                              <span className="text-sm font-medium">
+                                {signal.confidence ? `${Math.round(signal.confidence * 100)}%` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-y-2 text-sm">
+                            <div className="text-muted-foreground">Entry Price</div>
+                            <div className="text-right font-medium">{signal.entry_price}</div>
+                            
+                            {signal.stop_loss && (
+                              <>
+                                <div className="text-muted-foreground">Stop Loss</div>
+                                <div className="text-right font-medium text-red-600">{signal.stop_loss}</div>
+                              </>
+                            )}
+                            
+                            {signal.take_profit && (
+                              <>
+                                <div className="text-muted-foreground">Take Profit</div>
+                                <div className="text-right font-medium text-green-600">{signal.take_profit}</div>
+                              </>
+                            )}
+                            
+                            <div className="text-muted-foreground">Time</div>
+                            <div className="text-right font-medium">
+                              {signal.timestamp ? new Date(signal.timestamp).toLocaleString() : 
+                               new Date(signal.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="analysis">
+            <Card className="mb-8">
             <CardHeader>
               <CardTitle>AI Market Analysis</CardTitle>
               <CardDescription>
@@ -462,21 +518,21 @@ const AITradingSignals = () => {
                 </div>
               )}
             </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="chat">
-          <AITradingChat />
-        </TabsContent>
-        
-        <TabsContent value="market-data">
-          <MarketDataWidget />
-        </TabsContent>
-        
-        <TabsContent value="news">
-          <NewsWidget />
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          
+          <TabsContent value="chat">
+            <AITradingChat />
+          </TabsContent>
+          
+          <TabsContent value="market-data">
+            <MarketDataWidget />
+          </TabsContent>
+          
+          <TabsContent value="news">
+            <NewsWidget />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };

@@ -10,7 +10,7 @@ from ..models.user import User
 from ..utils.auth import get_user_from_token
 from ..config import settings
 
-router = APIRouter(prefix="/ai-trading-signals", tags=["ai-trading-signals"])
+router = APIRouter(prefix="/api/ai-trading-signals", tags=["ai-trading-signals"])
 
 # Mock data for trading signals
 def generate_mock_signals(market: str, timeframe: str, count: int = 10):
@@ -36,9 +36,9 @@ def generate_mock_signals(market: str, timeframe: str, count: int = 10):
         signal = {
             "id": str(i+1),
             "symbol": random.choice(pairs),
-            "direction": random.choice(directions),
+            "direction": random.choice(directions).lower(),  # Make lowercase to match frontend
             "strength": random.choice(strengths),
-            "confidence": round(random.uniform(65, 95), 1),
+            "confidence": round(random.uniform(0.65, 0.95), 2),  # As decimal for frontend
             "entry_price": round(random.uniform(100, 5000), 2),
             "stop_loss": round(random.uniform(95, 99), 2),
             "take_profit": round(random.uniform(101, 105), 2),
@@ -47,7 +47,9 @@ def generate_mock_signals(market: str, timeframe: str, count: int = 10):
             "market": market,
             "analysis": "AI analysis indicates a potential " + 
                       random.choice(directions).lower() + " opportunity based on " +
-                      random.choice(["trend analysis", "momentum indicators", "support/resistance levels", "volume analysis"])
+                      random.choice(["trend analysis", "momentum indicators", "support/resistance levels", "volume analysis"]),
+            "created_at": timestamp.isoformat(),
+            "status": random.choice(["active", "completed", "pending"])
         }
         signals.append(signal)
     
@@ -121,7 +123,7 @@ async def analyze_market(
             )
     
     # Generate a random direction and confidence
-    direction = random.choice(["BUY", "SELL"])
+    direction = random.choice(["bullish", "bearish", "neutral"])
     confidence = round(random.uniform(65, 95), 1)
     
     # Generate analysis result
@@ -129,42 +131,38 @@ async def analyze_market(
         "symbol": symbol,
         "timeframe": timeframe,
         "timestamp": datetime.now().isoformat(),
-        "direction": direction,
-        "confidence": confidence,
-        "entry_price": round(random.uniform(100, 5000), 2),
-        "stop_loss": round(random.uniform(95, 99), 2),
-        "take_profit": round(random.uniform(101, 105), 2),
-        "analysis_summary": f"AI analysis suggests a {direction.lower()} signal for {symbol} with {confidence}% confidence based on current market conditions.",
-        "technical_indicators": {
+        "created_at": datetime.now().isoformat(),
+        "trend": direction,
+        "strength": round(random.uniform(0.6, 0.9), 2),
+        "support_levels": [
+            round(random.uniform(90, 95), 2),
+            round(random.uniform(85, 90), 2)
+        ],
+        "resistance_levels": [
+            round(random.uniform(105, 110), 2),
+            round(random.uniform(110, 115), 2)
+        ],
+        "next_price_target": round(random.uniform(100, 5000), 2),
+        "stop_loss_suggestion": round(random.uniform(90, 95), 2),
+        "summary": f"The {symbol} is showing a {direction} trend on the {timeframe} timeframe. Technical indicators suggest potential continuation of the current momentum.",
+        "indicators": {
             "rsi": round(random.uniform(30, 70), 2),
-            "macd": round(random.uniform(-2, 2), 2),
-            "bollinger_bands": {
-                "upper": round(random.uniform(105, 110), 2),
-                "middle": 100,
-                "lower": round(random.uniform(90, 95), 2)
+            "macd": {
+                "value": round(random.uniform(-2, 2), 2),
+                "signal": round(random.uniform(-1, 1), 2),
+                "histogram": round(random.uniform(-1, 1), 2)
             },
             "moving_averages": {
-                "sma_50": round(random.uniform(95, 105), 2),
-                "sma_200": round(random.uniform(90, 110), 2),
-                "ema_12": round(random.uniform(95, 105), 2),
-                "ema_26": round(random.uniform(95, 105), 2)
+                "ma20": round(random.uniform(95, 105), 2),
+                "ma50": round(random.uniform(90, 110), 2),
+                "ma200": round(random.uniform(85, 115), 2)
             }
         },
-        "market_sentiment": random.choice(["Bullish", "Bearish", "Neutral"]),
-        "volume_analysis": {
-            "volume": round(random.uniform(100000, 1000000), 0),
-            "volume_change": f"{round(random.uniform(-10, 10), 2)}%"
-        },
-        "support_resistance": {
-            "support_levels": [
-                round(random.uniform(90, 95), 2),
-                round(random.uniform(85, 90), 2)
-            ],
-            "resistance_levels": [
-                round(random.uniform(105, 110), 2),
-                round(random.uniform(110, 115), 2)
-            ]
-        }
+        "recommendation": random.choice([
+            "Strong Buy", "Buy", "Neutral", "Sell", "Strong Sell"
+        ]),
+        "next_potential_move": f"Price might {'rise towards' if direction == 'bullish' else 'fall towards'} the next {'resistance' if direction == 'bullish' else 'support'} level.",
+        "risk_reward_ratio": round(random.uniform(1.5, 3.5), 2)
     }
     
     return analysis

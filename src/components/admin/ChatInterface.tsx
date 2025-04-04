@@ -11,6 +11,11 @@ import { Send, ArrowLeft, UserCircle } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import { io } from 'socket.io-client';
+
+// Get the API base URL from environment variable or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const socket = io(API_BASE_URL);
 
 const ChatInterface = () => {
   const { 
@@ -27,6 +32,29 @@ const ChatInterface = () => {
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Connect to real-time chat socket for admin
+  useEffect(() => {
+    if (user && user.is_admin) {
+      // Join admin's chat room
+      socket.emit('join-admin-chat', { adminId: user.id });
+      
+      // Listen for new messages from all users
+      socket.on('new-message', (message) => {
+        // The actual message update will be handled by the backend context
+        // This just ensures we're re-rendering when new messages arrive
+        if (message.conversationId === currentConversation) {
+          markMessageAsRead(message.id);
+        }
+      });
+      
+      return () => {
+        // Cleanup socket connection
+        socket.off('new-message');
+        socket.emit('leave-admin-chat', { adminId: user.id });
+      };
+    }
+  }, [user, currentConversation]);
   
   // If user is not admin and no conversation exists, create one
   useEffect(() => {
@@ -72,6 +100,16 @@ const ChatInterface = () => {
     
     try {
       await sendMessage(currentConversation, messageText);
+      
+      // Emit socket event for real-time communication
+      socket.emit('send-message', {
+        conversationId: currentConversation,
+        senderId: user?.id,
+        sender: user?.is_admin ? 'admin' : 'user',
+        text: messageText,
+        timestamp: new Date().toISOString()
+      });
+      
       setMessageText('');
       toast({
         title: "Message sent",

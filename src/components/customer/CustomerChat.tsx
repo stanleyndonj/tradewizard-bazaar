@@ -10,6 +10,11 @@ import { Send, MessageCircle, Clock } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import { io } from 'socket.io-client';
+
+// Get the API base URL from environment variable or use default
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const socket = io(API_BASE_URL);
 
 const CustomerChat = () => {
   const { 
@@ -26,6 +31,30 @@ const CustomerChat = () => {
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Connect to real-time chat socket
+  useEffect(() => {
+    if (user) {
+      // Join user's chat room
+      socket.emit('join-chat', { userId: user.id });
+      
+      // Listen for new messages
+      socket.on('new-message', (message) => {
+        // If the message is for current conversation, update the UI
+        if (message.conversationId === currentConversation) {
+          // The actual message update will be handled by the backend context
+          // This just ensures we're re-rendering when new messages arrive
+          markMessageAsRead(message.id);
+        }
+      });
+      
+      return () => {
+        // Cleanup socket connection
+        socket.off('new-message');
+        socket.emit('leave-chat', { userId: user.id });
+      };
+    }
+  }, [user, currentConversation]);
   
   // Set the first conversation as current if none is selected
   useEffect(() => {
@@ -70,12 +99,30 @@ const CustomerChat = () => {
           setTimeout(() => {
             if (currentConversation) {
               sendMessage(currentConversation, messageText);
+              
+              // Emit socket event for real-time communication
+              socket.emit('send-message', {
+                conversationId: currentConversation,
+                senderId: user.id,
+                text: messageText,
+                timestamp: new Date().toISOString()
+              });
+              
               setMessageText('');
             }
           }, 100);
         }
       } else {
         await sendMessage(currentConversation, messageText);
+        
+        // Emit socket event for real-time communication
+        socket.emit('send-message', {
+          conversationId: currentConversation,
+          senderId: user.id,
+          text: messageText,
+          timestamp: new Date().toISOString()
+        });
+        
         setMessageText('');
       }
     } catch (error) {

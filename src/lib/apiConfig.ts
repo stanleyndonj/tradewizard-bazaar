@@ -1,41 +1,41 @@
 
 // Get the API base URL from environment variable or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // API endpoints
 const API_ENDPOINTS = {
   // Auth endpoints
-  REGISTER: `${API_BASE_URL}/auth/register`,
-  LOGIN: `${API_BASE_URL}/auth/login`,
-  LOGOUT: `${API_BASE_URL}/auth/logout`,
-  CURRENT_USER: `${API_BASE_URL}/users/me`,
+  REGISTER: `${API_BASE_URL}/api/auth/register`,
+  LOGIN: `${API_BASE_URL}/api/auth/login`,
+  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+  CURRENT_USER: `${API_BASE_URL}/api/users/me`,
   
   // User endpoints
-  USERS: `${API_BASE_URL}/users`,
-  USER_BY_ID: (id: string) => `${API_BASE_URL}/users/${id}`,
+  USERS: `${API_BASE_URL}/api/users`,
+  USER_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
   
   // Robot endpoints
-  ROBOTS: `${API_BASE_URL}/robots`,
-  ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/robots/${id}`,
+  ROBOTS: `${API_BASE_URL}/api/robots`,
+  ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/api/robots/${id}`,
   
   // Robot request endpoints
-  ROBOT_REQUESTS: `${API_BASE_URL}/robot-requests`,
-  ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/robot-requests/${id}`,
+  ROBOT_REQUESTS: `${API_BASE_URL}/api/robot-requests`,
+  ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/api/robot-requests/${id}`,
   // Fix the endpoint to match the backend route
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/users/${userId}/robot-requests`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/api/users/${userId}/robot-requests`,
   
   // Purchase endpoints
-  PURCHASES: `${API_BASE_URL}/purchases`,
+  PURCHASES: `${API_BASE_URL}/api/purchases`,
   // Fix the endpoint to match the backend route
-  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/users/${userId}/purchases`,
+  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/api/users/${userId}/purchases`,
   
   // M-Pesa endpoints
-  MPESA_INITIATE: `${API_BASE_URL}/mpesa/initiate`,
-  MPESA_VERIFY: `${API_BASE_URL}/mpesa/verify`,
+  MPESA_INITIATE: `${API_BASE_URL}/api/mpesa/initiate`,
+  MPESA_VERIFY: `${API_BASE_URL}/api/mpesa/verify`,
   
   // AI Trading Signals endpoints
-  AI_TRADING_SIGNALS: `${API_BASE_URL}/ai-trading-signals`,
-  AI_MARKET_ANALYSIS: `${API_BASE_URL}/ai-trading-signals/analyze`
+  AI_TRADING_SIGNALS: `${API_BASE_URL}/api/ai-trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`
 };
 
 // Helper function to get authentication headers
