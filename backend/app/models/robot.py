@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, String, Float, DateTime, ARRAY
+from sqlalchemy import Column, String, Float, DateTime, ARRAY, Text
 from sqlalchemy.sql import func
 import uuid
 from ..database import Base
@@ -16,5 +16,8 @@ class Robot(Base):
     category = Column(String, nullable=False)
     features = Column(ARRAY(String), nullable=False)
     image_url = Column(String, nullable=True)
+    imageUrl = Column(String, nullable=True)  # Added to match frontend requirement
+    download_url = Column(String, nullable=True)  # Added for robot download functionality
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+

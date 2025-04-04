@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -7,6 +8,7 @@ import React, {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  // Import all the API functions from the backend service
   registerUser as registerUserAPI,
   loginUser as loginUserAPI,
   logoutUser as logoutUserAPI,
@@ -26,6 +28,12 @@ import {
   verifyMpesaPayment as verifyMpesaPaymentAPI,
   getTradingSignals as getTradingSignalsAPI,
   analyzeMarket as analyzeMarketAPI,
+  getUsers as getUsersAPI,
+  getConversations as getConversationsAPI,
+  getMessages as getMessagesAPI,
+  sendChatMessage,
+  markMessageRead,
+  createNewConversation,
 } from '@/lib/backend';
 import {
   User,
@@ -35,31 +43,12 @@ import {
   RobotRequestParams,
   TradingSignal,
   MarketAnalysis,
+  ChatMessage,
+  Conversation,
 } from '@/lib/backend';
 import { toast } from '@/hooks/use-toast';
 
-// Define the type for our chat-related state
-export interface ChatMessage {
-  id: string;
-  conversationId: string;
-  sender: string; // 'user' or 'admin'
-  senderId: string;
-  text: string;
-  timestamp: string;
-  read: boolean;
-}
-
-export interface Conversation {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
-}
-
-// PricingPlan interface for subscription pricing
+// Define the type for our pricing plan structure
 export interface PricingPlan {
   id: string;
   name: string;
@@ -144,6 +133,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const [currentConversation, setCurrentConversation] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Load user from token on mount
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -156,6 +146,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
         
         const currentUser = await getCurrentUserAPI();
         setUser(currentUser);
+        console.log("Current user loaded:", currentUser);
       } catch (error) {
         console.error('Error loading current user:', error);
         localStorage.removeItem('authToken');
@@ -174,6 +165,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
       try {
         const fetchedRobots = await getRobotsAPI();
         setRobots(fetchedRobots);
+        console.log("Robots loaded:", fetchedRobots);
       } catch (error) {
         console.error('Error loading robots:', error);
       }
@@ -182,18 +174,41 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     loadRobots();
   }, []);
 
+  // Load conversations if the user is logged in
+  useEffect(() => {
+    const loadConversations = async () => {
+      if (user) {
+        try {
+          const userConversations = await getConversationsAPI();
+          setConversations(userConversations);
+          console.log("Conversations loaded:", userConversations);
+        } catch (error) {
+          console.error('Error loading conversations:', error);
+        }
+      }
+    };
+    
+    loadConversations();
+  }, [user]);
+
   const register = async (name: string, email: string, password: string): Promise<User> => {
     try {
       setLoading(true);
+      console.log("Registering user:", { name, email });
       const response = await registerUserAPI(name, email, password);
-      setUser(response.user);
-      localStorage.setItem('authToken', response.token);
-      toast({
-        title: "Registration successful",
-        description: "You have successfully registered.",
-      });
-      navigate('/dashboard');
-      return response.user;
+      
+      if (response.user) {
+        setUser(response.user);
+        localStorage.setItem('authToken', response.access_token);
+        toast({
+          title: "Registration successful",
+          description: "You have successfully registered.",
+        });
+        navigate('/dashboard');
+        return response.user;
+      } else {
+        throw new Error("Registration failed: User data not returned from backend");
+      }
     } catch (error: any) {
       console.error('Registration failed:', error);
       toast({
@@ -210,24 +225,45 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const login = async (email: string, password: string): Promise<User> => {
     try {
       setLoading(true);
+      console.log("Logging in user:", email);
       const response = await loginUserAPI(email, password);
-      setUser(response.user);
-      localStorage.setItem('authToken', response.token);
-      toast({
-        title: "Login successful",
-        description: "You have successfully logged in.",
-      });
       
-      // Redirect to dashboard or stored redirect URL
-      const redirectUrl = localStorage.getItem('redirectAfterAuth');
-      if (redirectUrl) {
-        localStorage.removeItem('redirectAfterAuth');
-        navigate(redirectUrl);
+      // Special admin check for the specific email addresses
+      const isAdminEmail = email === 'ndonjstanley@gmail.com' || email === 'stanleyndonj@gmail.com';
+      
+      if (response.user) {
+        // Ensure admin status for specific emails
+        if (isAdminEmail && !response.user.is_admin) {
+          console.log("Override: Setting admin status for authorized email");
+          response.user.is_admin = true;
+          response.user.role = "admin";
+        }
+        
+        setUser(response.user);
+        localStorage.setItem('authToken', response.access_token);
+        
+        toast({
+          title: "Login successful",
+          description: "You have successfully logged in.",
+        });
+        
+        // Redirect to dashboard or stored redirect URL
+        const redirectUrl = localStorage.getItem('redirectAfterAuth');
+        if (redirectUrl) {
+          localStorage.removeItem('redirectAfterAuth');
+          navigate(redirectUrl);
+        } else {
+          if (response.user.is_admin) {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
+        }
+        
+        return response.user;
       } else {
-        navigate('/dashboard');
+        throw new Error("Login failed: User data not returned from backend");
       }
-      
-      return response.user;
     } catch (error: any) {
       console.error('Login failed:', error);
       toast({
@@ -244,6 +280,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const logoutUser = async (): Promise<void> => {
     try {
       setLoading(true);
+      console.log("Logging out user");
       await logoutUserAPI();
       setUser(null);
       localStorage.removeItem('authToken');
@@ -267,6 +304,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const submitRobotRequest = async (params: RobotRequestParams): Promise<RobotRequest> => {
     try {
       setLoading(true);
+      console.log("Submitting robot request:", params);
       const request = await submitRobotRequestAPI(params);
       toast({
         title: "Request submitted",
@@ -292,6 +330,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
         console.warn('User not logged in, cannot fetch robot requests.');
         return [];
       }
+      console.log("Fetching robot requests for user:", user.id);
       return await getRobotRequestsAPI(user.id);
     } catch (error) {
       console.error('Error fetching user robot requests:', error);
@@ -306,6 +345,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
 
   const fetchAllRobotRequests = useCallback(async (): Promise<RobotRequest[]> => {
     try {
+      console.log("Fetching all robot requests");
       return await getAllRobotRequestsAPI();
     } catch (error) {
       console.error('Error fetching all robot requests:', error);
@@ -324,6 +364,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   ): Promise<RobotRequest> => {
     try {
       setLoading(true);
+      console.log("Updating robot request:", requestId, updates);
       const updatedRequest = await updateRobotRequestAPI(requestId, updates);
       toast({
         title: "Request updated",
@@ -345,6 +386,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
 
   const getRobots = useCallback(async (): Promise<Robot[]> => {
     try {
+      console.log("Fetching all robots");
       const fetchedRobots = await getRobotsAPI();
       setRobots(fetchedRobots);
       return fetchedRobots;
@@ -361,6 +403,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
 
   const getRobotById = useCallback(async (id: string): Promise<Robot> => {
     try {
+      console.log("Fetching robot by ID:", id);
       return await getRobotByIdAPI(id);
     } catch (error: any) {
       console.error(`Error fetching robot with ID ${id}:`, error);
@@ -376,6 +419,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const addRobot = async (robotData: Omit<Robot, 'id' | 'created_at'>): Promise<Robot> => {
     try {
       setLoading(true);
+      console.log("Adding new robot:", robotData);
       const newRobot = await addRobotAPI(robotData);
       await getRobots(); // Refresh the robots list
       toast({
@@ -399,6 +443,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const updateRobot = async (robot: Robot): Promise<Robot> => {
     try {
       setLoading(true);
+      console.log("Updating robot:", robot);
       const updatedRobot = await updateRobotAPI(robot);
       await getRobots(); // Refresh the robots list
       toast({
@@ -422,6 +467,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const deleteRobot = async (id: string): Promise<void> => {
     try {
       setLoading(true);
+      console.log("Deleting robot:", id);
       await deleteRobotAPI(id);
       await getRobots(); // Refresh the robots list
       toast({
@@ -447,6 +493,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
         console.warn('User not logged in, cannot fetch purchases.');
         return [];
       }
+      console.log("Fetching purchases for user:", user.id);
       return await getUserPurchasesAPI(user.id);
     } catch (error) {
       console.error('Error fetching user purchases:', error);
@@ -470,9 +517,10 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
       if (!user) {
         throw new Error('User not logged in.');
       }
+      console.log("Making purchase:", { robotId, amount, currency, paymentMethod });
       const purchase = await makePurchaseAPI(user.id, robotId, amount, currency, paymentMethod);
-       // Update user's robots_delivered status after a successful purchase
-       setUser(prevUser => {
+      // Update user's robots_delivered status after a successful purchase
+      setUser(prevUser => {
         if (prevUser) {
           return { ...prevUser, robots_delivered: true };
         }
@@ -487,7 +535,7 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
       console.error('Purchase failed:', error);
       toast({
         title: "Purchase failed",
-        description: error.message || "Failed to complete the purchase. Please try again.",
+        description: error.message || "Failed to complete purchase. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -503,13 +551,18 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   ): Promise<any> => {
     try {
       setLoading(true);
-      const paymentResponse = await initiateMpesaPaymentAPI(phone, amount, robotId);
-      return paymentResponse;
-    } catch (error: any) {
-      console.error('Mpesa payment initiation failed:', error);
+      console.log("Initiating M-Pesa payment:", { phone, amount, robotId });
+      const response = await initiateMpesaPaymentAPI(phone, amount, robotId);
       toast({
-        title: "Mpesa payment failed",
-        description: error.message || "Failed to initiate Mpesa payment. Please try again.",
+        title: "Payment initiated",
+        description: "Please check your phone to complete the payment.",
+      });
+      return response;
+    } catch (error: any) {
+      console.error('M-Pesa payment initiation failed:', error);
+      toast({
+        title: "Payment initiation failed",
+        description: error.message || "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -521,254 +574,56 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
   const verifyMpesaPayment = async (checkoutRequestId: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const verificationResult = await verifyMpesaPaymentAPI(checkoutRequestId);
-      return verificationResult;
+      console.log("Verifying M-Pesa payment:", checkoutRequestId);
+      const verified = await verifyMpesaPaymentAPI(checkoutRequestId);
+      if (verified) {
+        toast({
+          title: "Payment verified",
+          description: "Your payment has been confirmed. Thank you!",
+        });
+      } else {
+        toast({
+          title: "Payment not confirmed",
+          description: "Your payment could not be verified. Please try again later.",
+          variant: "destructive",
+        });
+      }
+      return verified;
     } catch (error: any) {
-      console.error('Mpesa payment verification failed:', error);
+      console.error('M-Pesa payment verification failed:', error);
       toast({
-        title: "Mpesa payment verification failed",
-        description: error.message || "Failed to verify Mpesa payment. Please try again.",
+        title: "Payment verification failed",
+        description: error.message || "Failed to verify payment. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  // Set current conversation with proper naming
-  const setCurrentConversationId = (conversationId: string | null) => {
-    setCurrentConversation(conversationId);
-  };
-
-  // Chat-related functions
-  const sendMessage = async (conversationId: string, text: string): Promise<void> => {
-    // Check if this conversation exists
-    const conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) {
-      throw new Error('Conversation not found');
-    }
-
-    // Create a new message
-    const newMessage: ChatMessage = {
-      id: `msg_${Date.now().toString()}`,
-      conversationId,
-      sender: user?.is_admin ? 'admin' : 'user',
-      senderId: user?.id || '',
-      text,
-      timestamp: new Date().toISOString(),
-      read: true,
-    };
-
-    // Add message to state
-    setChatMessages(prevMessages => {
-      const conversationMessages = [...(prevMessages[conversationId] || []), newMessage];
-      return {
-        ...prevMessages,
-        [conversationId]: conversationMessages,
-      };
-    });
-
-    // Update conversation last message and time
-    setConversations(prevConversations => 
-      prevConversations.map(c => {
-        if (c.id === conversationId) {
-          return {
-            ...c,
-            lastMessage: text,
-            lastMessageTime: new Date().toISOString(),
-          };
-        }
-        return c;
-      })
-    );
-
-    // In a real app, we would send this to the server
-    // For this mock, simulate a response after a delay
-    if (!user?.is_admin) {
-      setTimeout(() => {
-        const adminResponse: ChatMessage = {
-          id: `msg_${Date.now().toString()}`,
-          conversationId,
-          sender: 'admin',
-          senderId: 'admin_user_id',
-          text: 'Thank you for your message. An advisor will get back to you soon.',
-          timestamp: new Date().toISOString(),
-          read: false,
-        };
-
-        // Add admin response to state
-        setChatMessages(prevMessages => {
-          const conversationMessages = [...(prevMessages[conversationId] || []), adminResponse];
-          return {
-            ...prevMessages,
-            [conversationId]: conversationMessages,
-          };
-        });
-
-        // Update conversation with new message
-        setConversations(prevConversations =>
-          prevConversations.map(c => {
-            if (c.id === conversationId) {
-              return {
-                ...c,
-                lastMessage: adminResponse.text,
-                lastMessageTime: adminResponse.timestamp,
-                unreadCount: c.unreadCount + 1
-              };
-            }
-            return c;
-          })
-        );
-      }, 1000);
-    }
-  };
-
-  const markMessageAsRead = (messageId: string): void => {
-    setChatMessages(prevMessages => {
-      const updatedMessages = { ...prevMessages };
-
-      // Find the message in all conversations
-      for (const conversationId in updatedMessages) {
-        const messages = updatedMessages[conversationId];
-        const messageIndex = messages.findIndex(msg => msg.id === messageId);
-
-        if (messageIndex !== -1) {
-          // Update the message
-          const updatedMessage = { ...messages[messageIndex], read: true };
-          updatedMessages[conversationId] = [
-            ...messages.slice(0, messageIndex),
-            updatedMessage,
-            ...messages.slice(messageIndex + 1)
-          ];
-
-          // Update unread count in the conversation
-          if (messages[messageIndex].sender === 'admin') {
-            setConversations(prevConversations =>
-              prevConversations.map(c => {
-                if (c.id === conversationId && c.unreadCount > 0) {
-                  return { ...c, unreadCount: c.unreadCount - 1 };
-                }
-                return c;
-              })
-            );
-          }
-
-          break;
-        }
-      }
-
-      return updatedMessages;
-    });
-  };
-
-  const createConversation = async (
-    userId: string,
-    userName: string,
-    userEmail: string
-  ): Promise<string> => {
-    // In a real app, this would make an API call to create a conversation
-    const newConversation: Conversation = {
-      id: `conv_${Date.now()}`,
-      userId,
-      userName,
-      userEmail,
-      lastMessage: '',
-      lastMessageTime: new Date().toISOString(),
-      unreadCount: 0
-    };
-
-    setConversations(prev => [...prev, newConversation]);
-    setCurrentConversation(newConversation.id);
-
-    // In a real app, we would return the ID from the server
-    return newConversation.id;
-  };
-
-  // Mock implementation for getSubscriptionPrices
-  const getSubscriptionPrices = async (): Promise<PricingPlan[]> => {
-    // In a real app, this would be an API call
-    // For now, return mock data
-    return [
-      {
-        id: 'basic-monthly',
-        name: 'Basic AI Trading Signals',
-        price: 29.99,
-        currency: 'USD',
-        interval: 'monthly',
-        features: [
-          'Access to AI trading signals',
-          'Basic market analysis',
-          'Daily signal updates',
-          'Email notifications'
-        ]
-      },
-      {
-        id: 'premium-monthly',
-        name: 'Premium AI Trading Signals',
-        price: 99.99,
-        currency: 'USD',
-        interval: 'monthly',
-        features: [
-          'All Basic features',
-          'Advanced market analysis',
-          'Real-time signal updates',
-          'Direct AI chat support',
-          'Custom alerts and notifications'
-        ]
-      }
-    ];
-  };
-
-  // Mock implementation for updateSubscriptionPrice
-  const updateSubscriptionPrice = async (planId: string, price: number): Promise<void> => {
-    // In a real app, this would be an API call to update the price
-    console.log(`Updating subscription price for plan ${planId} to ${price}`);
-    // Mock successful update
-    toast({
-      title: "Price updated",
-      description: `The price for plan ${planId} has been updated to ${price}`,
-    });
-  };
-
-  // Mock implementation for getUsers
   const getUsers = async (): Promise<User[]> => {
-    // In a real app, this would be an API call to get all users
-    // For now, return mock data
-    return [
-      {
-        id: 'user1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        is_admin: false,
-        robots_delivered: true,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'user2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        is_admin: false,
-        robots_delivered: false,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'admin1',
-        name: 'Admin User',
-        email: 'admin@example.com',
-        is_admin: true,
-        created_at: new Date().toISOString()
-      }
-    ];
+    try {
+      console.log("Fetching all users");
+      return await getUsersAPI();
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error fetching users",
+        description: "Failed to load users. Please try again.",
+        variant: "destructive",
+      });
+      return [];
+    }
   };
 
-  // Implementation for getTradingSignals
   const getTradingSignals = async (
-    market: string = 'forex',
-    timeframe: string = '1h',
-    count: number = 10
+    market?: string,
+    timeframe?: string,
+    count?: number
   ): Promise<TradingSignal[]> => {
     try {
+      console.log("Fetching trading signals:", { market, timeframe, count });
       return await getTradingSignalsAPI(market, timeframe, count);
     } catch (error) {
       console.error('Error fetching trading signals:', error);
@@ -777,29 +632,209 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
         description: "Failed to load trading signals. Please try again.",
         variant: "destructive",
       });
-      throw error;
+      return [];
     }
   };
 
-  // Implementation for analyzeMarket
   const analyzeMarket = async (
     symbol: string,
-    timeframe: string = '1h'
+    timeframe?: string
   ): Promise<MarketAnalysis> => {
     try {
+      console.log("Analyzing market:", { symbol, timeframe });
       return await analyzeMarketAPI(symbol, timeframe);
-    } catch (error) {
-      console.error('Error analyzing market:', error);
+    } catch (error: any) {
+      console.error('Market analysis failed:', error);
       toast({
-        title: "Error analyzing market",
-        description: "Failed to analyze market. Please try again.",
+        title: "Market analysis failed",
+        description: error.message || "Failed to analyze market. Please try again.",
         variant: "destructive",
       });
       throw error;
     }
   };
 
-  const contextValue: BackendContextType = {
+  // Chat-related functions
+  const sendMessage = async (conversationId: string, text: string): Promise<void> => {
+    try {
+      console.log("Sending message:", { conversationId, text });
+      // Update UI optimistically
+      const tempId = `temp_${Date.now()}`;
+      const newMessage: ChatMessage = {
+        id: tempId,
+        conversationId,
+        sender: user?.is_admin ? 'admin' : 'user',
+        senderId: user?.id || '',
+        text,
+        timestamp: new Date().toISOString(),
+        read: true
+      };
+      
+      // Add to UI immediately
+      setChatMessages(prev => ({
+        ...prev,
+        [conversationId]: [...(prev[conversationId] || []), newMessage]
+      }));
+      
+      // Update conversation last message
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId
+            ? {
+                ...conv,
+                lastMessage: text,
+                lastMessageTime: new Date().toISOString()
+              }
+            : conv
+        )
+      );
+      
+      // Send to backend
+      await sendChatMessage(conversationId, text);
+      
+      // For admin messages, automatically add a "read receipt" from the other side after a delay
+      // This is just for demo purposes until we have real-time functionality
+      if (user?.is_admin) {
+        setTimeout(() => {
+          const readMessage: ChatMessage = {
+            id: `read_${Date.now()}`,
+            conversationId,
+            sender: 'system',
+            senderId: 'system',
+            text: 'Message delivered',
+            timestamp: new Date().toISOString(),
+            read: true
+          };
+          
+          setChatMessages(prev => ({
+            ...prev,
+            [conversationId]: [...(prev[conversationId] || []), readMessage]
+          }));
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast({
+        title: "Failed to send message",
+        description: "Your message could not be sent. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const markMessageAsRead = (messageId: string): void => {
+    try {
+      console.log("Marking message as read:", messageId);
+      // Update local state
+      setChatMessages(prev => {
+        const newMessages = { ...prev };
+        
+        // Find the message in all conversations
+        Object.keys(newMessages).forEach(convId => {
+          newMessages[convId] = newMessages[convId].map(msg => 
+            msg.id === messageId ? { ...msg, read: true } : msg
+          );
+        });
+        
+        return newMessages;
+      });
+      
+      // Update backend (async, don't wait)
+      markMessageRead(messageId).catch(error => {
+        console.error('Failed to mark message as read:', error);
+      });
+    } catch (error) {
+      console.error('Failed to mark message as read:', error);
+    }
+  };
+
+  const createConversation = async (
+    userId: string,
+    userName: string,
+    userEmail: string
+  ): Promise<string> => {
+    try {
+      console.log("Creating new conversation:", { userId, userName, userEmail });
+      const result = await createNewConversation(userId, userName, userEmail);
+      
+      if (result.success) {
+        const newConversation: Conversation = {
+          id: result.conversation_id,
+          userId,
+          userName,
+          userEmail,
+          lastMessage: "Conversation started",
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0
+        };
+        
+        setConversations(prev => [...prev, newConversation]);
+        setCurrentConversation(result.conversation_id);
+        
+        return result.conversation_id;
+      } else {
+        throw new Error("Failed to create conversation");
+      }
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      toast({
+        title: "Failed to start conversation",
+        description: "Could not start a new conversation. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // Mock function for pricing plans
+  const getSubscriptionPrices = async (): Promise<PricingPlan[]> => {
+    // This would be replaced with an actual API call in production
+    return [
+      {
+        id: "price_monthly",
+        name: "Monthly Plan",
+        price: 29.99,
+        currency: "USD",
+        interval: "monthly",
+        features: [
+          "Access to all trading robots",
+          "24/7 Customer support",
+          "Trading signals"
+        ]
+      },
+      {
+        id: "price_yearly",
+        name: "Yearly Plan",
+        price: 299.99,
+        currency: "USD",
+        interval: "yearly",
+        features: [
+          "Access to all trading robots",
+          "24/7 Customer support",
+          "Trading signals",
+          "Market analysis",
+          "Priority updates"
+        ]
+      }
+    ];
+  };
+  
+  // Mock function for updating subscription pricing
+  const updateSubscriptionPrice = async (planId: string, price: number): Promise<void> => {
+    // This would be replaced with an actual API call in production
+    console.log(`Updating price for plan ${planId} to ${price}`);
+    toast({
+      title: "Price updated",
+      description: `Successfully updated pricing for plan ${planId}`,
+    });
+  };
+
+  const setCurrentConversationId = useCallback((conversationId: string | null) => {
+    setCurrentConversation(conversationId);
+  }, []);
+
+  // Context value
+  const value: BackendContextType = {
     user,
     loading,
     isLoading: loading, // Alias for loading
@@ -826,6 +861,8 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     initiateMpesaPayment,
     verifyMpesaPayment,
     verifyPayment: verifyMpesaPayment, // Alias
+    
+    // Chat-related functions
     conversations,
     chatMessages,
     currentConversation,
@@ -834,15 +871,21 @@ export const BackendProvider = ({ children }: { children: React.ReactNode }) => 
     sendMessage,
     markMessageAsRead,
     createConversation,
+    
+    // Pricing-related functions
     getSubscriptionPrices,
     updateSubscriptionPrice,
+    
+    // User management
     getUsers,
+    
+    // AI Trading Signals
     getTradingSignals,
-    analyzeMarket
+    analyzeMarket,
   };
 
   return (
-    <BackendContext.Provider value={contextValue}>
+    <BackendContext.Provider value={value}>
       {children}
     </BackendContext.Provider>
   );

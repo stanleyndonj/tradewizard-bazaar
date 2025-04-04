@@ -117,9 +117,10 @@ const RobotManagement = () => {
           const isZip = fileExtension === 'zip';
           const fileType = isZip ? 'zip' : 'xml';
           
+          // Create a complete updated robot object
           const updatedRobot: Robot = {
             ...robot,
-            download_url: `/uploads/${file.name}`, // This would be a real URL in production
+            download_url: `/uploads/${file.name}` // This would be a real URL in production
           };
           
           updateRobot(updatedRobot);
