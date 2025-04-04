@@ -36,7 +36,8 @@ export interface RobotRequest {
   user_name?: string;
   user_email?: string;
   status: "pending" | "in_progress" | "approved" | "rejected" | "delivered";
-  type: string;
+  type?: string;
+  robot_type: string; // Ensure this matches the backend model
   created_at: string;
   updated_at?: string;
   progress?: number;
@@ -125,6 +126,7 @@ export interface TradingSignal {
   strength?: number;
   confidence?: number;
   created_at: string;
+  status?: string; // Add missing property
 }
 
 export interface MarketAnalysis {
@@ -151,6 +153,9 @@ export interface MarketAnalysis {
   next_potential_move: string;
   risk_reward_ratio: number;
   created_at: string;
+  next_price_target?: number; // Add missing property
+  stop_loss_suggestion?: number; // Add missing property
+  summary?: string; // Add missing property
 }
 
 export interface ChatMessage {

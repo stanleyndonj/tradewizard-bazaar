@@ -1,189 +1,174 @@
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import { Robot } from '@/lib/backend'; // Import Robot type from backend
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useBackend } from '@/context/BackendContext';
+import { Robot } from '@/lib/backend';
 
 interface RobotManagementModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  onSave: (robot: Robot) => void;
-  robot: Robot | null;
+  robot?: Robot | null;
+  isEdit: boolean;
 }
 
-const RobotManagementModal = ({ isOpen, onClose, onSave, robot }: RobotManagementModalProps) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState(0);
-  const [currency, setCurrency] = useState('USD');
-  const [type, setType] = useState<'MT5' | 'Binary'>('MT5');
-  const [category, setCategory] = useState<'free' | 'paid'>('paid');
-  const [featuresText, setFeaturesText] = useState('');
-  const [imageUrl, setImageUrl] = useState('/placeholder.svg');
+const initialRobot: Omit<Robot, 'id' | 'created_at'> = {
+  name: '',
+  description: '',
+  type: 'MT5',
+  price: 0,
+  currency: 'USD',
+  category: 'paid',
+  features: [],
+  image_url: '',
+  imageUrl: '',
+  download_url: '',
+  updated_at: undefined
+};
 
-  // Initialize form when editing an existing robot
+const RobotManagementModal = ({ open, onClose, robot, isEdit }: RobotManagementModalProps) => {
+  const { addRobot, updateRobot } = useBackend();
+  const [robotData, setRobotData] = useState<any>(initialRobot);
+  const [featuresInput, setFeaturesInput] = useState('');
+  const [category, setCategory] = useState<string>(initialRobot.category);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    if (robot) {
-      setName(robot.name);
-      setDescription(robot.description);
-      setPrice(robot.price);
-      setCurrency(robot.currency);
-      setType(robot.type as 'MT5' | 'Binary'); // Cast to the expected type
+    if (robot && isEdit) {
+      setRobotData(robot);
+      setFeaturesInput(robot.features?.join(', ') || '');
       setCategory(robot.category);
-      setFeaturesText(robot.features.join('\n'));
-      setImageUrl(robot.imageUrl || robot.image_url || '/placeholder.svg');
     } else {
-      // Reset form for new robot
-      setName('');
-      setDescription('');
-      setPrice(0);
-      setCurrency('USD');
-      setType('MT5');
-      setCategory('paid');
-      setFeaturesText('');
-      setImageUrl('/placeholder.svg');
+      setRobotData(initialRobot);
+      setFeaturesInput('');
+      setCategory(initialRobot.category);
     }
-  }, [robot]);
+  }, [robot, isEdit]);
 
-  const handleSubmit = () => {
-    // Parse features from text input (one per line)
-    const features = featuresText
-      .split('\n')
-      .map(feature => feature.trim())
-      .filter(feature => feature.length > 0);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setRobotData({ ...robotData, [name]: value });
+  };
 
-    const robotData: Robot = {
-      id: robot?.id || '',
-      name,
-      description,
-      price: category === 'free' ? 0 : price,
-      currency,
-      type,
-      category,
-      features,
-      imageUrl,
-      created_at: robot?.created_at || new Date().toISOString(),
-      // Include download_url if it exists in the original robot
-      ...(robot?.download_url ? { download_url: robot.download_url } : {})
-    };
-
-    onSave(robotData);
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const features = featuresInput.split(',').map(feature => feature.trim()).filter(feature => feature);
+      
+      // Prepare robot data with all required fields
+      const completeRobotData = {
+        ...robotData,
+        features,
+        category,
+        image_url: robotData.image_url || robotData.imageUrl || '',
+        imageUrl: robotData.imageUrl || robotData.image_url || '',
+      };
+      
+      if (isEdit && robot) {
+        await updateRobot({ ...completeRobotData, id: robot.id, created_at: robot.created_at });
+      } else {
+        await addRobot(completeRobotData);
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving robot:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{robot ? 'Edit Robot' : 'Add New Robot'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Robot' : 'Add New Robot'}</DialogTitle>
         </DialogHeader>
-
+        
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Name</Label>
-            <Input 
-              id="name" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              className="col-span-3" 
-              placeholder="e.g., MT5 Pro Scalper"
-            />
+            <Input id="name" name="name" value={robotData.name} onChange={handleChange} className="col-span-3" />
           </div>
           
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
+            <Textarea id="description" name="description" value={robotData.description} onChange={handleChange} className="col-span-3" />
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="type" className="text-right">Type</Label>
+            <Select 
+              value={robotData.type} 
+              onValueChange={(value) => setRobotData({...robotData, type: value})}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MT5">MT5</SelectItem>
+                <SelectItem value="Binary">Binary</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="category" className="text-right">Category</Label>
+            <Select 
+              value={category} 
+              onValueChange={setCategory}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="price" className="text-right">Price</Label>
+            <Input type="number" id="price" name="price" value={robotData.price} onChange={handleChange} className="col-span-3" />
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="currency" className="text-right">Currency</Label>
+            <Input id="currency" name="currency" value={robotData.currency} onChange={handleChange} className="col-span-3" />
+          </div>
+          
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="features" className="text-right">Features</Label>
             <Textarea 
-              id="description" 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)} 
+              id="features" 
+              placeholder="Enter features separated by commas" 
+              value={featuresInput} 
+              onChange={(e) => setFeaturesInput(e.target.value)} 
               className="col-span-3" 
-              placeholder="Brief description of the robot"
             />
           </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Type</Label>
-            <RadioGroup value={type} onValueChange={(value) => setType(value as 'MT5' | 'Binary')} className="col-span-3 flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="MT5" id="mt5" />
-                <Label htmlFor="mt5">MT5</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Binary" id="binary" />
-                <Label htmlFor="binary">Binary</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Category</Label>
-            <div className="col-span-3 flex items-center space-x-4">
-              <Switch 
-                checked={category === 'free'} 
-                onCheckedChange={(checked) => setCategory(checked ? 'free' : 'paid')} 
-                id="free-switch"
-              />
-              <Label htmlFor="free-switch">Free Robot</Label>
-            </div>
-          </div>
-          
-          {category === 'paid' && (
-            <>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">Price</Label>
-                <Input 
-                  id="price" 
-                  type="number" 
-                  value={price.toString()} 
-                  onChange={(e) => setPrice(Number(e.target.value))} 
-                  className="col-span-3" 
-                  min="0"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="currency" className="text-right">Currency</Label>
-                <Input 
-                  id="currency" 
-                  value={currency} 
-                  onChange={(e) => setCurrency(e.target.value)} 
-                  className="col-span-3" 
-                  placeholder="USD"
-                />
-              </div>
-            </>
-          )}
           
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="imageUrl" className="text-right">Image URL</Label>
-            <Input 
-              id="imageUrl" 
-              value={imageUrl} 
-              onChange={(e) => setImageUrl(e.target.value)} 
-              className="col-span-3" 
-              placeholder="/placeholder.svg"
-            />
+            <Input id="imageUrl" name="imageUrl" value={robotData.imageUrl} onChange={handleChange} className="col-span-3" />
           </div>
           
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="features" className="text-right pt-2">Features</Label>
-            <Textarea 
-              id="features" 
-              value={featuresText} 
-              onChange={(e) => setFeaturesText(e.target.value)} 
-              className="col-span-3 min-h-24" 
-              placeholder="Enter features, one per line"
-            />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="download_url" className="text-right">Download URL</Label>
+            <Input id="download_url" name="download_url" value={robotData.download_url} onChange={handleChange} className="col-span-3" />
           </div>
         </div>
-
+        
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="button" onClick={handleSubmit}>Save</Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Saving...' : isEdit ? 'Update' : 'Add'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
