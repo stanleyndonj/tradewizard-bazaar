@@ -26,9 +26,11 @@ function App() {
         {/* Dashboard routes */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/dashboard" element={<CustomerDashboard />} />
+        <Route path="/customer-dashboard" element={<CustomerDashboard />} />
         
         {/* Robot routes */}
         <Route path="/marketplace" element={<RobotMarketplace />} />
+        <Route path="/robot-marketplace" element={<RobotMarketplace />} />
         <Route path="/robot-configuration" element={<RobotConfiguration />} />
         
         {/* Trading features */}

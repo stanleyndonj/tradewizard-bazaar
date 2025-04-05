@@ -141,23 +141,39 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const userData = await loginUser(email, password);
-      setUser(userData);
+      const response = await loginUser(email, password);
       
-      // Load relevant data after login
-      if (userData) {
-        await Promise.all([
-          loadRobots(),
-          loadPurchases(userData.id)
-        ]);
+      // Check if response has the expected structure
+      if (response && response.user) {
+        setUser(response.user);
+        
+        // Load relevant data after login
+        if (response.user) {
+          await Promise.all([
+            loadRobots(),
+            loadPurchases(response.user.id)
+          ]);
+        }
+        
+        toast({
+          title: "Welcome back!",
+          description: `Logged in as ${response.user.name || 'User'}`,
+        });
+      } else {
+        console.error('Login response missing user data:', response);
+        toast({
+          title: "Login Error",
+          description: "Invalid response from server",
+          variant: "destructive",
+        });
       }
-      
-      toast({
-        title: "Welcome back!",
-        description: `Logged in as ${userData.name}`,
-      });
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "Please check your credentials",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -168,14 +184,30 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsLoading(true);
     try {
       const userData = await registerUser(name, email, password);
-      setUser(userData);
       
-      toast({
-        title: "Welcome!",
-        description: "Your account has been created successfully",
-      });
+      // Check if userData has the expected structure
+      if (userData && userData.id) {
+        setUser(userData);
+        
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created successfully",
+        });
+      } else {
+        console.error('Registration response missing user data:', userData);
+        toast({
+          title: "Registration Error",
+          description: "Invalid response from server",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Registration failed:', error);
+      toast({
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "Please check your information",
+        variant: "destructive",
+      });
       throw error;
     } finally {
       setIsLoading(false);

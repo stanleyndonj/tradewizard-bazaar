@@ -200,10 +200,20 @@ export const loginUser = async (email: string, password: string) => {
     body: JSON.stringify({ email, password }),
   });
 
-  return handleApiResponse(response);
+  const data = await handleApiResponse(response);
+  
+  // Store the token in localStorage for subsequent API calls
+  if (data && data.access_token) {
+    localStorage.setItem('auth_token', data.access_token);
+  }
+  
+  return data;
 };
 
 export const logoutUser = async () => {
+  // Remove token from localStorage
+  localStorage.removeItem('auth_token');
+  
   const response = await fetch(API_ENDPOINTS.LOGOUT, {
     method: 'POST',
     headers: {

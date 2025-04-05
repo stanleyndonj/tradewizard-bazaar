@@ -1,70 +1,83 @@
 
-// Get the API base URL from environment variable or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_URL = 'http://localhost:8000';
 
-// API endpoints
 const API_ENDPOINTS = {
   // Auth endpoints
-  REGISTER: `${API_BASE_URL}/api/auth/register`,
-  LOGIN: `${API_BASE_URL}/api/auth/login`,
-  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
-  CURRENT_USER: `${API_BASE_URL}/api/auth/users/me`,
+  REGISTER: `${API_URL}/api/auth/register`,
+  LOGIN: `${API_URL}/api/auth/login`,
+  LOGOUT: `${API_URL}/api/auth/logout`,
+  CURRENT_USER: `${API_URL}/api/auth/users/me`,
   
   // User endpoints
-  USERS: `${API_BASE_URL}/api/users`,
-  USER_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
+  USERS: `${API_URL}/users`,
+  USER_BY_ID: (id: string) => `${API_URL}/users/${id}`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_URL}/users/${userId}/robot-requests`,
+  USER_PURCHASES: (userId: string) => `${API_URL}/users/${userId}/purchases`,
   
   // Robot endpoints
-  ROBOTS: `${API_BASE_URL}/api/robots`,
-  ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/api/robots/${id}`,
+  ROBOTS: `${API_URL}/robots`,
+  ROBOT_BY_ID: (id: string) => `${API_URL}/robots/${id}`,
   
   // Robot request endpoints
-  ROBOT_REQUESTS: `${API_BASE_URL}/api/robot-requests`,
-  ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/api/robot-requests/${id}`,
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/api/users/${userId}/robot-requests`,
+  ROBOT_REQUESTS: `${API_URL}/robot-requests`,
+  ROBOT_REQUEST_BY_ID: (id: string) => `${API_URL}/robot-requests/${id}`,
   
   // Purchase endpoints
-  PURCHASES: `${API_BASE_URL}/api/purchases`,
-  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/api/users/${userId}/purchases`,
+  PURCHASES: `${API_URL}/purchases`,
+  PURCHASE_BY_ID: (id: string) => `${API_URL}/purchases/${id}`,
   
-  // M-Pesa endpoints
-  MPESA_INITIATE: `${API_BASE_URL}/api/mpesa/initiate`,
-  MPESA_VERIFY: `${API_BASE_URL}/api/mpesa/verify`,
+  // Payment endpoints
+  MPESA_INITIATE: `${API_URL}/payments/mpesa/initiate`,
+  MPESA_VERIFY: `${API_URL}/payments/mpesa/verify`,
   
-  // AI Trading Signals endpoints
-  AI_TRADING_SIGNALS: `${API_BASE_URL}/api/ai-trading-signals`,
-  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`,
+  // AI Trading endpoints
+  AI_TRADING_SIGNALS: `${API_URL}/ai/trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_URL}/ai/market-analysis`,
   
   // Chat endpoints
-  CHAT_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
-  CHAT_MESSAGES: (conversationId: string) => `${API_BASE_URL}/api/chat/conversations/${conversationId}/messages`,
-  CHAT_MARK_READ: (messageId: string) => `${API_BASE_URL}/api/chat/messages/${messageId}/read`,
-  CHAT_UNREAD_COUNT: `${API_BASE_URL}/api/chat/unread-count`,
-  
-  // Socket.io endpoint
-  SOCKET_IO: API_BASE_URL
+  CHAT_CONVERSATIONS: `${API_URL}/chat/conversations`,
+  CHAT_MESSAGES: (conversationId: string) => `${API_URL}/chat/conversations/${conversationId}/messages`,
+  CHAT_MARK_READ: (messageId: string) => `${API_URL}/chat/messages/${messageId}/read`,
+  CHAT_UNREAD_COUNT: `${API_URL}/chat/unread-count`,
 };
 
-// Helper function to get authentication headers
+export default API_ENDPOINTS;
+
+// Helper function to get auth headers
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    return {};
+  }
+  return {
+    'Authorization': `Bearer ${token}`
+  };
 };
 
 // Helper function to handle API responses
 export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
-    // Try to get error message from response
+    const errorText = await response.text();
+    let errorMessage;
+    
     try {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `HTTP error ${response.status}`);
+      // Try to parse as JSON for structured error messages
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.detail || errorJson.message || `HTTP error ${response.status}`;
     } catch (e) {
-      // If parsing fails, throw generic error
-      throw new Error(`HTTP error ${response.status}`);
+      // Fallback to plain text error
+      errorMessage = errorText || `HTTP error ${response.status}`;
     }
+    
+    throw new Error(errorMessage);
   }
   
-  return await response.json();
+  // Check if response is empty
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  
+  // Parse JSON response
+  return JSON.parse(text);
 };
-
-export default API_ENDPOINTS;

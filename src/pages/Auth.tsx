@@ -64,11 +64,13 @@ const Auth = () => {
 
     // Redirect if already logged in
     if (user) {
+      console.log("User authentication detected, redirecting...", user);
+      
       // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
       if (user.is_admin) {
         navigate('/admin-dashboard');
       } else {
-        navigate('/customer-dashboard');
+        navigate('/dashboard');
       }
     }
   }, [user, navigate]);
@@ -78,8 +80,10 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       await login(values.email, values.password);
+      // The redirect will happen in the useEffect when user state is updated
     } catch (error) {
       console.error('Login error:', error);
+      // Error toast is shown in the login function
     } finally {
       setIsSubmitting(false);
     }
@@ -90,13 +94,10 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       await registerUser(values.name, values.email, values.password);
+      // The redirect will happen in the useEffect when user state is updated
     } catch (error) {
       console.error('Registration error:', error);
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please check your information and try again",
-        variant: "destructive",
-      });
+      // Toast is shown in the register function
     } finally {
       setIsSubmitting(false);
     }
