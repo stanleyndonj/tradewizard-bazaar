@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,15 +11,6 @@ import { Send, ArrowLeft, UserCircle } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
-import { io } from 'socket.io-client';
-import API_ENDPOINTS from '@/lib/apiConfig';
-
-// Create socket connection using the correct endpoint
-const socket = io(API_ENDPOINTS.SOCKET_IO, {
-  transports: ['websocket'],
-  autoConnect: true,
-  reconnection: true
-});
 
 const ChatInterface = () => {
   const { 
@@ -28,51 +20,20 @@ const ChatInterface = () => {
     currentConversation, 
     setCurrentConversationId,
     sendMessage,
-    markMessageAsRead,
-    createConversation
+    loadConversations,
+    markMessageAsRead
   } = useBackend();
   
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Connect to real-time chat socket for admin
+  // Reload conversations when component mounts
   useEffect(() => {
-    if (user && user.is_admin) {
-      // Join admin's chat room
-      socket.emit('join_admin_chat', { adminId: user.id });
-      
-      // Listen for new messages from all users
-      socket.on('new_message', (message) => {
-        // The actual message update will be handled by the backend context
-        // This just ensures we're re-rendering when new messages arrive
-        if (message.conversationId === currentConversation) {
-          markMessageAsRead(message.id);
-        }
-      });
-      
-      return () => {
-        // Cleanup socket connection
-        socket.off('new_message');
-        socket.emit('leave_admin_chat', { adminId: user.id });
-      };
+    if (user) {
+      loadConversations();
     }
-  }, [user, currentConversation]);
-  
-  // If user is not admin and no conversation exists, create one
-  useEffect(() => {
-    if (user && !user.is_admin && conversations.length === 0) {
-      // Create a conversation with support if none exists for non-admin user
-      createConversation('support', 'Support Team', 'support@tradewizard.com');
-    }
-  }, [user, conversations.length, createConversation]);
-  
-  // Automatically select first conversation for non-admin users
-  useEffect(() => {
-    if (user && !user.is_admin && conversations.length > 0 && !currentConversation) {
-      setCurrentConversationId(conversations[0].id);
-    }
-  }, [user, conversations, currentConversation, setCurrentConversationId]);
+  }, [user]);
   
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -103,22 +64,8 @@ const ChatInterface = () => {
     
     try {
       await sendMessage(currentConversation, messageText);
-      
-      // Get the user's ID for the current conversation
-      const currentUserData = conversations.find(c => c.id === currentConversation);
-      const userId = currentUserData?.userId;
-      
-      // Emit socket event for real-time communication
-      socket.emit('send_message', {
-        conversationId: currentConversation,
-        senderId: user?.id,
-        sender: user?.is_admin ? 'admin' : 'user',
-        text: messageText,
-        timestamp: new Date().toISOString(),
-        userRoom: userId // Send to specific user room
-      });
-      
       setMessageText('');
+      
       toast({
         title: "Message sent",
         description: "Your message has been sent successfully.",
@@ -166,8 +113,8 @@ const ChatInterface = () => {
       <div className="grid h-[calc(100vh-250px)]">
         <div className="flex flex-col">
           {/* Chat header for non-admin */}
-          <div className="p-4 border-b flex items-center bg-trading-blue text-white">
-            <Avatar className="h-10 w-10 mr-3 bg-white text-trading-blue">
+          <div className="p-4 border-b flex items-center bg-primary text-white">
+            <Avatar className="h-10 w-10 mr-3 bg-white text-primary">
               <AvatarFallback>ST</AvatarFallback>
             </Avatar>
             <div>
@@ -187,14 +134,14 @@ const ChatInterface = () => {
                   <div
                     className={`max-w-[80%] rounded-lg p-3 ${
                       message.sender === 'user'
-                        ? 'bg-trading-blue text-white rounded-br-none'
+                        ? 'bg-primary text-white rounded-br-none'
                         : 'bg-muted rounded-bl-none'
                     }`}
                   >
                     <p>{message.text}</p>
                     <p className={`text-xs mt-1 ${
                       message.sender === 'user'
-                        ? 'text-blue-100'
+                        ? 'text-primary-foreground/70'
                         : 'text-muted-foreground'
                     }`}>
                       {formatMessageTime(message.timestamp)}
@@ -310,14 +257,14 @@ const ChatInterface = () => {
                     <div
                       className={`max-w-[80%] rounded-lg p-3 ${
                         message.sender === (user?.is_admin ? 'admin' : 'user')
-                          ? 'bg-trading-blue text-white rounded-br-none'
+                          ? 'bg-primary text-primary-foreground rounded-br-none'
                           : 'bg-muted rounded-bl-none'
                       }`}
                     >
                       <p>{message.text}</p>
                       <p className={`text-xs mt-1 ${
                         message.sender === (user?.is_admin ? 'admin' : 'user')
-                          ? 'text-blue-100'
+                          ? 'text-primary-foreground/70'
                           : 'text-muted-foreground'
                       }`}>
                         {formatMessageTime(message.timestamp)}

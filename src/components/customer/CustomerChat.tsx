@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,62 +10,37 @@ import { Send, MessageCircle, Clock } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
-import { io } from 'socket.io-client';
-import API_ENDPOINTS from '@/lib/apiConfig';
-
-// Create socket connection using the correct endpoint
-const socket = io(API_ENDPOINTS.SOCKET_IO, {
-  transports: ['websocket'],
-  autoConnect: true,
-  reconnection: true
-});
 
 const CustomerChat = () => {
   const { 
     user, 
     conversations, 
     chatMessages, 
-    currentConversation, 
-    setCurrentConversation,
+    currentConversation,
+    setCurrentConversationId,
     sendMessage,
     markMessageAsRead,
-    createConversation
+    createConversation,
+    loadConversations
   } = useBackend();
   
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Connect to real-time chat socket
+  // Reload conversations when component mounts
   useEffect(() => {
     if (user) {
-      // Join user's chat room
-      socket.emit('join_chat', { userId: user.id });
-      
-      // Listen for new messages
-      socket.on('new_message', (message) => {
-        // If the message is for current conversation, update the UI
-        if (message.conversationId === currentConversation) {
-          // The actual message update will be handled by the backend context
-          // This just ensures we're re-rendering when new messages arrive
-          markMessageAsRead(message.id);
-        }
-      });
-      
-      return () => {
-        // Cleanup socket connection
-        socket.off('new_message');
-        socket.emit('leave_chat', { userId: user.id });
-      };
+      loadConversations();
     }
-  }, [user, currentConversation]);
+  }, [user]);
   
   // Set the first conversation as current if none is selected
   useEffect(() => {
     if (conversations.length > 0 && !currentConversation) {
-      setCurrentConversation(conversations[0].id);
+      setCurrentConversationId(conversations[0].id);
     }
-  }, [conversations, currentConversation, setCurrentConversation]);
+  }, [conversations, currentConversation]);
   
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -74,16 +50,7 @@ const CustomerChat = () => {
   // When messages change or conversation changes, scroll to bottom
   useEffect(() => {
     scrollToBottom();
-    
-    // Mark all messages in current conversation as read
-    if (currentConversation && chatMessages[currentConversation]) {
-      chatMessages[currentConversation].forEach(msg => {
-        if (!msg.read && msg.sender === 'admin') {
-          markMessageAsRead(msg.id);
-        }
-      });
-    }
-  }, [currentConversation, chatMessages, markMessageAsRead]);
+  }, [currentConversation, chatMessages]);
   
   // Handle sending a message
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -97,40 +64,22 @@ const CustomerChat = () => {
       if (!currentConversation) {
         // If no conversation exists, create one
         if (user) {
-          createConversation(user.id, user.name, user.email);
-          // Wait for the conversation to be created
-          setTimeout(() => {
+          await createConversation(user.id, user.name, user.email);
+          
+          // Wait a moment for the conversation to be created and set
+          setTimeout(async () => {
             if (currentConversation) {
-              sendMessage(currentConversation, messageText);
-              
-              // Emit socket event for real-time communication
-              socket.emit('send_message', {
-                conversationId: currentConversation,
-                senderId: user.id,
-                sender: 'user',
-                text: messageText,
-                timestamp: new Date().toISOString(),
-                userRoom: user.id // Add user ID for room identification
-              });
-              
+              await sendMessage(currentConversation, messageText);
               setMessageText('');
             }
-          }, 100);
+            setLoading(false);
+          }, 500);
+          return;
         }
       } else {
         await sendMessage(currentConversation, messageText);
-        
-        // Emit socket event for real-time communication
-        socket.emit('send_message', {
-          conversationId: currentConversation,
-          senderId: user.id,
-          sender: 'user',
-          text: messageText,
-          timestamp: new Date().toISOString(),
-          userRoom: user.id // Add user ID for room identification
-        });
-        
         setMessageText('');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -139,7 +88,6 @@ const CustomerChat = () => {
         description: "Failed to send message. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -150,15 +98,24 @@ const CustomerChat = () => {
   };
   
   // Start a new support conversation
-  const startNewConversation = () => {
+  const startNewConversation = async () => {
     if (!user) return;
     
-    // Create a new conversation for the user
-    createConversation(user.id, user.name, user.email);
-    toast({
-      title: "Conversation started",
-      description: "You can now chat with our support team",
-    });
+    try {
+      // Create a new conversation for the user
+      await createConversation(user.id, user.name, user.email);
+      toast({
+        title: "Conversation started",
+        description: "You can now chat with our support team",
+      });
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   if (conversations.length === 0) {
@@ -207,14 +164,14 @@ const CustomerChat = () => {
                     <div
                       className={`max-w-[80%] rounded-lg p-3 ${
                         message.sender === 'user'
-                          ? 'bg-trading-blue text-white rounded-br-none'
+                          ? 'bg-primary text-primary-foreground rounded-br-none'
                           : 'bg-muted rounded-bl-none'
                       }`}
                     >
                       <p>{message.text}</p>
                       <p className={`text-xs mt-1 flex items-center ${
                         message.sender === 'user'
-                          ? 'text-blue-100'
+                          ? 'text-primary-foreground/70'
                           : 'text-muted-foreground'
                       }`}>
                         <Clock className="h-3 w-3 mr-1" />

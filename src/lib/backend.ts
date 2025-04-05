@@ -1,4 +1,3 @@
-
 import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from './apiConfig';
 
 // Types for user management
@@ -158,10 +157,11 @@ export interface MarketAnalysis {
   summary?: string; // Add missing property
 }
 
+// Add chat types
 export interface ChatMessage {
   id: string;
   conversationId: string;
-  sender: string;
+  sender: 'user' | 'admin';
   senderId: string;
   text: string;
   timestamp: string;
@@ -427,41 +427,86 @@ export const analyzeMarket = async (symbol: string, timeframe?: string) => {
 
 // Chat APIs
 export const getConversations = async () => {
-  // Implement the actual API call to get conversations from the backend
-  // For now, returning an empty array until the backend API is implemented
-  return [];
+  const response = await fetch(API_ENDPOINTS.CHAT_CONVERSATIONS, {
+    headers: getAuthHeaders(),
+  });
+
+  const conversations = await handleApiResponse(response);
+  
+  // Format the conversations to match the expected interface
+  return conversations.map((conversation: any) => ({
+    id: conversation.id,
+    userId: conversation.user_id,
+    userName: conversation.user_name,
+    userEmail: conversation.user_email,
+    lastMessage: conversation.last_message || '',
+    lastMessageTime: conversation.last_message_time,
+    unreadCount: 0 // This will be calculated in the frontend context
+  }));
 };
 
 export const getMessages = async (conversationId: string) => {
-  // Implement the actual API call to get messages from the backend
-  // For now, returning an empty array until the backend API is implemented
-  return [];
+  const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
+    headers: getAuthHeaders(),
+  });
+
+  const messages = await handleApiResponse(response);
+  
+  // Format the messages to match the expected interface
+  return messages.map((message: any) => ({
+    id: message.id,
+    conversationId: message.conversation_id,
+    sender: message.sender,
+    senderId: message.sender_id,
+    text: message.text,
+    timestamp: message.timestamp,
+    read: message.read
+  }));
 };
 
 export const sendChatMessage = async (conversationId: string, text: string) => {
-  // Implement the actual API call to send a message to the backend
-  // For now, returning a mock response until the backend API is implemented
-  return {
-    success: true,
-    message: "Message sent successfully"
-  };
+  const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  return handleApiResponse(response);
 };
 
 export const markMessageRead = async (messageId: string) => {
-  // Implement the actual API call to mark a message as read in the backend
-  // For now, returning a mock response until the backend API is implemented
-  return {
-    success: true,
-    message: "Message marked as read"
-  };
+  const response = await fetch(API_ENDPOINTS.CHAT_MARK_READ(messageId), {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
 };
 
 export const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
-  // Implement the actual API call to create a new conversation in the backend
-  // For now, returning a mock response until the backend API is implemented
-  return {
-    success: true,
-    conversation_id: `conv_${Date.now()}`,
-    message: "Conversation created successfully"
-  };
+  const response = await fetch(API_ENDPOINTS.CHAT_CONVERSATIONS, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user_id: userId,
+      user_name: userName,
+      user_email: userEmail
+    }),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const getUnreadMessageCount = async () => {
+  const response = await fetch(API_ENDPOINTS.CHAT_UNREAD_COUNT, {
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
 };

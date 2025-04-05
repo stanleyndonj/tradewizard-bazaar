@@ -35,6 +35,12 @@ const API_ENDPOINTS = {
   AI_TRADING_SIGNALS: `${API_BASE_URL}/api/ai-trading-signals`,
   AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`,
   
+  // Chat endpoints
+  CHAT_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
+  CHAT_MESSAGES: (conversationId: string) => `${API_BASE_URL}/api/chat/conversations/${conversationId}/messages`,
+  CHAT_MARK_READ: (messageId: string) => `${API_BASE_URL}/api/chat/messages/${messageId}/read`,
+  CHAT_UNREAD_COUNT: `${API_BASE_URL}/api/chat/unread-count`,
+  
   // Socket.io endpoint
   SOCKET_IO: API_BASE_URL
 };

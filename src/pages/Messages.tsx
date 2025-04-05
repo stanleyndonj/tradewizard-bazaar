@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -10,7 +10,7 @@ import { TradingLoader } from '@/components/ui/loader';
 
 const Messages = () => {
   const navigate = useNavigate();
-  const { user } = useBackend();
+  const { user, loadConversations } = useBackend();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -28,8 +28,12 @@ const Messages = () => {
       return;
     }
     
-    setIsLoading(false);
-  }, [user, navigate]);
+    // Load conversations
+    loadConversations()
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [user, navigate, loadConversations]);
 
   if (isLoading) {
     return (
@@ -38,6 +42,7 @@ const Messages = () => {
         <div className="container mx-auto py-8 px-4 max-w-7xl mt-20 flex-grow flex items-center justify-center">
           <TradingLoader text="Loading messages..." />
         </div>
+        <Footer />
       </div>
     );
   }
@@ -49,7 +54,7 @@ const Messages = () => {
       <main className="flex-grow pt-24 pb-10">
         <div className="container mx-auto max-w-7xl px-4">
           <h1 className="text-3xl font-bold mb-6">Messages</h1>
-          <div className="glass-card rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <ChatInterface />
           </div>
         </div>
