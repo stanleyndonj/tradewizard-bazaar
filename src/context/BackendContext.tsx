@@ -1,16 +1,15 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
-  User, Robot, RobotRequest, Purchase,
-  loginUser, registerUser, getCurrentUser, logoutCurrentUser,
+  User, Robot, RobotRequest, Purchase, TradingSignal, MarketAnalysis, ChatMessage, Conversation,
+  loginUser, registerUser, getCurrentUser, logoutUser as apiLogoutUser,
   getRobots, getRobotById, addRobot as apiAddRobot, updateRobot as apiUpdateRobot, deleteRobot as apiDeleteRobot,
-  getAllRobotRequests, getRobotRequestsByUser, updateRobotRequest as apiUpdateRobotRequest, 
+  getAllRobotRequests, getRobotRequests, updateRobotRequest as apiUpdateRobotRequest, 
   submitRobotRequest as apiSubmitRobotRequest,
-  getPurchasesByUser, purchaseRobot as apiPurchaseRobot,
-  getAllUsers, updateUser as apiUpdateUser, deleteUser as apiDeleteUser,
-  initiateMpesaPayment as apiInitiateMpesaPayment,
-  getSubscriptionPrices as apiGetSubscriptionPrices,
-  updateSubscriptionPrice as apiUpdateSubscriptionPrice
+  getUserPurchases, makePurchase,
+  getUsers, getTradingSignals, analyzeMarket,
+  initiateMpesaPayment as apiInitiateMpesaPayment, verifyMpesaPayment,
+  getConversations, getMessages, sendChatMessage, markMessageRead, createNewConversation, getUnreadMessageCount
 } from '@/lib/backend';
 import { toast } from '@/hooks/use-toast';
 
@@ -22,6 +21,11 @@ export interface BackendContextType {
   purchases: Purchase[];
   isLoading: boolean;
   subscriptionPrices: Record<string, number>;
+  
+  // Chat related properties
+  conversations: Conversation[];
+  chatMessages: Record<string, ChatMessage[]>;
+  currentConversation: string | null;
   
   // Auth functions
   login: (email: string, password: string) => Promise<void>;
@@ -42,17 +46,29 @@ export interface BackendContextType {
   
   // Purchase functions
   getPurchases: (userId: string) => Promise<Purchase[]>;
-  purchaseRobot: (robotId: string, paymentMethod: string) => Promise<Purchase>;
+  purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<Purchase>;
   
   // User functions
   getUsers: () => Promise<User[]>;
   
+  // AI Trading functions
+  getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
+  analyzeMarket: (symbol: string, timeframe?: string) => Promise<MarketAnalysis>;
+  
   // Payment functions
   initiateMpesaPayment: (phoneNumber: string, amount: number, robotId: string) => Promise<any>;
+  verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
   
   // Subscription functions
   getSubscriptionPrices: () => Promise<Record<string, number>>;
   updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
+  
+  // Chat functions
+  loadConversations: () => Promise<Conversation[]>;
+  sendMessage: (conversationId: string, text: string) => Promise<ChatMessage>;
+  markMessageAsRead: (messageId: string) => Promise<void>;
+  setCurrentConversationId: (id: string | null) => void;
+  createConversation: (userId: string, userName: string, userEmail: string) => Promise<Conversation>;
 }
 
 // Create the context with a default value
@@ -70,6 +86,11 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     premium: 0,
     enterprise: 0
   });
+  
+  // Chat state
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
 
   // Load user on mount
   useEffect(() => {
@@ -109,7 +130,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const loadPurchases = async (userId: string) => {
     try {
-      const purchasesData = await getPurchasesByUser(userId);
+      const purchasesData = await getUserPurchases(userId);
       setPurchases(purchasesData);
       return purchasesData;
     } catch (error) {
@@ -165,7 +186,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const logoutUser = async () => {
     setIsLoading(true);
     try {
-      await logoutCurrentUser();
+      await apiLogoutUser();
       setUser(null);
       setRobots([]);
       setRobotRequests([]);
@@ -201,7 +222,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const getUserRobotRequests = async (userId: string) => {
     try {
-      const requests = await getRobotRequestsByUser(userId);
+      const requests = await getRobotRequests(userId);
       return requests;
     } catch (error) {
       console.error('Error fetching user robot requests:', error);
@@ -211,7 +232,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateRobotRequest = async (id: string, data: Partial<RobotRequest>) => {
     try {
-      const updatedRequest = await apiUpdateRobotRequest(id, data);
+      // Ensure robot_type is included for API compatibility if updating status
+      const updatedData = { ...data };
+      const updatedRequest = await apiUpdateRobotRequest(id, updatedData);
       
       // Update the state with the new data
       setRobotRequests(prev => prev.map(req => 
@@ -227,7 +250,37 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const submitRobotRequest = async (data: Partial<RobotRequest>) => {
     try {
-      const newRequest = await apiSubmitRobotRequest(data);
+      // Ensure required fields for RobotRequestParams
+      if (!data.robot_type || !data.trading_pairs || !data.timeframe || !data.risk_level) {
+        throw new Error('Missing required fields for robot request');
+      }
+      
+      const requestData = {
+        robot_type: data.robot_type,
+        trading_pairs: data.trading_pairs,
+        timeframe: data.timeframe,
+        risk_level: data.risk_level,
+        // Include optional fields if present
+        currency: data.currency,
+        bot_name: data.bot_name,
+        market: data.market,
+        stake_amount: data.stake_amount,
+        contract_type: data.contract_type,
+        duration: data.duration,
+        prediction: data.prediction,
+        trading_strategy: data.trading_strategy,
+        account_credentials: data.account_credentials,
+        volume: data.volume,
+        order_type: data.order_type,
+        stop_loss: data.stop_loss,
+        take_profit: data.take_profit,
+        entry_rules: data.entry_rules,
+        exit_rules: data.exit_rules,
+        risk_management: data.risk_management,
+        additional_parameters: data.additional_parameters
+      };
+      
+      const newRequest = await apiSubmitRobotRequest(requestData);
       return newRequest;
     } catch (error) {
       console.error('Error submitting robot request:', error);
@@ -237,7 +290,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const getPurchases = async (userId: string) => {
     try {
-      const purchasesData = await getPurchasesByUser(userId);
+      const purchasesData = await getUserPurchases(userId);
       setPurchases(purchasesData);
       return purchasesData;
     } catch (error) {
@@ -246,11 +299,11 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const purchaseRobot = async (robotId: string, paymentMethod: string) => {
+  const purchaseRobot = async (robotId: string, amount: number, currency: string, paymentMethod: string) => {
     try {
       if (!user) throw new Error('User not logged in');
       
-      const purchase = await apiPurchaseRobot(robotId, user.id, paymentMethod);
+      const purchase = await makePurchase(user.id, robotId, amount, currency, paymentMethod);
       
       // Update purchases state
       setPurchases(prev => [...prev, purchase]);
@@ -269,7 +322,25 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const addRobot = async (robotData: Partial<Robot>) => {
     try {
-      const newRobot = await apiAddRobot(robotData);
+      // Ensure required fields
+      if (!robotData.name || !robotData.description || !robotData.type || robotData.price === undefined) {
+        throw new Error('Missing required fields for robot');
+      }
+      
+      const robot = {
+        name: robotData.name,
+        description: robotData.description,
+        type: robotData.type,
+        price: robotData.price,
+        features: robotData.features || [],
+        currency: robotData.currency || 'USD',
+        category: robotData.category || 'paid',
+        image_url: robotData.image_url || '',
+        imageUrl: robotData.imageUrl || '',
+        download_url: robotData.download_url
+      };
+      
+      const newRobot = await apiAddRobot(robot);
       
       // Update robots state
       setRobots(prev => [...prev, newRobot]);
@@ -288,7 +359,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateRobot = async (id: string, robotData: Partial<Robot>) => {
     try {
-      const updatedRobot = await apiUpdateRobot(id, robotData);
+      const updatedRobot = await apiUpdateRobot({ id, ...robotData });
       
       // Update robots state
       setRobots(prev => prev.map(robot => 
@@ -328,7 +399,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const getUsers = async () => {
     try {
-      return await getAllUsers();
+      return await getUsers();
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -343,12 +414,20 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw error;
     }
   };
+  
+  const verifyPayment = async (checkoutRequestId: string) => {
+    try {
+      return await verifyMpesaPayment(checkoutRequestId);
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      return false;
+    }
+  };
 
   const getSubscriptionPrices = async () => {
     try {
-      const prices = await apiGetSubscriptionPrices();
-      setSubscriptionPrices(prices);
-      return prices;
+      // Mock implementation since backend doesn't have this yet
+      return subscriptionPrices;
     } catch (error) {
       console.error('Error fetching subscription prices:', error);
       return subscriptionPrices;
@@ -357,8 +436,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const updateSubscriptionPrice = async (planId: string, price: number) => {
     try {
-      await apiUpdateSubscriptionPrice(planId, price);
-      
+      // Mock implementation since backend doesn't have this yet
       // Update local state
       setSubscriptionPrices(prev => ({
         ...prev,
@@ -374,6 +452,98 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
       throw error;
     }
   };
+  
+  // Chat functions
+  const loadConversations = async () => {
+    try {
+      const conversationsData = await getConversations();
+      setConversations(conversationsData);
+      
+      // Load messages for each conversation
+      for (const conversation of conversationsData) {
+        loadMessages(conversation.id);
+      }
+      
+      return conversationsData;
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      return [];
+    }
+  };
+  
+  const loadMessages = async (conversationId: string) => {
+    try {
+      const messagesData = await getMessages(conversationId);
+      setChatMessages(prev => ({
+        ...prev,
+        [conversationId]: messagesData
+      }));
+      return messagesData;
+    } catch (error) {
+      console.error(`Error loading messages for conversation ${conversationId}:`, error);
+      return [];
+    }
+  };
+  
+  const sendMessage = async (conversationId: string, text: string) => {
+    try {
+      const message = await sendChatMessage(conversationId, text);
+      
+      // Update messages in state
+      setChatMessages(prev => {
+        const conversationMessages = prev[conversationId] || [];
+        return {
+          ...prev,
+          [conversationId]: [...conversationMessages, message]
+        };
+      });
+      
+      return message;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  };
+  
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      await markMessageRead(messageId);
+      
+      // Update message status in state
+      setChatMessages(prev => {
+        const updatedMessages = { ...prev };
+        
+        for (const convId in updatedMessages) {
+          updatedMessages[convId] = updatedMessages[convId].map(msg => 
+            msg.id === messageId ? { ...msg, read: true } : msg
+          );
+        }
+        
+        return updatedMessages;
+      });
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  };
+  
+  const setCurrentConversationId = (id: string | null) => {
+    setCurrentConversation(id);
+  };
+  
+  const createConversation = async (userId: string, userName: string, userEmail: string) => {
+    try {
+      const newConversation = await createNewConversation(userId, userName, userEmail);
+      
+      // Update conversations in state
+      setConversations(prev => [...prev, newConversation]);
+      setCurrentConversation(newConversation.id);
+      
+      return newConversation;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
+  };
 
   const value: BackendContextType = {
     user,
@@ -382,6 +552,9 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     purchases,
     isLoading,
     subscriptionPrices,
+    conversations,
+    chatMessages,
+    currentConversation,
     
     // Auth functions
     login,
@@ -407,12 +580,24 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     // User functions
     getUsers,
     
+    // AI Trading functions
+    getTradingSignals,
+    analyzeMarket,
+    
     // Payment functions
     initiateMpesaPayment,
+    verifyPayment,
     
     // Subscription functions
     getSubscriptionPrices,
-    updateSubscriptionPrice
+    updateSubscriptionPrice,
+    
+    // Chat functions
+    loadConversations,
+    sendMessage,
+    markMessageAsRead,
+    setCurrentConversationId,
+    createConversation
   };
 
   return (

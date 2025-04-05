@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useBackend } from '@/context/BackendContext';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ const RobotRequestManagement = () => {
     // Initial load is handled by AdminDashboard
   }, []);
 
-  const handleStatusChange = async (requestId: string, newStatus: string) => {
+  const handleStatusChange = async (requestId: string, newStatus: "pending" | "in_progress" | "approved" | "rejected" | "delivered") => {
     try {
       await updateRobotRequest(requestId, { status: newStatus });
       toast({
@@ -50,7 +51,7 @@ const RobotRequestManagement = () => {
 
   const handleOpenResponse = (request: RobotRequest) => {
     setSelectedRequest(request);
-    setResponseText(request.admin_response || '');
+    setResponseText(request.notes || '');
     setIsDialogOpen(true);
   };
 
@@ -59,8 +60,8 @@ const RobotRequestManagement = () => {
     
     try {
       await updateRobotRequest(selectedRequest.id, { 
-        admin_response: responseText,
-        status: 'responded'
+        notes: responseText,
+        status: "approved" // Use an allowed status value
       });
       
       toast({
@@ -97,7 +98,7 @@ const RobotRequestManagement = () => {
               <TableRow key={request.id}>
                 <TableCell>{request.id}</TableCell>
                 <TableCell>{request.user_id}</TableCell>
-                <TableCell>{request.robot_description}</TableCell>
+                <TableCell>{request.trading_pairs} - {request.timeframe}</TableCell>
                 <TableCell>{request.status}</TableCell>
                 <TableCell>
                   <Button

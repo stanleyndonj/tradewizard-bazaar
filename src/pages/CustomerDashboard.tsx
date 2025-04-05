@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useBackend } from '@/context/BackendContext';
@@ -72,7 +73,7 @@ const CustomerDashboard = () => {
                   {robotRequests.map((request) => (
                     <li key={request.id} className="border-b pb-2">
                       <p><strong>Request ID:</strong> {request.id}</p>
-                      <p><strong>Description:</strong> {request.description}</p>
+                      <p><strong>Description:</strong> {request.robot_type} - {request.trading_pairs}</p>
                       <p><strong>Status:</strong> {request.status}</p>
                     </li>
                   ))}

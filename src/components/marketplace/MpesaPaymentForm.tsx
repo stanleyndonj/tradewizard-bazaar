@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -114,6 +113,7 @@ const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPayment
     checkStatus();
   };
 
+  
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">

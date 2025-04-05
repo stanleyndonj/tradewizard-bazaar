@@ -48,7 +48,7 @@ const RobotMarketplace = () => {
       });
       
       // Simulate a purchase for free robots too
-      purchaseRobot(robot.id, 0, robot.currency, 'Free Download');
+      purchaseRobot(robot.id, 0, robot.currency || 'USD', 'Free Download');
     } else {
       // Open payment modal for paid robots
       setSelectedRobot(robot);
@@ -65,9 +65,9 @@ const RobotMarketplace = () => {
     if (!selectedRobot) return;
     
     purchaseRobot(
-      selectedRobot.id, 
-      selectedRobot.price, 
-      selectedRobot.currency, 
+      selectedRobot.id,
+      selectedRobot.price,
+      selectedRobot.currency || 'USD',
       paymentMethod
     );
     
