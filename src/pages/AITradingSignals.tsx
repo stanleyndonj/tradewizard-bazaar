@@ -298,226 +298,227 @@ const AITradingSignals = () => {
           
           <TabsContent value="analysis">
             <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>AI Market Analysis</CardTitle>
-              <CardDescription>
-                Get in-depth analysis of any trading pair across multiple timeframes
-              </CardDescription>
-              <div className="flex flex-wrap gap-4 mt-4">
-                <div className="w-full sm:w-auto">
-                  <Label htmlFor="symbol">Symbol</Label>
-                  <Input 
-                    id="symbol" 
-                    value={symbolToAnalyze} 
-                    onChange={(e) => setSymbolToAnalyze(e.target.value)} 
-                    placeholder="e.g. EURUSD, BTCUSD" 
-                    className="w-full sm:w-[200px]"
-                  />
-                </div>
-                <div className="w-full sm:w-auto">
-                  <Label htmlFor="analysis-timeframe">Timeframe</Label>
-                  <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Select timeframe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M5">5 Minutes</SelectItem>
-                      <SelectItem value="M15">15 Minutes</SelectItem>
-                      <SelectItem value="M30">30 Minutes</SelectItem>
-                      <SelectItem value="H1">1 Hour</SelectItem>
-                      <SelectItem value="H4">4 Hours</SelectItem>
-                      <SelectItem value="D1">Daily</SelectItem>
-                      <SelectItem value="W1">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-full sm:w-auto flex items-end">
-                  <Button onClick={handleAnalyze} className="w-full sm:w-auto">
-                    {analyzeLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      'Analyze Market'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {analyzeLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-              ) : !marketAnalysis ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  Enter a symbol and click "Analyze Market" to get detailed analysis.
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-xl flex items-center">
-                        {marketAnalysis.symbol} - {marketAnalysis.timeframe} Analysis
-                        <span className={`ml-auto px-3 py-1 rounded-full text-sm ${
-                          marketAnalysis.trend === 'bullish' ? 'bg-green-100 text-green-800' : 
-                          marketAnalysis.trend === 'bearish' ? 'bg-red-100 text-red-800' : 
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {marketAnalysis.trend.toUpperCase()} TREND
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {marketAnalysis.summary && (
-                        <div className="mb-6 p-4 bg-gray-50 rounded-md">
-                          <h4 className="font-semibold mb-2 flex items-center">
-                            <TrendingUp className="mr-2 h-5 w-5" />
-                            Market Summary
-                          </h4>
-                          <p className="text-gray-700">{marketAnalysis.summary}</p>
-                        </div>
+              <CardHeader>
+                <CardTitle>AI Market Analysis</CardTitle>
+                <CardDescription>
+                  Get in-depth analysis of any trading pair across multiple timeframes
+                </CardDescription>
+                <div className="flex flex-wrap gap-4 mt-4">
+                  <div className="w-full sm:w-auto">
+                    <Label htmlFor="symbol">Symbol</Label>
+                    <Input 
+                      id="symbol" 
+                      value={symbolToAnalyze} 
+                      onChange={(e) => setSymbolToAnalyze(e.target.value)} 
+                      placeholder="e.g. EURUSD, BTCUSD" 
+                      className="w-full sm:w-[200px]"
+                    />
+                  </div>
+                  <div className="w-full sm:w-auto">
+                    <Label htmlFor="analysis-timeframe">Timeframe</Label>
+                    <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
+                      <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Select timeframe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M5">5 Minutes</SelectItem>
+                        <SelectItem value="M15">15 Minutes</SelectItem>
+                        <SelectItem value="M30">30 Minutes</SelectItem>
+                        <SelectItem value="H1">1 Hour</SelectItem>
+                        <SelectItem value="H4">4 Hours</SelectItem>
+                        <SelectItem value="D1">Daily</SelectItem>
+                        <SelectItem value="W1">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-full sm:w-auto flex items-end">
+                    <Button onClick={handleAnalyze} className="w-full sm:w-auto">
+                      {analyzeLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        'Analyze Market'
                       )}
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-semibold mb-3">Key Levels</h4>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Support Levels</Label>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {marketAnalysis.support_levels.map((level, i) => (
-                                  <span key={i} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                                    {level}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Resistance Levels</Label>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                {marketAnalysis.resistance_levels.map((level, i) => (
-                                  <span key={i} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                                    {level}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            {marketAnalysis.next_price_target !== undefined && (
-                              <div>
-                                <Label>Next Price Target</Label>
-                                <div className="font-medium text-green-600 mt-1">{marketAnalysis.next_price_target}</div>
-                              </div>
-                            )}
-                            {marketAnalysis.stop_loss_suggestion !== undefined && (
-                              <div>
-                                <Label>Suggested Stop Loss</Label>
-                                <div className="font-medium text-red-600 mt-1">{marketAnalysis.stop_loss_suggestion}</div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-semibold mb-3">Technical Indicators</h4>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>RSI</Label>
-                              <div className="flex items-center mt-1">
-                                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                  <div 
-                                    className={`h-2.5 rounded-full ${
-                                      marketAnalysis.indicators.rsi > 70 ? 'bg-red-500' : 
-                                      marketAnalysis.indicators.rsi < 30 ? 'bg-green-500' : 
-                                      'bg-blue-500'
-                                    }`} 
-                                    style={{ width: `${marketAnalysis.indicators.rsi}%` }}
-                                  ></div>
-                                </div>
-                                <span className="ml-2 text-sm">{marketAnalysis.indicators.rsi}</span>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Label>MACD</Label>
-                              <div className="grid grid-cols-3 gap-2 mt-1 text-sm">
-                                <div>
-                                  <span className="text-gray-500">Value:</span> 
-                                  <span className={marketAnalysis.indicators.macd.value > 0 ? 'text-green-600' : 'text-red-600'}>
-                                    {marketAnalysis.indicators.macd.value.toFixed(2)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500">Signal:</span> 
-                                  <span>{marketAnalysis.indicators.macd.signal.toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500">Histogram:</span> 
-                                  <span className={marketAnalysis.indicators.macd.histogram > 0 ? 'text-green-600' : 'text-red-600'}>
-                                    {marketAnalysis.indicators.macd.histogram.toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Label>Moving Averages</Label>
-                              <div className="grid grid-cols-3 gap-2 mt-1 text-sm">
-                                <div>
-                                  <span className="text-gray-500">MA20:</span> 
-                                  <span>{marketAnalysis.indicators.moving_averages.ma20.toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500">MA50:</span> 
-                                  <span>{marketAnalysis.indicators.moving_averages.ma50.toFixed(2)}</span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-500">MA200:</span> 
-                                  <span>{marketAnalysis.indicators.moving_averages.ma200.toFixed(2)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Separator className="my-6" />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-semibold mb-3">Recommendation</h4>
-                          <div className={`p-3 rounded-md ${
-                            marketAnalysis.recommendation.toLowerCase().includes('buy') ? 'bg-green-100' : 
-                            marketAnalysis.recommendation.toLowerCase().includes('sell') ? 'bg-red-100' : 
-                            'bg-yellow-100'
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {analyzeLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                  </div>
+                ) : !marketAnalysis ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Enter a symbol and click "Analyze Market" to get detailed analysis.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-xl flex items-center">
+                          {marketAnalysis.symbol} - {marketAnalysis.timeframe} Analysis
+                          <span className={`ml-auto px-3 py-1 rounded-full text-sm ${
+                            marketAnalysis.trend === 'bullish' ? 'bg-green-100 text-green-800' : 
+                            marketAnalysis.trend === 'bearish' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {marketAnalysis.recommendation}
+                            {marketAnalysis.trend.toUpperCase()} TREND
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {marketAnalysis.summary && (
+                          <div className="mb-6 p-4 bg-gray-50 rounded-md">
+                            <h4 className="font-semibold mb-2 flex items-center">
+                              <TrendingUp className="mr-2 h-5 w-5" />
+                              Market Summary
+                            </h4>
+                            <p className="text-gray-700">{marketAnalysis.summary}</p>
                           </div>
-                        </div>
+                        )}
                         
-                        <div>
-                          <h4 className="font-semibold mb-3">Next Potential Move</h4>
-                          <div className="p-3 rounded-md bg-blue-50">
-                            {marketAnalysis.next_potential_move}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-semibold mb-3">Key Levels</h4>
+                            <div className="space-y-4">
+                              <div>
+                                <Label>Support Levels</Label>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {marketAnalysis.support_levels.map((level, i) => (
+                                    <span key={i} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                                      {level}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Resistance Levels</Label>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {marketAnalysis.resistance_levels.map((level, i) => (
+                                    <span key={i} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                                      {level}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              {marketAnalysis.next_price_target !== undefined && (
+                                <div>
+                                  <Label>Next Price Target</Label>
+                                  <div className="font-medium text-green-600 mt-1">{marketAnalysis.next_price_target}</div>
+                                </div>
+                              )}
+                              {marketAnalysis.stop_loss_suggestion !== undefined && (
+                                <div>
+                                  <Label>Suggested Stop Loss</Label>
+                                  <div className="font-medium text-red-600 mt-1">{marketAnalysis.stop_loss_suggestion}</div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                           
-                          <div className="mt-4">
-                            <Label>Risk/Reward Ratio</Label>
-                            <div className="font-medium mt-1">
-                              {marketAnalysis.risk_reward_ratio.toFixed(2)}
+                          <div>
+                            <h4 className="font-semibold mb-3">Technical Indicators</h4>
+                            <div className="space-y-4">
+                              <div>
+                                <Label>RSI</Label>
+                                <div className="flex items-center mt-1">
+                                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div 
+                                      className={`h-2.5 rounded-full ${
+                                        marketAnalysis.indicators.rsi > 70 ? 'bg-red-500' : 
+                                        marketAnalysis.indicators.rsi < 30 ? 'bg-green-500' : 
+                                        'bg-blue-500'
+                                      }`} 
+                                      style={{ width: `${marketAnalysis.indicators.rsi}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="ml-2 text-sm">{marketAnalysis.indicators.rsi}</span>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <Label>MACD</Label>
+                                <div className="grid grid-cols-3 gap-2 mt-1 text-sm">
+                                  <div>
+                                    <span className="text-gray-500">Value:</span> 
+                                    <span className={marketAnalysis.indicators.macd.value > 0 ? 'text-green-600' : 'text-red-600'}>
+                                      {marketAnalysis.indicators.macd.value.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Signal:</span> 
+                                    <span>{marketAnalysis.indicators.macd.signal.toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Histogram:</span> 
+                                    <span className={marketAnalysis.indicators.macd.histogram > 0 ? 'text-green-600' : 'text-red-600'}>
+                                      {marketAnalysis.indicators.macd.histogram.toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <Label>Moving Averages</Label>
+                                <div className="grid grid-cols-3 gap-2 mt-1 text-sm">
+                                  <div>
+                                    <span className="text-gray-500">MA20:</span> 
+                                    <span>{marketAnalysis.indicators.moving_averages.ma20.toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">MA50:</span> 
+                                    <span>{marketAnalysis.indicators.moving_averages.ma50.toFixed(2)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">MA200:</span> 
+                                    <span>{marketAnalysis.indicators.moving_averages.ma200.toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="text-xs text-gray-500">
-                      Analysis generated on: {new Date(marketAnalysis.created_at).toLocaleString()}
-                    </CardFooter>
-                  </Card>
-                </div>
-              )}
-            </CardContent>
+                        
+                        <Separator className="my-6" />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="font-semibold mb-3">Recommendation</h4>
+                            <div className={`p-3 rounded-md ${
+                              marketAnalysis.recommendation.toLowerCase().includes('buy') ? 'bg-green-100' : 
+                              marketAnalysis.recommendation.toLowerCase().includes('sell') ? 'bg-red-100' : 
+                              'bg-yellow-100'
+                            }`}>
+                              {marketAnalysis.recommendation}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold mb-3">Next Potential Move</h4>
+                            <div className="p-3 rounded-md bg-blue-50">
+                              {marketAnalysis.next_potential_move}
+                            </div>
+                            
+                            <div className="mt-4">
+                              <Label>Risk/Reward Ratio</Label>
+                              <div className="font-medium mt-1">
+                                {marketAnalysis.risk_reward_ratio.toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="text-xs text-gray-500">
+                        Analysis generated on: {new Date(marketAnalysis.created_at).toLocaleString()}
+                      </CardFooter>
+                    </Card>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="chat">
