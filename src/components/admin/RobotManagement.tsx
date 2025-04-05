@@ -55,7 +55,7 @@ const RobotManagement = () => {
   const handleSaveRobot = async (robotData: any) => {
     try {
       if (robotData.id) {
-        await updateRobot(robotData);
+        await updateRobot(robotData.id, robotData);
         toast({
           title: "Robot updated",
           description: "The robot has been updated successfully."
@@ -123,7 +123,7 @@ const RobotManagement = () => {
             download_url: `/uploads/${file.name}` // This would be a real URL in production
           };
           
-          updateRobot(updatedRobot);
+          updateRobot(updatedRobot.id, updatedRobot);
           
           toast({
             title: "File uploaded",

@@ -31,7 +31,9 @@ const SubscriptionRequired = ({
   };
   
   if (showUpgrade) {
-    return <SubscriptionUpgrade onSubscribe={handleSubscriptionComplete} />;
+    // Now we're only using the SubscriptionUpgrade component without any props
+    // since its implementation doesn't accept any props
+    return <SubscriptionUpgrade />;
   }
   
   return (

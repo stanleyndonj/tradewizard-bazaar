@@ -69,7 +69,7 @@ const RobotManagementModal = ({ open, onClose, robot, isEdit }: RobotManagementM
       };
       
       if (isEdit && robot) {
-        await updateRobot({ ...completeRobotData, id: robot.id, created_at: robot.created_at });
+        await updateRobot(robot.id, { ...completeRobotData, id: robot.id, created_at: robot.created_at });
       } else {
         await addRobot(completeRobotData);
       }
