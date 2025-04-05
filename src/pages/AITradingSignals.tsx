@@ -10,6 +10,7 @@ import { useBackend } from '@/context/BackendContext';
 import { TradingLoader } from '@/components/ui/loader';
 import AITradingChat from '@/components/trading/AITradingChat';
 import { TradingSignal, MarketAnalysis } from '@/lib/backend';
+import SubscriptionRequired from '@/components/trading/SubscriptionRequired';
 
 // Import specific features components as needed
 
@@ -101,7 +102,9 @@ const AITradingSignals = () => {
     }
   };
 
-  // Show placeholder component if user is not admin
+  // Check if user has access to AI trading (admin or has subscription)
+  const hasAccess = user?.is_admin || user?.robots_delivered;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -115,50 +118,54 @@ const AITradingSignals = () => {
             </p>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid grid-cols-4 md:w-[600px]">
-              <TabsTrigger value="signals">Signals</TabsTrigger>
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
-              <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
-              <TabsTrigger value="backtesting">Backtesting</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signals" className="mt-6">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Trading Signals</h2>
-                <p>This feature is under development. Check back soon for real-time trading signals powered by our advanced AI algorithms.</p>
-                <div className="mt-8 text-center">
-                  <TradingLoader text="Feature coming soon" />
+          {hasAccess ? (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+              <TabsList className="grid grid-cols-4 md:w-[600px]">
+                <TabsTrigger value="signals">Signals</TabsTrigger>
+                <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+                <TabsTrigger value="backtesting">Backtesting</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="signals" className="mt-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-4">Trading Signals</h2>
+                  <p>This feature is under development. Check back soon for real-time trading signals powered by our advanced AI algorithms.</p>
+                  <div className="mt-8 text-center">
+                    <TradingLoader text="Feature coming soon" />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="analysis" className="mt-6">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Market Analysis</h2>
-                <p>This feature is under development. Soon you'll be able to get detailed market analysis for any trading pair, including support/resistance levels, trend detection, and trade recommendations.</p>
-                <div className="mt-8 text-center">
-                  <TradingLoader text="Feature coming soon" />
+              </TabsContent>
+              
+              <TabsContent value="analysis" className="mt-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-4">Market Analysis</h2>
+                  <p>This feature is under development. Soon you'll be able to get detailed market analysis for any trading pair, including support/resistance levels, trend detection, and trade recommendations.</p>
+                  <div className="mt-8 text-center">
+                    <TradingLoader text="Feature coming soon" />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="assistant" className="mt-6">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <AITradingChat />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="backtesting" className="mt-6">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Strategy Backtesting</h2>
-                <p>This feature is under development. Soon you'll be able to backtest your trading strategies using historical data and AI optimization.</p>
-                <div className="mt-8 text-center">
-                  <TradingLoader text="Feature coming soon" />
+              </TabsContent>
+              
+              <TabsContent value="assistant" className="mt-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <AITradingChat />
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+              
+              <TabsContent value="backtesting" className="mt-6">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-4">Strategy Backtesting</h2>
+                  <p>This feature is under development. Soon you'll be able to backtest your trading strategies using historical data and AI optimization.</p>
+                  <div className="mt-8 text-center">
+                    <TradingLoader text="Feature coming soon" />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <SubscriptionRequired message="Subscribe to unlock AI Trading Signals" />
+          )}
         </div>
       </main>
       
