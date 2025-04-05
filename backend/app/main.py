@@ -51,13 +51,13 @@ app.add_middleware(
     secret_key=os.getenv("JWT_SECRET_KEY", "default-secret-key")
 )
 
-# Include routers
+# Include routers - making sure all routes start with /api
 app.include_router(auth.router)
-app.include_router(user.router)
-app.include_router(robot.router)
-app.include_router(robot_request.router)  # No prefix here, it's already in the router
-app.include_router(purchase.router)
-app.include_router(mpesa.router)
+app.include_router(user.router, prefix="/api")
+app.include_router(robot.router, prefix="/api")
+app.include_router(robot_request.router, prefix="/api")
+app.include_router(purchase.router, prefix="/api")
+app.include_router(mpesa.router, prefix="/api")
 
 # Socket.io event handlers
 @sio.event
@@ -124,6 +124,10 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/")
 def read_root():
+    return {"message": "Welcome to Trading Robot API"}
+
+@app.get("/api")
+def api_root():
     return {"message": "Welcome to Trading Robot API"}
 
 @app.get("/health")

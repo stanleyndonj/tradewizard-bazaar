@@ -8,7 +8,7 @@ const API_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/api/auth/register`,
   LOGIN: `${API_BASE_URL}/api/auth/login`,
   LOGOUT: `${API_BASE_URL}/api/auth/logout`,
-  CURRENT_USER: `${API_BASE_URL}/api/users/me`,
+  CURRENT_USER: `${API_BASE_URL}/api/auth/users/me`,
   
   // User endpoints
   USERS: `${API_BASE_URL}/api/users`,

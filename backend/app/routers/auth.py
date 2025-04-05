@@ -12,8 +12,8 @@ from ..models.user import User
 from ..utils.auth import create_access_token, get_password_hash, verify_password
 from ..config import settings
 
-router = APIRouter(prefix="/auth", tags=["auth"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 @router.post("/register", response_model=UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)) -> Any:
@@ -75,3 +75,23 @@ def logout():
     # In a stateless JWT system, logout is handled client-side
     # by removing the token from storage
     return {"message": "Successfully logged out"}
+
+@router.get("/users/me", response_model=UserResponse)
+async def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    from ..utils.auth import get_user_from_token
+    user_id = await get_user_from_token(f"Bearer {token}")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return user
