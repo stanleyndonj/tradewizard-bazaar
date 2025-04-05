@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   User, Robot, RobotRequest, Purchase, TradingSignal, MarketAnalysis, ChatMessage, Conversation,
@@ -357,26 +356,33 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  const updateRobot = async (id: string, robotData: Partial<Robot>) => {
-    try {
-      const updatedRobot = await apiUpdateRobot({ id, ...robotData });
-      
-      // Update robots state
-      setRobots(prev => prev.map(robot => 
-        robot.id === id ? { ...robot, ...updatedRobot } : robot
-      ));
-      
-      toast({
-        title: "Robot Updated",
-        description: "Robot details have been updated",
-      });
-      
-      return updatedRobot;
-    } catch (error) {
-      console.error('Error updating robot:', error);
-      throw error;
-    }
-  };
+const updateRobot = async (id: string, robotData: Partial<Robot>) => {
+  try {
+    // Create a complete robot object with the id and partial data
+    // This addresses the type mismatch by ensuring we're passing valid data to the API
+    const robotToUpdate = {
+      id,
+      ...robotData
+    };
+    
+    const updatedRobot = await apiUpdateRobot(robotToUpdate as Robot);
+    
+    // Update robots state
+    setRobots(prev => prev.map(robot => 
+      robot.id === id ? { ...robot, ...updatedRobot } : robot
+    ));
+    
+    toast({
+      title: "Robot Updated",
+      description: "Robot details have been updated",
+    });
+    
+    return updatedRobot;
+  } catch (error) {
+    console.error('Error updating robot:', error);
+    throw error;
+  }
+};
 
   const deleteRobot = async (id: string) => {
     try {
