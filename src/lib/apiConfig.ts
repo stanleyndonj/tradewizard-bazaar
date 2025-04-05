@@ -21,12 +21,10 @@ const API_ENDPOINTS = {
   // Robot request endpoints
   ROBOT_REQUESTS: `${API_BASE_URL}/api/robot-requests`,
   ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/api/robot-requests/${id}`,
-  // Fix the endpoint to match the backend route
   USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/api/users/${userId}/robot-requests`,
   
   // Purchase endpoints
   PURCHASES: `${API_BASE_URL}/api/purchases`,
-  // Fix the endpoint to match the backend route
   USER_PURCHASES: (userId: string) => `${API_BASE_URL}/api/users/${userId}/purchases`,
   
   // M-Pesa endpoints
@@ -35,7 +33,10 @@ const API_ENDPOINTS = {
   
   // AI Trading Signals endpoints
   AI_TRADING_SIGNALS: `${API_BASE_URL}/api/ai-trading-signals`,
-  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`
+  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`,
+  
+  // Socket.io endpoint
+  SOCKET_IO: API_BASE_URL
 };
 
 // Helper function to get authentication headers

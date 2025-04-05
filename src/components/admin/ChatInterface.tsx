@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,10 +11,14 @@ import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { io } from 'socket.io-client';
+import API_ENDPOINTS from '@/lib/apiConfig';
 
-// Get the API base URL from environment variable or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const socket = io(API_BASE_URL);
+// Create socket connection using the correct endpoint
+const socket = io(API_ENDPOINTS.SOCKET_IO, {
+  transports: ['websocket'],
+  autoConnect: true,
+  reconnection: true
+});
 
 const ChatInterface = () => {
   const { 
@@ -37,10 +40,10 @@ const ChatInterface = () => {
   useEffect(() => {
     if (user && user.is_admin) {
       // Join admin's chat room
-      socket.emit('join-admin-chat', { adminId: user.id });
+      socket.emit('join_admin_chat', { adminId: user.id });
       
       // Listen for new messages from all users
-      socket.on('new-message', (message) => {
+      socket.on('new_message', (message) => {
         // The actual message update will be handled by the backend context
         // This just ensures we're re-rendering when new messages arrive
         if (message.conversationId === currentConversation) {
@@ -50,8 +53,8 @@ const ChatInterface = () => {
       
       return () => {
         // Cleanup socket connection
-        socket.off('new-message');
-        socket.emit('leave-admin-chat', { adminId: user.id });
+        socket.off('new_message');
+        socket.emit('leave_admin_chat', { adminId: user.id });
       };
     }
   }, [user, currentConversation]);
@@ -101,13 +104,18 @@ const ChatInterface = () => {
     try {
       await sendMessage(currentConversation, messageText);
       
+      // Get the user's ID for the current conversation
+      const currentUserData = conversations.find(c => c.id === currentConversation);
+      const userId = currentUserData?.userId;
+      
       // Emit socket event for real-time communication
-      socket.emit('send-message', {
+      socket.emit('send_message', {
         conversationId: currentConversation,
         senderId: user?.id,
         sender: user?.is_admin ? 'admin' : 'user',
         text: messageText,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userRoom: userId // Send to specific user room
       });
       
       setMessageText('');

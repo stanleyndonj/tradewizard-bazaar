@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,10 +10,14 @@ import { useBackend } from '@/context/BackendContext';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { io } from 'socket.io-client';
+import API_ENDPOINTS from '@/lib/apiConfig';
 
-// Get the API base URL from environment variable or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-const socket = io(API_BASE_URL);
+// Create socket connection using the correct endpoint
+const socket = io(API_ENDPOINTS.SOCKET_IO, {
+  transports: ['websocket'],
+  autoConnect: true,
+  reconnection: true
+});
 
 const CustomerChat = () => {
   const { 
@@ -36,10 +39,10 @@ const CustomerChat = () => {
   useEffect(() => {
     if (user) {
       // Join user's chat room
-      socket.emit('join-chat', { userId: user.id });
+      socket.emit('join_chat', { userId: user.id });
       
       // Listen for new messages
-      socket.on('new-message', (message) => {
+      socket.on('new_message', (message) => {
         // If the message is for current conversation, update the UI
         if (message.conversationId === currentConversation) {
           // The actual message update will be handled by the backend context
@@ -50,8 +53,8 @@ const CustomerChat = () => {
       
       return () => {
         // Cleanup socket connection
-        socket.off('new-message');
-        socket.emit('leave-chat', { userId: user.id });
+        socket.off('new_message');
+        socket.emit('leave_chat', { userId: user.id });
       };
     }
   }, [user, currentConversation]);
@@ -101,11 +104,13 @@ const CustomerChat = () => {
               sendMessage(currentConversation, messageText);
               
               // Emit socket event for real-time communication
-              socket.emit('send-message', {
+              socket.emit('send_message', {
                 conversationId: currentConversation,
                 senderId: user.id,
+                sender: 'user',
                 text: messageText,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                userRoom: user.id // Add user ID for room identification
               });
               
               setMessageText('');
@@ -116,11 +121,13 @@ const CustomerChat = () => {
         await sendMessage(currentConversation, messageText);
         
         // Emit socket event for real-time communication
-        socket.emit('send-message', {
+        socket.emit('send_message', {
           conversationId: currentConversation,
           senderId: user.id,
+          sender: 'user',
           text: messageText,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          userRoom: user.id // Add user ID for room identification
         });
         
         setMessageText('');

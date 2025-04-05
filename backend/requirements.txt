@@ -14,3 +14,5 @@ python-multipart>=0.0.6
 gunicorn>=20.1.0
 itsdangerous>=2.1.2
 pydantic-settings
+python-socketio>=5.9.0
+websockets>=10.4
