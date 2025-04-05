@@ -178,6 +178,16 @@ export interface Conversation {
   unreadCount: number;
 }
 
+// New interface for subscription pricing
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: 'monthly' | 'yearly';
+  features: string[];
+}
+
 // Authentication APIs
 export const registerUser = async (name: string, email: string, password: string) => {
   const response = await fetch(API_ENDPOINTS.REGISTER, {
@@ -430,6 +440,62 @@ export const analyzeMarket = async (symbol: string, timeframe?: string) => {
   
   const response = await fetch(url, {
     headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+// Subscription Pricing APIs
+export const getSubscriptionPrices = async () => {
+  try {
+    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PRICES, {
+      headers: getAuthHeaders(),
+    });
+    
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error('Error fetching subscription prices:', error);
+    // Return default plans as fallback
+    return [
+      {
+        id: 'basic-monthly',
+        name: 'Basic AI Trading Signals',
+        price: 29.99,
+        currency: 'USD',
+        interval: 'monthly',
+        features: [
+          'Access to AI trading signals',
+          'Basic market analysis',
+          'Daily signal updates',
+          'Email notifications'
+        ]
+      },
+      {
+        id: 'premium-monthly',
+        name: 'Premium AI Trading Signals',
+        price: 99.99,
+        currency: 'USD',
+        interval: 'monthly',
+        features: [
+          'All Basic features',
+          'Advanced market analysis',
+          'Real-time signal updates',
+          'Direct AI chat support',
+          'Custom alerts and notifications'
+        ]
+      }
+    ];
+  }
+};
+
+export const updateSubscriptionPrice = async (planId: string, price: number) => {
+  const response = await fetch(API_ENDPOINTS.UPDATE_SUBSCRIPTION_PRICE(planId), {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ price }),
   });
 
   return handleApiResponse(response);

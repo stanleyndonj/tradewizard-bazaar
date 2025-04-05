@@ -11,6 +11,7 @@ import {
   getConversations, getMessages, sendChatMessage, markMessageRead, createNewConversation, getUnreadMessageCount
 } from '@/lib/backend';
 import { toast } from '@/hooks/use-toast';
+import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from '@/lib/apiConfig';
 
 // Define the BackendContext type
 export interface BackendContextType {
@@ -19,7 +20,7 @@ export interface BackendContextType {
   robotRequests: RobotRequest[];
   purchases: Purchase[];
   isLoading: boolean;
-  subscriptionPrices: Record<string, number>;
+  subscriptionPrices: any[];
   
   // Chat related properties
   conversations: Conversation[];
@@ -58,8 +59,8 @@ export interface BackendContextType {
   initiateMpesaPayment: (phoneNumber: string, amount: number, robotId: string) => Promise<any>;
   verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
   
-  // Subscription functions
-  getSubscriptionPrices: () => Promise<Record<string, number>>;
+  // Make sure these subscription methods are properly defined
+  getSubscriptionPrices: () => Promise<any[]>;
   updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
   
   // Chat functions
@@ -80,11 +81,7 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [robotRequests, setRobotRequests] = useState<RobotRequest[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [subscriptionPrices, setSubscriptionPrices] = useState<Record<string, number>>({
-    basic: 0,
-    premium: 0,
-    enterprise: 0
-  });
+  const [subscriptionPrices, setSubscriptionPrices] = useState<any[]>([]);
   
   // Chat state
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -94,6 +91,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
   // Load user on mount
   useEffect(() => {
     loadUser();
+    // Load subscription prices regardless of user authentication
+    loadSubscriptionPrices();
   }, []);
 
   const loadUser = async () => {
@@ -151,7 +150,8 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
         if (response.user) {
           await Promise.all([
             loadRobots(),
-            loadPurchases(response.user.id)
+            loadPurchases(response.user.id),
+            loadSubscriptionPrices()
           ]);
         }
         
@@ -435,9 +435,12 @@ const updateRobot = async (id: string, robotData: Partial<Robot>) => {
     }
   };
 
-  const getUsers = async () => {
+  const getUsersList = async () => {
     try {
-      return await getUsers();
+      const response = await fetch(API_ENDPOINTS.USERS, {
+        headers: getAuthHeaders(),
+      });
+      return await handleApiResponse(response);
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -462,31 +465,103 @@ const updateRobot = async (id: string, robotData: Partial<Robot>) => {
     }
   };
 
-  const getSubscriptionPrices = async () => {
+  const loadSubscriptionPrices = async () => {
     try {
-      // Mock implementation since backend doesn't have this yet
-      return subscriptionPrices;
+      // Default plans as fallback
+      const defaultPlans = [
+        {
+          id: 'basic-monthly',
+          name: 'Basic AI Trading Signals',
+          price: 29.99,
+          currency: 'USD',
+          interval: 'monthly' as const,
+          features: [
+            'Access to AI trading signals',
+            'Basic market analysis',
+            'Daily signal updates',
+            'Email notifications'
+          ]
+        },
+        {
+          id: 'premium-monthly',
+          name: 'Premium AI Trading Signals',
+          price: 99.99,
+          currency: 'USD',
+          interval: 'monthly' as const,
+          features: [
+            'All Basic features',
+            'Advanced market analysis',
+            'Real-time signal updates',
+            'Direct AI chat support',
+            'Custom alerts and notifications'
+          ]
+        }
+      ];
+      
+      try {
+        // Try to get prices from API
+        const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PRICES, {
+          headers: getAuthHeaders(),
+        });
+        const data = await handleApiResponse(response);
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          setSubscriptionPrices(data);
+          return data;
+        } else {
+          setSubscriptionPrices(defaultPlans);
+          return defaultPlans;
+        }
+      } catch (error) {
+        console.error('Error loading subscription prices:', error);
+        setSubscriptionPrices(defaultPlans);
+        return defaultPlans;
+      }
     } catch (error) {
-      console.error('Error fetching subscription prices:', error);
+      console.error('Error in loadSubscriptionPrices:', error);
+      return [];
+    }
+  };
+
+  const getSubscriptionPrices = async () => {
+    // If we already have prices loaded, return them
+    if (subscriptionPrices.length > 0) {
       return subscriptionPrices;
     }
+    
+    // Otherwise load them
+    return loadSubscriptionPrices();
   };
 
   const updateSubscriptionPrice = async (planId: string, price: number) => {
     try {
-      // Mock implementation since backend doesn't have this yet
-      // Update local state
-      setSubscriptionPrices(prev => ({
-        ...prev,
-        [planId]: price
-      }));
+      const response = await fetch(API_ENDPOINTS.UPDATE_SUBSCRIPTION_PRICE(planId), {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ price }),
+      });
+      
+      await handleApiResponse(response);
+      
+      // Update prices in state
+      setSubscriptionPrices(prev => prev.map(plan => 
+        plan.id === planId ? { ...plan, price } : plan
+      ));
       
       toast({
         title: "Price Updated",
-        description: `${planId.charAt(0).toUpperCase() + planId.slice(1)} plan price has been updated`,
+        description: `The subscription price has been updated successfully.`,
       });
     } catch (error) {
       console.error('Error updating subscription price:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update subscription price. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -616,7 +691,7 @@ const updateRobot = async (id: string, robotData: Partial<Robot>) => {
     purchaseRobot,
     
     // User functions
-    getUsers,
+    getUsers: getUsersList,
     
     // AI Trading functions
     getTradingSignals,

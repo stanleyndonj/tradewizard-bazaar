@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Dialog, 
   DialogContent, 
@@ -20,8 +20,9 @@ import {
   DialogDescription,
   DialogFooter 
 } from '@/components/ui/dialog';
-import { Loader2, DollarSign, CreditCard } from 'lucide-react';
+import { Loader2, DollarSign, CreditCard, CheckCircle2 } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
+import { motion } from 'framer-motion';
 
 // Interface for subscription plans
 interface PricingPlan {
@@ -35,6 +36,7 @@ interface PricingPlan {
 
 const AIPricingManager = () => {
   const { updateSubscriptionPrice, getSubscriptionPrices } = useBackend();
+  const { toast } = useToast();
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -103,7 +105,7 @@ const AIPricingManager = () => {
     };
 
     loadPrices();
-  }, [getSubscriptionPrices]);
+  }, [getSubscriptionPrices, toast]);
 
   const handleOpenDialog = (plan: PricingPlan) => {
     setEditingPlan({...plan});
@@ -165,45 +167,63 @@ const AIPricingManager = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">AI Trading Signal Pricing</h2>
-      <p className="text-muted-foreground">Manage the pricing for AI trading signal subscriptions.</p>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="text-3xl font-bold tracking-tight">AI Trading Signal Pricing</h2>
+        <p className="text-muted-foreground">Manage the pricing for AI trading signal subscriptions.</p>
+      </motion.div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {plans.map(plan => (
-          <Card key={plan.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.interval === 'monthly' ? 'Monthly' : 'Yearly'} subscription</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline mb-4">
-                <span className="text-3xl font-bold">{plan.currency} {plan.price}</span>
-                <span className="text-muted-foreground ml-1">/{plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
-              </div>
-              
-              <ul className="space-y-2">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => handleOpenDialog(plan)} className="w-full">
-                Edit Price
-              </Button>
-            </CardFooter>
-          </Card>
+        {plans.map((plan, index) => (
+          <motion.div
+            key={plan.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
+            <Card className="hover:shadow-md transition-shadow bg-gray-800 border-gray-700 overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <CardHeader>
+                <CardTitle className="text-white">{plan.name}</CardTitle>
+                <CardDescription className="text-gray-400">{plan.interval === 'monthly' ? 'Monthly' : 'Yearly'} subscription</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-3xl font-bold text-white">{plan.currency} {plan.price}</span>
+                  <span className="text-gray-400 ml-1">/{plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
+                </div>
+                
+                <ul className="space-y-2">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-center">
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      <span className="text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={() => handleOpenDialog(plan)} 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Edit Price
+                </Button>
+              </CardFooter>
+            </Card>
+          </motion.div>
         ))}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle>Edit Subscription Price</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Edit Subscription Price</DialogTitle>
+            <DialogDescription className="text-gray-400">
               Update the price for this AI trading signals subscription plan.
             </DialogDescription>
           </DialogHeader>
@@ -211,20 +231,20 @@ const AIPricingManager = () => {
           {editingPlan && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
+                <Label htmlFor="name" className="text-right text-gray-300">
                   Plan
                 </Label>
-                <div className="col-span-3 font-medium">
+                <div className="col-span-3 font-medium text-white">
                   {editingPlan.name}
                 </div>
               </div>
               
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">
+                <Label htmlFor="price" className="text-right text-gray-300">
                   Price
                 </Label>
                 <div className="col-span-3 flex items-center">
-                  <span className="mr-2">{editingPlan.currency}</span>
+                  <span className="mr-2 text-gray-300">{editingPlan.currency}</span>
                   <Input
                     id="price"
                     type="number"
@@ -232,15 +252,16 @@ const AIPricingManager = () => {
                     min="0"
                     value={editingPlan.price}
                     onChange={handlePriceChange}
+                    className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
               </div>
               
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">
+                <Label className="text-right text-gray-300">
                   Interval
                 </Label>
-                <div className="col-span-3">
+                <div className="col-span-3 text-white">
                   {editingPlan.interval === 'monthly' ? 'Monthly' : 'Yearly'}
                 </div>
               </div>
@@ -248,10 +269,19 @@ const AIPricingManager = () => {
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)} 
+              disabled={isLoading}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveChanges} disabled={isLoading}>
+            <Button 
+              onClick={handleSaveChanges} 
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
