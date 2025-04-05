@@ -1,4 +1,3 @@
-
 // Backend context for Trading Robot app
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -49,27 +48,47 @@ interface BackendContextType {
   purchases: Purchase[];
   loading: boolean;
   error: string | null;
+  isLoading: boolean;
   
   // User authentication
   register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  logoutUser: () => Promise<void>;
   
   // Robot management
   addNewRobot: (robot: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
   updateExistingRobot: (robot: Robot) => Promise<void>;
   removeRobot: (id: string) => Promise<void>;
   
+  // Robot functions with different naming
+  addRobot: (robot: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
+  updateRobot: (robot: Robot) => Promise<void>;
+  deleteRobot: (id: string) => Promise<void>;
+  getUsers: () => Promise<User[]>;
+  getRobots: () => Promise<Robot[]>;
+  
   // Robot requests
   submitRequest: (requestData: any) => Promise<void>;
   updateRequest: (requestId: string, updates: any) => Promise<void>;
+  submitRobotRequest: (requestData: any) => Promise<void>;
+  updateRobotRequest: (requestId: string, updates: any) => Promise<void>;
+  fetchAllRobotRequests: () => Promise<void>;
+  getUserRobotRequests: (userId: string) => Promise<void>;
   
   // Purchases
   createPurchase: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
+  purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
+  getPurchases: (userId: string) => Promise<Purchase[]>;
   
   // M-Pesa Payments
   initiatePayment: (phone: string, amount: number, robotId: string) => Promise<any>;
   verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
+  initiateMpesaPayment: (phone: string, amount: number, robotId: string) => Promise<any>;
+  
+  // Subscription management
+  updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
+  getSubscriptionPrices: () => Promise<any[]>;
   
   // AI Trading Signals
   getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
@@ -708,6 +727,144 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     }
   };
   
+  // Add functions with different naming for compatibility
+  const getUsers = async (): Promise<User[]> => {
+    try {
+      // Mock implementation - replace with actual API call
+      return [
+        {
+          id: '1',
+          name: 'Admin User',
+          email: 'admin@example.com',
+          is_admin: true,
+          created_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Customer User',
+          email: 'customer@example.com',
+          is_admin: false,
+          created_at: new Date().toISOString()
+        }
+      ];
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  };
+  
+  const getRobotsImpl = async (): Promise<Robot[]> => {
+    try {
+      // This should be the actual API call
+      return robots;
+    } catch (error) {
+      console.error('Error fetching robots:', error);
+      throw error;
+    }
+  };
+  
+  const addRobotImpl = async (robot: Omit<Robot, 'id' | 'created_at'>) => {
+    await addNewRobot(robot);
+  };
+  
+  const updateRobotImpl = async (robot: Robot) => {
+    await updateExistingRobot(robot);
+  };
+  
+  const deleteRobotImpl = async (id: string) => {
+    await removeRobot(id);
+  };
+  
+  const submitRobotRequestImpl = async (requestData: any) => {
+    await submitRequest(requestData);
+  };
+  
+  const updateRobotRequestImpl = async (requestId: string, updates: any) => {
+    await updateRequest(requestId, updates);
+  };
+  
+  const fetchAllRobotRequestsImpl = async () => {
+    await loadAllRobotRequests();
+  };
+  
+  const getUserRobotRequestsImpl = async (userId: string) => {
+    await loadUserRobotRequests(userId);
+  };
+  
+  const getPurchasesImpl = async (userId: string): Promise<Purchase[]> => {
+    try {
+      // Mockup implementation
+      return purchases;
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+      throw error;
+    }
+  };
+  
+  const purchaseRobotImpl = async (robotId: string, amount: number, currency: string, paymentMethod: string) => {
+    await createPurchase(robotId, amount, currency, paymentMethod);
+  };
+  
+  const initiateMpesaPaymentImpl = async (phone: string, amount: number, robotId: string) => {
+    return await initiatePayment(phone, amount, robotId);
+  };
+  
+  // Subscription management functions
+  const updateSubscriptionPrice = async (planId: string, price: number) => {
+    try {
+      // Mock implementation
+      console.log(`Updating subscription plan ${planId} to price ${price}`);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      toast({
+        title: "Subscription updated",
+        description: `Plan ${planId} price updated to ${price}`
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating subscription price:', error);
+      throw error;
+    }
+  };
+  
+  const getSubscriptionPrices = async () => {
+    try {
+      // Mock implementation
+      return [
+        {
+          id: 'basic-monthly',
+          name: 'Basic AI Trading Signals',
+          price: 29.99,
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'Access to AI trading signals',
+            'Basic market analysis',
+            'Daily signal updates',
+            'Email notifications'
+          ]
+        },
+        {
+          id: 'premium-monthly',
+          name: 'Premium AI Trading Signals',
+          price: 99.99,
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'All Basic features',
+            'Advanced market analysis',
+            'Real-time signal updates',
+            'Direct AI chat support',
+            'Custom alerts and notifications'
+          ]
+        }
+      ];
+    } catch (error) {
+      console.error('Error fetching subscription prices:', error);
+      throw error;
+    }
+  };
+  
   const value: BackendContextType = {
     user,
     robots,
@@ -715,9 +872,11 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     purchases,
     loading,
     error,
+    isLoading: loading,
     register,
     login,
     logout,
+    logoutUser: logout,
     addNewRobot,
     updateExistingRobot,
     removeRobot,
@@ -738,6 +897,22 @@ export const BackendProvider: React.FC<BackendProviderProps> = ({ children }) =>
     markMessageAsRead,
     createConversation,
     unreadMessageCount,
+    
+    // Additional functions with different naming
+    getUsers,
+    getRobots: getRobotsImpl,
+    addRobot: addRobotImpl,
+    updateRobot: updateRobotImpl,
+    deleteRobot: deleteRobotImpl,
+    submitRobotRequest: submitRobotRequestImpl,
+    updateRobotRequest: updateRobotRequestImpl,
+    fetchAllRobotRequests: fetchAllRobotRequestsImpl,
+    getUserRobotRequests: getUserRobotRequestsImpl,
+    getPurchases: getPurchasesImpl,
+    purchaseRobot: purchaseRobotImpl,
+    initiateMpesaPayment: initiateMpesaPaymentImpl,
+    updateSubscriptionPrice,
+    getSubscriptionPrices
   };
 
   return (
