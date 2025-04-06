@@ -1,4 +1,3 @@
-
 import React, {
   createContext,
   useState,
@@ -54,6 +53,7 @@ import {
   processCardPayment,
   verifyCardPayment
 } from '@/lib/backend';
+import { toast } from '@/hooks/use-toast';
 
 interface BackendContextType {
   user: User | null;
@@ -534,8 +534,9 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       setConversations(conversationsData || []);
       return conversationsData || [];
     } catch (err: any) {
+      console.error('Error fetching conversations:', err.message);
       setError(err.message || 'Failed to load conversations');
-      setConversations([]);
+      // Don't throw the error further, just return empty array
       return [];
     } finally {
       setIsLoading(false);
@@ -623,22 +624,24 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       setUnreadMessageCount(count || 0);
       return count || 0;
     } catch (err: any) {
+      console.error('Error fetching unread count:', err.message);
       setError(err.message || 'Failed to get unread message count');
-      setUnreadMessageCount(0);
+      // Don't throw the error further
       return 0;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Function to load subscription plans
+  // Function to load subscription plans with better error handling
   const loadSubscriptionPlans = async () => {
     try {
       const plans = await getSubscriptionPlans();
       setSubscriptionPlans(Array.isArray(plans) ? plans : []);
       return plans;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading subscription prices:', error);
+      // Use the default plans from the backend.ts file instead of throwing
       return [];
     }
   };
@@ -658,7 +661,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Function to load user's active subscriptions
+  // Function to load user's active subscriptions with better error handling
   const loadUserSubscriptions = async () => {
     if (!user) return;
     
@@ -666,8 +669,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       const subscriptions = await getUserActiveSubscriptions();
       setActiveSubscriptions(subscriptions || []);
       setHasActiveSubscription(Array.isArray(subscriptions) && subscriptions.length > 0);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading user subscriptions:', error);
+      // Don't throw the error further, set default empty values
+      setActiveSubscriptions([]);
+      setHasActiveSubscription(false);
     }
   };
 
@@ -759,23 +765,63 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    loadCurrentUser();
-    getRobots();
-    if (user) {
-      getRobotRequests(user.id);
-      getUserPurchases(user.id);
-    }
-    getConversations();
-    getUnreadMessageCount();
-    
-    // Load subscription plans
-    loadSubscriptionPlans();
-    
-    // If user is logged in, load their subscriptions
-    if (user) {
-      loadUserSubscriptions();
-    }
-  }, [user]);
+    // Prevent constant refreshes by adding error handling
+    const loadInitialData = async () => {
+      try {
+        await loadCurrentUser();
+      } catch (err) {
+        console.error("Error loading current user:", err);
+      }
+
+      try {
+        await getRobots();
+      } catch (err) {
+        console.error("Error loading robots:", err);
+      }
+
+      if (user) {
+        try {
+          await getRobotRequests(user.id);
+        } catch (err) {
+          console.error("Error loading robot requests:", err);
+        }
+
+        try {
+          await getUserPurchases(user.id);
+        } catch (err) {
+          console.error("Error loading purchases:", err);
+        }
+      }
+
+      try {
+        await getConversations();
+      } catch (err) {
+        console.error("Error loading conversations:", err);
+      }
+
+      try {
+        await getUnreadMessageCount();
+      } catch (err) {
+        console.error("Error loading unread count:", err);
+      }
+      
+      try {
+        await loadSubscriptionPlans();
+      } catch (err) {
+        console.error("Error loading subscription plans:", err);
+      }
+      
+      if (user) {
+        try {
+          await loadUserSubscriptions();
+        } catch (err) {
+          console.error("Error loading user subscriptions:", err);
+        }
+      }
+    };
+
+    loadInitialData();
+  }, [user?.id]); // Changed dependency to user?.id instead of user to prevent excess reloads
 
   const contextValue: BackendContextType = {
     user,

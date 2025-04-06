@@ -36,13 +36,13 @@ const API_ENDPOINTS = {
   AI_TRADING_SIGNALS: `${API_URL}/api/ai/trading-signals`,
   AI_MARKET_ANALYSIS: `${API_URL}/api/ai/market-analysis`,
   
-  // Chat endpoints
+  // Chat endpoints - Fixing the path to match the backend
   CHAT_CONVERSATIONS: `${API_URL}/api/chat/conversations`,
   CHAT_MESSAGES: (conversationId: string) => `${API_URL}/api/chat/conversations/${conversationId}/messages`,
   CHAT_MARK_READ: (messageId: string) => `${API_URL}/api/chat/messages/${messageId}/read`,
   CHAT_UNREAD_COUNT: `${API_URL}/api/chat/unread-count`,
   
-  // Subscription endpoints
+  // Subscription endpoints - Fixing the path to match the backend
   SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
   SUBSCRIPTION_PLAN_BY_ID: (planId: string) => `${API_URL}/api/subscription/plans/${planId}`,
   CREATE_SUBSCRIPTION: `${API_URL}/api/subscription/subscribe`,

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, Phone } from 'lucide-react';
 import { CardPaymentForm } from './CardPaymentForm';
 import MpesaPaymentForm from './MpesaPaymentForm';
+import { toast } from '@/hooks/use-toast';
 
 interface PaymentItem {
   id: string;
@@ -29,9 +30,23 @@ const EnhancedPaymentModal = ({
   onPaymentComplete
 }: EnhancedPaymentModalProps) => {
   const [activeTab, setActiveTab] = useState<string>('card');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSuccess = () => {
+    toast({
+      title: "Payment successful",
+      description: `Your ${item.type === 'subscription' ? 'subscription' : 'purchase'} was completed successfully.`,
+      variant: "default",
+    });
     onPaymentComplete();
+  };
+
+  const handleError = (error: any) => {
+    toast({
+      title: "Payment failed",
+      description: error?.message || "There was an error processing your payment. Please try again.",
+      variant: "destructive",
+    });
   };
 
   // Convert item.type to expected paymentType
@@ -40,7 +55,7 @@ const EnhancedPaymentModal = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Complete Payment</DialogTitle>
@@ -76,6 +91,8 @@ const EnhancedPaymentModal = ({
                 paymentType={getPaymentType()}
                 onSuccess={handleSuccess}
                 onCancel={onClose}
+                onError={handleError}
+                onSubmitStateChange={setIsSubmitting}
               />
             </TabsContent>
 
@@ -86,6 +103,8 @@ const EnhancedPaymentModal = ({
                 paymentType={getPaymentType()}
                 onSuccess={handleSuccess}
                 onCancel={onClose}
+                onError={handleError}
+                onSubmitStateChange={setIsSubmitting}
               />
             </TabsContent>
           </Tabs>

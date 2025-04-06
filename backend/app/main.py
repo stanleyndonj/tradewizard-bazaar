@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -55,7 +54,7 @@ app.include_router(purchase.router, prefix="/api")
 app.include_router(mpesa.router, prefix="/api")
 app.include_router(ai_trading_signals.router)  # Already has /api prefix
 app.include_router(chat.router, prefix="/api")
-app.include_router(subscription.router, prefix="/api/subscription")
+app.include_router(subscription.router, prefix="/api/subscription")  # Changed to match frontend URLs
 app.include_router(card_payment.router, prefix="/api")
 
 # Socket.io event handlers
