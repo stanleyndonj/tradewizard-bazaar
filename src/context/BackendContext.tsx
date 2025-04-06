@@ -1,214 +1,206 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { 
-  User, Robot, RobotRequest, Purchase, TradingSignal, MarketAnalysis, ChatMessage, Conversation,
-  loginUser, registerUser, getCurrentUser, logoutUser as apiLogoutUser,
-  getRobots, getRobotById, addRobot as apiAddRobot, updateRobot as apiUpdateRobot, deleteRobot as apiDeleteRobot,
-  getAllRobotRequests, getRobotRequests, updateRobotRequest as apiUpdateRobotRequest, 
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  ReactNode,
+} from 'react';
+import {
+  registerUser as apiRegisterUser,
+  loginUser as apiLoginUser,
+  logoutUser as apiLogoutUser,
+  getCurrentUser as apiGetCurrentUser,
+  getRobots as apiGetRobots,
+  getRobotById as apiGetRobotById,
+  addRobot as apiAddRobot,
+  updateRobot as apiUpdateRobot,
+  deleteRobot as apiDeleteRobot,
+  getRobotRequests as apiGetRobotRequests,
+  getAllRobotRequests as apiGetAllRobotRequests,
   submitRobotRequest as apiSubmitRobotRequest,
-  getUserPurchases, makePurchase,
-  getUsers, getTradingSignals, analyzeMarket,
-  initiateMpesaPayment as apiInitiateMpesaPayment, verifyMpesaPayment,
-  getConversations, getMessages, sendChatMessage, markMessageRead, createNewConversation, getUnreadMessageCount
+  updateRobotRequest as apiUpdateRobotRequest,
+  getUserPurchases as apiGetUserPurchases,
+  makePurchase as apiMakePurchase,
+  getUsers as apiGetUsers,
+  getTradingSignals as apiGetTradingSignals,
+  analyzeMarket as apiAnalyzeMarket,
+  ChatMessage,
+  Conversation,
+  getConversations as apiGetConversations,
+  getMessages as apiGetMessages,
+  sendChatMessage as apiSendChatMessage,
+  markMessageRead as apiMarkMessageRead,
+  createNewConversation as apiCreateNewConversation,
+  getUnreadMessageCount as apiGetUnreadMessageCount,
+  User,
+  Robot,
+  RobotRequest,
+  Purchase,
+  RobotRequestParams,
+  TradingSignal,
+  MarketAnalysis,
+  SubscriptionPlan,
 } from '@/lib/backend';
-import { toast } from '@/hooks/use-toast';
-import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from '@/lib/apiConfig';
+import { useNavigate } from 'react-router-dom';
+import {
+  getSubscriptionPlans,
+  createSubscription,
+  getUserActiveSubscriptions,
+  checkSubscription,
+  cancelSubscription,
+  initiateMpesaPayment,
+  verifyMpesaPayment,
+  processCardPayment,
+  verifyCardPayment
+} from '@/lib/backend';
 
-// Define the BackendContext type
-export interface BackendContextType {
+interface BackendContextType {
   user: User | null;
   robots: Robot[];
   robotRequests: RobotRequest[];
   purchases: Purchase[];
-  isLoading: boolean;
-  subscriptionPrices: any[];
-  
-  // Chat related properties
+  users: User[];
+  tradingSignals: TradingSignal[];
+  marketAnalysis: MarketAnalysis | null;
   conversations: Conversation[];
-  chatMessages: Record<string, ChatMessage[]>;
-  currentConversation: string | null;
-  
-  // Auth functions
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  unreadMessageCount: number;
+  isLoading: boolean;
+  error: string | null;
+  registerUser: (name: string, email: string, password: string) => Promise<void>;
+  loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
-  
-  // Robot functions
-  getRobots: () => Promise<Robot[]>;
-  addRobot: (robotData: Partial<Robot>) => Promise<Robot>;
-  updateRobot: (id: string, robotData: Partial<Robot>) => Promise<Robot>;
-  deleteRobot: (id: string) => Promise<boolean>;
-  
-  // Robot Request functions
-  fetchAllRobotRequests: () => Promise<RobotRequest[]>;
-  getUserRobotRequests: (userId: string) => Promise<RobotRequest[]>;
-  updateRobotRequest: (id: string, data: Partial<RobotRequest>) => Promise<RobotRequest>;
-  submitRobotRequest: (data: Partial<RobotRequest>) => Promise<RobotRequest>;
-  
-  // Purchase functions
-  getPurchases: (userId: string) => Promise<Purchase[]>;
-  purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<Purchase>;
-  
-  // User functions
-  getUsers: () => Promise<User[]>;
-  
-  // AI Trading functions
-  getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
-  analyzeMarket: (symbol: string, timeframe?: string) => Promise<MarketAnalysis>;
-  
-  // Payment functions
-  initiateMpesaPayment: (phoneNumber: string, amount: number, robotId: string) => Promise<any>;
-  verifyPayment: (checkoutRequestId: string) => Promise<boolean>;
-  
-  // Make sure these subscription methods are properly defined
-  getSubscriptionPrices: () => Promise<any[]>;
-  updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
-  
-  // Chat functions
-  loadConversations: () => Promise<Conversation[]>;
-  sendMessage: (conversationId: string, text: string) => Promise<ChatMessage>;
-  markMessageAsRead: (messageId: string) => Promise<void>;
-  setCurrentConversationId: (id: string | null) => void;
-  createConversation: (userId: string, userName: string, userEmail: string) => Promise<Conversation>;
+  getRobots: () => Promise<void>;
+  getRobotById: (id: string) => Promise<void>;
+  addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>> => Promise<void>;
+  updateRobot: (robot: Robot) => Promise<void>;
+  deleteRobot: (id: string) => Promise<void>;
+  getRobotRequests: (userId: string) => Promise<void>;
+  getAllRobotRequests: () => Promise<void>;
+  submitRobotRequest: (params: RobotRequestParams) => Promise<void>;
+  updateRobotRequest: (requestId: string, updates: any) => Promise<void>;
+  getUserPurchases: (userId: string) => Promise<void>;
+  purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
+  getUsers: () => Promise<void>;
+  getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<void>;
+  analyzeMarket: (symbol: string, timeframe?: string) => Promise<void>;
+  getConversations: () => Promise<void>;
+  getMessages: (conversationId: string) => Promise<void>;
+  sendChatMessage: (conversationId: string, text: string) => Promise<void>;
+  markMessageRead: (messageId: string) => Promise<void>;
+  createNewConversation: (userId: string, userName: string, userEmail: string) => Promise<void>;
+  getUnreadMessageCount: () => Promise<void>;
+  subscriptionPlans: SubscriptionPlan[];
+  activeSubscriptions: any[];
+  hasActiveSubscription: boolean;
+  getSubscriptionPlans: () => Promise<void>;
+  checkSubscription: (planId: string) => Promise<boolean>;
+  subscribeToPlan: (planId: string, amount: number, currency: string, paymentMethod: string) => Promise<any>;
+  cancelSubscription: (subscriptionId: string) => Promise<void>;
+  initiateMpesaPayment: (phone: string, amount: number, itemId: string, paymentType?: 'purchase' | 'subscription') => Promise<any>;
+  verifyPayment: (transactionId: string) => Promise<boolean>;
+  processCardPayment: (cardDetails: any, amount: number, currency: string, itemId: string, paymentType?: 'purchase' | 'subscription') => Promise<any>;
+  verifyCardPayment: (paymentId: string) => Promise<any>;
 }
 
-// Create the context with a default value
-const BackendContext = createContext<BackendContextType | undefined>(undefined);
+const BackendContext = createContext<BackendContextType>({
+  user: null,
+  robots: [],
+  robotRequests: [],
+  purchases: [],
+  users: [],
+  tradingSignals: [],
+  marketAnalysis: null,
+  conversations: [],
+  unreadMessageCount: 0,
+  isLoading: false,
+  error: null,
+  registerUser: async () => {},
+  loginUser: async () => {},
+  logoutUser: async () => {},
+  getRobots: async () => {},
+  getRobotById: async () => {},
+  addRobot: async () => {},
+  updateRobot: async () => {},
+  deleteRobot: async () => {},
+  getRobotRequests: async () => {},
+  getAllRobotRequests: async () => {},
+  submitRobotRequest: async () => {},
+  updateRobotRequest: async () => {},
+  getUserPurchases: async () => {},
+  purchaseRobot: async () => {},
+  getUsers: async () => {},
+  getTradingSignals: async () => {},
+  analyzeMarket: async () => {},
+  getConversations: async () => {},
+  getMessages: async () => {},
+  sendChatMessage: async () => {},
+  markMessageRead: async () => {},
+  createNewConversation: async () => {},
+  getUnreadMessageCount: async () => {},
+  subscriptionPlans: [],
+  activeSubscriptions: [],
+  hasActiveSubscription: false,
+  getSubscriptionPlans: async () => {},
+  checkSubscription: async () => false,
+  subscribeToPlan: async () => {},
+  cancelSubscription: async () => {},
+  initiateMpesaPayment: async () => {},
+  verifyPayment: async () => false,
+  processCardPayment: async () => {},
+  verifyCardPayment: async () => {},
+});
 
-// Provider component
-export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [robots, setRobots] = useState<Robot[]>([]);
   const [robotRequests, setRobotRequests] = useState<RobotRequest[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [subscriptionPrices, setSubscriptionPrices] = useState<any[]>([]);
-  
-  // Chat state
+  const [users, setUsers] = useState<User[]>([]);
+  const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
+  const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysis | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
-  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Load user on mount
-  useEffect(() => {
-    loadUser();
-    // Load subscription prices regardless of user authentication
-    loadSubscriptionPrices();
-  }, []);
-
-  const loadUser = async () => {
+  // Add new state for subscriptions
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
+  
+  const registerUser = async (name: string, email: string, password: string) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const userData = await getCurrentUser();
-      setUser(userData);
-      
-      // If there's a user, load their data
-      if (userData) {
-        await Promise.all([
-          loadRobots(),
-          loadPurchases(userData.id)
-        ]);
-      }
-    } catch (error) {
-      console.error('Error loading user:', error);
+      await apiRegisterUser(name, email, password);
+      // Optionally, automatically log the user in after registration
+      await loginUser(email, password);
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadRobots = async () => {
-    try {
-      const robotsData = await getRobots();
-      setRobots(robotsData);
-      return robotsData;
-    } catch (error) {
-      console.error('Error loading robots:', error);
-      return [];
-    }
-  };
-
-  const loadPurchases = async (userId: string) => {
-    try {
-      const purchasesData = await getUserPurchases(userId);
-      setPurchases(purchasesData);
-      return purchasesData;
-    } catch (error) {
-      console.error('Error loading purchases:', error);
-      return [];
-    }
-  };
-
-  const login = async (email: string, password: string) => {
+  const loginUser = async (email: string, password: string) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await loginUser(email, password);
-      
-      // Check if response has the expected structure
-      if (response && response.user) {
-        setUser(response.user);
+      const data = await apiLoginUser(email, password);
+      if (data && data.access_token) {
+        // Fetch the current user immediately after login
+        await loadCurrentUser();
         
-        // Load relevant data after login
-        if (response.user) {
-          await Promise.all([
-            loadRobots(),
-            loadPurchases(response.user.id),
-            loadSubscriptionPrices()
-          ]);
-        }
-        
-        toast({
-          title: "Welcome back!",
-          description: `Logged in as ${response.user.name || 'User'}`,
-        });
+        // Redirect user after successful login
+        const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
+        localStorage.removeItem('redirectAfterAuth');
+        navigate(redirectPath);
       } else {
-        console.error('Login response missing user data:', response);
-        toast({
-          title: "Login Error",
-          description: "Invalid response from server",
-          variant: "destructive",
-        });
+        throw new Error('Login failed: access token not received');
       }
-    } catch (error) {
-      console.error('Login failed:', error);
-      toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "Please check your credentials",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const userData = await registerUser(name, email, password);
-      
-      // Check if userData has the expected structure
-      if (userData && userData.id) {
-        setUser(userData);
-        
-        toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully",
-        });
-      } else {
-        console.error('Registration response missing user data:', userData);
-        toast({
-          title: "Registration Error",
-          description: "Invalid response from server",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Registration failed:', error);
-      toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "Please check your information",
-        variant: "destructive",
-      });
-      throw error;
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -216,515 +208,506 @@ export const BackendProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const logoutUser = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await apiLogoutUser();
       setUser(null);
       setRobots([]);
       setRobotRequests([]);
       setPurchases([]);
-      
-      toast({
-        title: "Logged out",
-        description: "You have been logged out successfully",
-      });
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
+      setUsers([]);
+      setTradingSignals([]);
+      setMarketAnalysis(null);
+      setConversations([]);
+      setUnreadMessageCount(0);
+      setActiveSubscriptions([]);
+      setHasActiveSubscription(false);
+      navigate('/auth');
+    } catch (err: any) {
+      setError(err.message || 'Logout failed');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAllRobotRequests = async () => {
+  const loadCurrentUser = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const requests = await getAllRobotRequests();
-      setRobotRequests(requests);
-      return requests;
-    } catch (error) {
-      console.error('Error fetching robot requests:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load robot requests",
-        variant: "destructive",
-      });
-      return [];
-    }
-  };
-
-  const getUserRobotRequests = async (userId: string) => {
-    try {
-      const requests = await getRobotRequests(userId);
-      return requests;
-    } catch (error) {
-      console.error('Error fetching user robot requests:', error);
-      return [];
-    }
-  };
-
-  const updateRobotRequest = async (id: string, data: Partial<RobotRequest>) => {
-    try {
-      // Ensure robot_type is included for API compatibility if updating status
-      const updatedData = { ...data };
-      const updatedRequest = await apiUpdateRobotRequest(id, updatedData);
-      
-      // Update the state with the new data
-      setRobotRequests(prev => prev.map(req => 
-        req.id === id ? { ...req, ...updatedRequest } : req
-      ));
-      
-      return updatedRequest;
-    } catch (error) {
-      console.error('Error updating robot request:', error);
-      throw error;
-    }
-  };
-
-  const submitRobotRequest = async (data: Partial<RobotRequest>) => {
-    try {
-      // Ensure required fields for RobotRequestParams
-      if (!data.robot_type || !data.trading_pairs || !data.timeframe || !data.risk_level) {
-        throw new Error('Missing required fields for robot request');
+      const currentUser = await apiGetCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
       }
-      
-      const requestData = {
-        robot_type: data.robot_type,
-        trading_pairs: data.trading_pairs,
-        timeframe: data.timeframe,
-        risk_level: data.risk_level,
-        // Include optional fields if present
-        currency: data.currency,
-        bot_name: data.bot_name,
-        market: data.market,
-        stake_amount: data.stake_amount,
-        contract_type: data.contract_type,
-        duration: data.duration,
-        prediction: data.prediction,
-        trading_strategy: data.trading_strategy,
-        account_credentials: data.account_credentials,
-        volume: data.volume,
-        order_type: data.order_type,
-        stop_loss: data.stop_loss,
-        take_profit: data.take_profit,
-        entry_rules: data.entry_rules,
-        exit_rules: data.exit_rules,
-        risk_management: data.risk_management,
-        additional_parameters: data.additional_parameters
-      };
-      
-      const newRequest = await apiSubmitRobotRequest(requestData);
-      return newRequest;
-    } catch (error) {
-      console.error('Error submitting robot request:', error);
-      throw error;
+    } catch (err: any) {
+      setError(err.message || 'Failed to load current user');
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getPurchases = async (userId: string) => {
+  const getRobots = async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const purchasesData = await getUserPurchases(userId);
-      setPurchases(purchasesData);
-      return purchasesData;
-    } catch (error) {
-      console.error('Error loading purchases:', error);
-      return [];
+      const robotsData = await apiGetRobots();
+      setRobots(robotsData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load robots');
+      setRobots([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getRobotById = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiGetRobotById(id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load robot');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addRobot = async (robotData: Omit<Robot, 'id' | 'created_at'>) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiAddRobot(robotData);
+      await getRobots(); // Refresh robots after adding
+    } catch (err: any) {
+      setError(err.message || 'Failed to add robot');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateRobot = async (robot: Robot) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiUpdateRobot(robot);
+      await getRobots(); // Refresh robots after updating
+    } catch (err: any) {
+      setError(err.message || 'Failed to update robot');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteRobot = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiDeleteRobot(id);
+      await getRobots(); // Refresh robots after deleting
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete robot');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getRobotRequests = async (userId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const robotRequestsData = await apiGetRobotRequests(userId);
+      setRobotRequests(robotRequestsData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load robot requests');
+      setRobotRequests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getAllRobotRequests = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const robotRequestsData = await apiGetAllRobotRequests();
+      setRobotRequests(robotRequestsData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load robot requests');
+      setRobotRequests([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const submitRobotRequest = async (params: RobotRequestParams) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiSubmitRobotRequest(params);
+      // Optionally, refresh robot requests after submitting
+      if (user) {
+        await getRobotRequests(user.id);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit robot request');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateRobotRequest = async (requestId: string, updates: any) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiUpdateRobotRequest(requestId, updates);
+      // Optionally, refresh robot requests after updating
+      if (user) {
+        await getRobotRequests(user.id);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update robot request');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getUserPurchases = async (userId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const purchasesData = await apiGetUserPurchases(userId);
+      setPurchases(purchasesData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load purchases');
+      setPurchases([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const purchaseRobot = async (robotId: string, amount: number, currency: string, paymentMethod: string) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      if (!user) throw new Error('User not logged in');
-      
-      const purchase = await makePurchase(user.id, robotId, amount, currency, paymentMethod);
-      
-      // Update purchases state
-      setPurchases(prev => [...prev, purchase]);
-      
-      toast({
-        title: "Purchase Successful",
-        description: "You now have access to this robot",
-      });
-      
-      return purchase;
+      if (!user) throw new Error('User not authenticated');
+      await apiMakePurchase(user.id, robotId, amount, currency, paymentMethod);
+      // Optionally, refresh purchases after making a purchase
+      await getUserPurchases(user.id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to make purchase');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getUsers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const usersData = await apiGetUsers();
+      setUsers(usersData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load users');
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getTradingSignals = async (market?: string, timeframe?: string, count?: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const signalsData = await apiGetTradingSignals(market, timeframe, count);
+      setTradingSignals(signalsData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load trading signals');
+      setTradingSignals([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const analyzeMarket = async (symbol: string, timeframe?: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const analysisData = await apiAnalyzeMarket(symbol, timeframe);
+      setMarketAnalysis(analysisData);
+    } catch (err: any) {
+      setError(err.message || 'Failed to analyze market');
+      setMarketAnalysis(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getConversations = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const conversationsData = await apiGetConversations();
+      setConversations(conversationsData || []);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load conversations');
+      setConversations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getMessages = async (conversationId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const messagesData = await apiGetMessages(conversationId);
+      return messagesData || [];
+    } catch (err: any) {
+      setError(err.message || 'Failed to load messages');
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendChatMessage = async (conversationId: string, text: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiSendChatMessage(conversationId, text);
+      // Optionally, refresh messages after sending
+      await getMessages(conversationId);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const markMessageRead = async (messageId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiMarkMessageRead(messageId);
+      // Optionally, refresh conversations after marking message as read
+      await getConversations();
+    } catch (err: any) {
+      setError(err.message || 'Failed to mark message as read');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await apiCreateNewConversation(userId, userName, userEmail);
+      // Optionally, refresh conversations after creating a new one
+      await getConversations();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create new conversation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getUnreadMessageCount = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const count = await apiGetUnreadMessageCount();
+      setUnreadMessageCount(count || 0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to get unread message count');
+      setUnreadMessageCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add new function to load subscription plans
+  const loadSubscriptionPlans = async () => {
+    try {
+      const plans = await getSubscriptionPlans();
+      setSubscriptionPlans(Array.isArray(plans) ? plans : []);
     } catch (error) {
-      console.error('Error purchasing robot:', error);
+      console.error('Error loading subscription prices:', error);
+    }
+  };
+
+  // Add function to load user's active subscriptions
+  const loadUserSubscriptions = async () => {
+    if (!user) return;
+    
+    try {
+      const subscriptions = await getUserActiveSubscriptions();
+      setActiveSubscriptions(subscriptions || []);
+      setHasActiveSubscription(Array.isArray(subscriptions) && subscriptions.length > 0);
+    } catch (error) {
+      console.error('Error loading user subscriptions:', error);
+    }
+  };
+
+  // Check if user has access to a specific plan
+  const checkUserSubscription = async (planId: string) => {
+    if (!user) return false;
+    
+    try {
+      const hasAccess = await checkSubscription(planId);
+      return hasAccess;
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      return false;
+    }
+  };
+
+  // Function to subscribe to a plan
+  const subscribeToPlan = async (planId: string, amount: number, currency: string, paymentMethod: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      const subscription = await createSubscription(planId, amount, currency, paymentMethod);
+      await loadUserSubscriptions();
+      return subscription;
+    } catch (error) {
+      console.error('Error creating subscription:', error);
       throw error;
     }
   };
 
-  const addRobot = async (robotData: Partial<Robot>) => {
+  // Function to cancel a subscription
+  const cancelUserSubscription = async (subscriptionId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
     try {
-      // Ensure required fields
-      if (!robotData.name || !robotData.description || !robotData.type || robotData.price === undefined) {
-        throw new Error('Missing required fields for robot');
-      }
-      
-      const robot = {
-        name: robotData.name,
-        description: robotData.description,
-        type: robotData.type,
-        price: robotData.price,
-        features: robotData.features || [],
-        currency: robotData.currency || 'USD',
-        category: robotData.category || 'paid',
-        image_url: robotData.image_url || '',
-        imageUrl: robotData.imageUrl || '',
-        download_url: robotData.download_url
-      };
-      
-      const newRobot = await apiAddRobot(robot);
-      
-      // Update robots state
-      setRobots(prev => [...prev, newRobot]);
-      
-      toast({
-        title: "Robot Added",
-        description: "New robot has been added to the marketplace",
-      });
-      
-      return newRobot;
+      await cancelSubscription(subscriptionId);
+      await loadUserSubscriptions();
     } catch (error) {
-      console.error('Error adding robot:', error);
+      console.error('Error cancelling subscription:', error);
       throw error;
     }
   };
 
-const updateRobot = async (id: string, robotData: Partial<Robot>) => {
-  try {
-    // Create a complete robot object with the id and partial data
-    // This addresses the type mismatch by ensuring we're passing valid data to the API
-    const robotToUpdate = {
-      id,
-      ...robotData
-    };
+  // Payment processing functions
+  const initiateM-PesaPayment = async (phone: string, amount: number, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
+    if (!user) throw new Error('User not authenticated');
     
-    const updatedRobot = await apiUpdateRobot(robotToUpdate as Robot);
-    
-    // Update robots state
-    setRobots(prev => prev.map(robot => 
-      robot.id === id ? { ...robot, ...updatedRobot } : robot
-    ));
-    
-    toast({
-      title: "Robot Updated",
-      description: "Robot details have been updated",
-    });
-    
-    return updatedRobot;
-  } catch (error) {
-    console.error('Error updating robot:', error);
-    throw error;
-  }
-};
-
-  const deleteRobot = async (id: string) => {
     try {
-      await apiDeleteRobot(id);
-      
-      // Update robots state
-      setRobots(prev => prev.filter(robot => robot.id !== id));
-      
-      toast({
-        title: "Robot Deleted",
-        description: "Robot has been removed from the marketplace",
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error deleting robot:', error);
-      throw error;
-    }
-  };
-
-  const getUsersList = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.USERS, {
-        headers: getAuthHeaders(),
-      });
-      return await handleApiResponse(response);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      throw error;
-    }
-  };
-
-  const initiateMpesaPayment = async (phoneNumber: string, amount: number, robotId: string) => {
-    try {
-      return await apiInitiateMpesaPayment(phoneNumber, amount, robotId);
+      const response = await initiateMpesaPayment(phone, amount, itemId, paymentType);
+      return response;
     } catch (error) {
       console.error('Error initiating M-Pesa payment:', error);
       throw error;
     }
   };
-  
-  const verifyPayment = async (checkoutRequestId: string) => {
-    try {
-      return await verifyMpesaPayment(checkoutRequestId);
-    } catch (error) {
-      console.error('Error verifying payment:', error);
-      return false;
-    }
-  };
 
-  const loadSubscriptionPrices = async () => {
-    try {
-      // Default plans as fallback
-      const defaultPlans = [
-        {
-          id: 'basic-monthly',
-          name: 'Basic AI Trading Signals',
-          price: 29.99,
-          currency: 'USD',
-          interval: 'monthly' as const,
-          features: [
-            'Access to AI trading signals',
-            'Basic market analysis',
-            'Daily signal updates',
-            'Email notifications'
-          ]
-        },
-        {
-          id: 'premium-monthly',
-          name: 'Premium AI Trading Signals',
-          price: 99.99,
-          currency: 'USD',
-          interval: 'monthly' as const,
-          features: [
-            'All Basic features',
-            'Advanced market analysis',
-            'Real-time signal updates',
-            'Direct AI chat support',
-            'Custom alerts and notifications'
-          ]
-        }
-      ];
-      
-      try {
-        // Try to get prices from API
-        const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PRICES, {
-          headers: getAuthHeaders(),
-        });
-        const data = await handleApiResponse(response);
-        
-        if (data && Array.isArray(data) && data.length > 0) {
-          setSubscriptionPrices(data);
-          return data;
-        } else {
-          setSubscriptionPrices(defaultPlans);
-          return defaultPlans;
-        }
-      } catch (error) {
-        console.error('Error loading subscription prices:', error);
-        setSubscriptionPrices(defaultPlans);
-        return defaultPlans;
-      }
-    } catch (error) {
-      console.error('Error in loadSubscriptionPrices:', error);
-      return [];
-    }
-  };
-
-  const getSubscriptionPrices = async () => {
-    // If we already have prices loaded, return them
-    if (subscriptionPrices.length > 0) {
-      return subscriptionPrices;
-    }
+  const verifyPayment = async (transactionId: string) => {
+    if (!user) throw new Error('User not authenticated');
     
-    // Otherwise load them
-    return loadSubscriptionPrices();
-  };
-
-  const updateSubscriptionPrice = async (planId: string, price: number) => {
     try {
-      const response = await fetch(API_ENDPOINTS.UPDATE_SUBSCRIPTION_PRICE(planId), {
-        method: 'PUT',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ price }),
-      });
-      
-      await handleApiResponse(response);
-      
-      // Update prices in state
-      setSubscriptionPrices(prev => prev.map(plan => 
-        plan.id === planId ? { ...plan, price } : plan
-      ));
-      
-      toast({
-        title: "Price Updated",
-        description: `The subscription price has been updated successfully.`,
-      });
+      return await verifyMpesaPayment(transactionId);
     } catch (error) {
-      console.error('Error updating subscription price:', error);
-      toast({
-        title: "Update Failed",
-        description: "Failed to update subscription price. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-  
-  // Chat functions
-  const loadConversations = async () => {
-    try {
-      const conversationsData = await getConversations();
-      setConversations(conversationsData);
-      
-      // Load messages for each conversation
-      for (const conversation of conversationsData) {
-        loadMessages(conversation.id);
-      }
-      
-      return conversationsData;
-    } catch (error) {
-      console.error('Error loading conversations:', error);
-      return [];
-    }
-  };
-  
-  const loadMessages = async (conversationId: string) => {
-    try {
-      const messagesData = await getMessages(conversationId);
-      setChatMessages(prev => ({
-        ...prev,
-        [conversationId]: messagesData
-      }));
-      return messagesData;
-    } catch (error) {
-      console.error(`Error loading messages for conversation ${conversationId}:`, error);
-      return [];
-    }
-  };
-  
-  const sendMessage = async (conversationId: string, text: string) => {
-    try {
-      const message = await sendChatMessage(conversationId, text);
-      
-      // Update messages in state
-      setChatMessages(prev => {
-        const conversationMessages = prev[conversationId] || [];
-        return {
-          ...prev,
-          [conversationId]: [...conversationMessages, message]
-        };
-      });
-      
-      return message;
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    }
-  };
-  
-  const markMessageAsRead = async (messageId: string) => {
-    try {
-      await markMessageRead(messageId);
-      
-      // Update message status in state
-      setChatMessages(prev => {
-        const updatedMessages = { ...prev };
-        
-        for (const convId in updatedMessages) {
-          updatedMessages[convId] = updatedMessages[convId].map(msg => 
-            msg.id === messageId ? { ...msg, read: true } : msg
-          );
-        }
-        
-        return updatedMessages;
-      });
-    } catch (error) {
-      console.error('Error marking message as read:', error);
-    }
-  };
-  
-  const setCurrentConversationId = (id: string | null) => {
-    setCurrentConversation(id);
-  };
-  
-  const createConversation = async (userId: string, userName: string, userEmail: string) => {
-    try {
-      const newConversation = await createNewConversation(userId, userName, userEmail);
-      
-      // Update conversations in state
-      setConversations(prev => [...prev, newConversation]);
-      setCurrentConversation(newConversation.id);
-      
-      return newConversation;
-    } catch (error) {
-      console.error('Error creating conversation:', error);
+      console.error('Error verifying M-Pesa payment:', error);
       throw error;
     }
   };
 
-  const value: BackendContextType = {
+  const processCardPayment = async (cardDetails: any, amount: number, currency: string, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      const response = await processCardPayment(cardDetails, amount, currency, itemId, paymentType);
+      return response;
+    } catch (error) {
+      console.error('Error processing card payment:', error);
+      throw error;
+    }
+  };
+
+  const verifyCardPayment = async (paymentId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      return await verifyCardPayment(paymentId);
+    } catch (error) {
+      console.error('Error verifying card payment:', error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    loadCurrentUser();
+    getRobots();
+    if (user) {
+      getRobotRequests(user.id);
+      getUserPurchases(user.id);
+    }
+    getConversations();
+    getUnreadMessageCount();
+    
+    // Load subscription plans
+    loadSubscriptionPlans();
+    
+    // If user is logged in, load their subscriptions
+    if (user) {
+      loadUserSubscriptions();
+    }
+  }, [user]);
+
+  const contextValue: BackendContextType = {
     user,
     robots,
     robotRequests,
     purchases,
-    isLoading,
-    subscriptionPrices,
+    users,
+    tradingSignals,
+    marketAnalysis,
     conversations,
-    chatMessages,
-    currentConversation,
-    
-    // Auth functions
-    login,
-    register,
+    unreadMessageCount,
+    isLoading,
+    error,
+    registerUser,
+    loginUser,
     logoutUser,
-    
-    // Robot functions
-    getRobots: loadRobots,
+    getRobots,
+    getRobotById,
     addRobot,
     updateRobot,
     deleteRobot,
-    
-    // Robot Request functions
-    fetchAllRobotRequests,
-    getUserRobotRequests,
-    updateRobotRequest,
+    getRobotRequests,
+    getAllRobotRequests,
     submitRobotRequest,
-    
-    // Purchase functions
-    getPurchases,
+    updateRobotRequest,
+    getUserPurchases,
     purchaseRobot,
-    
-    // User functions
-    getUsers: getUsersList,
-    
-    // AI Trading functions
+    getUsers,
     getTradingSignals,
     analyzeMarket,
+    getConversations,
+    getMessages,
+    sendChatMessage,
+    markMessageRead,
+    createNewConversation,
+    getUnreadMessageCount,
     
-    // Payment functions
-    initiateMpesaPayment,
+    // Add new subscription-related properties
+    subscriptionPlans,
+    activeSubscriptions,
+    hasActiveSubscription,
+    getSubscriptionPlans: loadSubscriptionPlans,
+    checkSubscription: checkUserSubscription,
+    subscribeToPlan,
+    cancelSubscription,
+    
+    // Add payment processing functions
+    initiateMpesaPayment: initiateM-PesaPayment,
     verifyPayment,
-    
-    // Subscription functions
-    getSubscriptionPrices,
-    updateSubscriptionPrice,
-    
-    // Chat functions
-    loadConversations,
-    sendMessage,
-    markMessageAsRead,
-    setCurrentConversationId,
-    createConversation
+    processCardPayment,
+    verifyCardPayment
   };
 
-  return (
-    <BackendContext.Provider value={value}>
-      {children}
-    </BackendContext.Provider>
-  );
-};
+  return <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>;
+}
 
-// Custom hook to use the context
-export const useBackend = () => {
-  const context = useContext(BackendContext);
-  if (context === undefined) {
-    throw new Error('useBackend must be used within a BackendProvider');
-  }
-  return context;
-};
+export const useBackend = () => useContext(BackendContext);

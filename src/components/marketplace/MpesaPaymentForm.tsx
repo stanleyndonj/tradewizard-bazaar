@@ -1,25 +1,33 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Smartphone } from 'lucide-react';
 
 interface MpesaPaymentFormProps {
   amount: number;
-  robotId: string;
+  itemId: string;
+  paymentType?: 'purchase' | 'subscription';
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPaymentFormProps) => {
+const MpesaPaymentForm = ({ 
+  amount, 
+  itemId, 
+  paymentType = 'purchase',
+  onSuccess, 
+  onCancel 
+}: MpesaPaymentFormProps) => {
   const { toast } = useToast();
-  const { initiateMpesaPayment, verifyPayment } = useBackend();
+  const { initiateMpesaPayment, verifyMpesaPayment } = useBackend();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
-  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,16 +55,21 @@ const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPayment
       setPaymentStatus('processing');
       
       // Initiate M-Pesa payment
-      const requestId = await initiateMpesaPayment(formattedPhone, amount, robotId);
-      setCheckoutRequestId(requestId);
+      const response = await initiateMpesaPayment(formattedPhone, amount, itemId, paymentType);
       
-      toast({
-        title: "Payment Initiated",
-        description: "Please check your phone for the M-Pesa prompt and enter your PIN",
-      });
-      
-      // Start checking payment status
-      checkPaymentStatus(requestId);
+      if (response && response.transaction_id) {
+        setTransactionId(response.transaction_id);
+        
+        toast({
+          title: "Payment Initiated",
+          description: "Please check your phone for the M-Pesa prompt and enter your PIN",
+        });
+        
+        // Start checking payment status
+        checkPaymentStatus(response.transaction_id);
+      } else {
+        throw new Error("Failed to initiate payment");
+      }
     } catch (error) {
       console.error('M-Pesa payment error:', error);
       setPaymentStatus('failed');
@@ -70,14 +83,14 @@ const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPayment
     }
   };
 
-  const checkPaymentStatus = async (requestId: string) => {
+  const checkPaymentStatus = async (txnId: string) => {
     let attempts = 0;
     const maxAttempts = 10;
     const interval = 5000; // 5 seconds
     
     const checkStatus = async () => {
       try {
-        const isSuccess = await verifyPayment(requestId);
+        const isSuccess = await verifyMpesaPayment(txnId);
         if (isSuccess) {
           setPaymentStatus('success');
           toast({
@@ -125,14 +138,18 @@ const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPayment
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="phone">Phone Number</Label>
-            <Input 
-              id="phone"
-              type="tel"
-              placeholder="e.g., 0712345678 or 254712345678"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Smartphone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                id="phone"
+                className="pl-10"
+                type="tel"
+                placeholder="e.g., 0712345678 or 254712345678"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                required
+              />
+            </div>
             <p className="text-xs text-muted-foreground">Enter your M-Pesa phone number</p>
           </div>
           
@@ -205,7 +222,7 @@ const MpesaPaymentForm = ({ amount, robotId, onSuccess, onCancel }: MpesaPayment
             <Button 
               onClick={() => {
                 setPaymentStatus('idle');
-                setCheckoutRequestId(null);
+                setTransactionId(null);
               }}
             >
               Try Again

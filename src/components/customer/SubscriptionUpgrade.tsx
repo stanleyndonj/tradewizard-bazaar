@@ -1,69 +1,100 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Check, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useBackend } from '@/context/BackendContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import PaymentForm, { PaymentItem } from '@/components/payment/PaymentForm';
+import { SubscriptionPlan } from '@/lib/backend';
 
 interface SubscriptionUpgradeProps {
   onSubscribe?: () => void;
 }
 
 const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
-  const { user, purchaseRobot } = useBackend();
+  const { user, getSubscriptionPlans } = useBackend();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PaymentItem | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const plans = [
-    {
-      id: 'basic-monthly',
-      name: 'Basic Plan',
-      price: 29.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'Access to AI trading signals',
-        'Basic market analysis',
-        'Daily signal updates',
-        'Email notifications'
-      ]
-    },
-    {
-      id: 'premium-monthly',
-      name: 'Premium Plan',
-      price: 99.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'All Basic features',
-        'Advanced market analysis',
-        'Real-time signal updates',
-        'Direct AI chat support',
-        'Custom alerts and notifications'
-      ]
-    },
-    {
-      id: 'enterprise-monthly',
-      name: 'Enterprise Plan',
-      price: 299.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'All Premium features',
-        'Dedicated account manager',
-        'Custom robot creation',
-        'Priority support',
-        'White-label solutions',
-        'API access'
-      ]
+  useEffect(() => {
+    loadSubscriptionPlans();
+  }, []);
+
+  const loadSubscriptionPlans = async () => {
+    setIsLoading(true);
+    try {
+      const subscriptionPlans = await getSubscriptionPlans();
+      if (Array.isArray(subscriptionPlans)) {
+        setPlans(subscriptionPlans);
+      } else {
+        // Fallback to default plans if API fails
+        setPlans([
+          {
+            id: 'basic-monthly',
+            name: 'Basic Plan',
+            price: 29.99,
+            currency: 'USD',
+            interval: 'monthly',
+            features: [
+              'Access to AI trading signals',
+              'Basic market analysis',
+              'Daily signal updates',
+              'Email notifications'
+            ],
+            created_at: new Date().toISOString()
+          },
+          {
+            id: 'premium-monthly',
+            name: 'Premium Plan',
+            price: 99.99,
+            currency: 'USD',
+            interval: 'monthly',
+            features: [
+              'All Basic features',
+              'Advanced market analysis',
+              'Real-time signal updates',
+              'Direct AI chat support',
+              'Custom alerts and notifications'
+            ],
+            created_at: new Date().toISOString()
+          },
+          {
+            id: 'enterprise-monthly',
+            name: 'Enterprise Plan',
+            price: 299.99,
+            currency: 'USD',
+            interval: 'monthly',
+            features: [
+              'All Premium features',
+              'Dedicated account manager',
+              'Custom robot creation',
+              'Priority support',
+              'White-label solutions',
+              'API access'
+            ],
+            created_at: new Date().toISOString()
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading subscription plans:', error);
+      toast({
+        title: "Error loading plans",
+        description: "Could not load subscription plans. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
-  const handleSubscribe = async (planId: string, price: number) => {
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -74,41 +105,31 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
       return;
     }
 
-    setIsProcessing(true);
-    setSelectedPlan(planId);
-    
-    try {
-      // Mock robot ID for subscription purchase
-      const subscriptionRobotId = "subscription-" + planId;
-      
-      await purchaseRobot(
-        subscriptionRobotId,
-        price,
-        'USD',
-        'card'
-      );
+    setSelectedPlan({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      price: plan.price,
+      currency: plan.currency,
+      type: 'subscription'
+    });
+    setIsPaymentModalOpen(true);
+  };
 
-      toast({
-        title: "Subscription successful",
-        description: "You now have access to AI Trading Signals",
-      });
+  const handlePaymentComplete = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedPlan(null);
 
-      if (onSubscribe) {
-        onSubscribe();
-      } else {
-        // Refresh the page to update access
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Subscription error:', error);
-      toast({
-        title: "Subscription failed",
-        description: "Please try again or contact support",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-      setSelectedPlan(null);
+    toast({
+      title: "Subscription successful",
+      description: "You now have access to AI Trading Signals",
+    });
+
+    if (onSubscribe) {
+      onSubscribe();
+    } else {
+      // Refresh the page to update access
+      window.location.reload();
     }
   };
 
@@ -152,13 +173,13 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
               </ul>
               <Button 
                 className="w-full mt-6 bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
-                onClick={() => handleSubscribe(plan.id, plan.price)}
-                disabled={isProcessing && selectedPlan === plan.id}
+                onClick={() => handleSubscribe(plan)}
+                disabled={isLoading}
               >
-                {isProcessing && selectedPlan === plan.id ? (
+                {isLoading ? (
                   <>
                     <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    Processing...
+                    Loading...
                   </>
                 ) : (
                   <>
@@ -176,6 +197,15 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
         <p>By subscribing, you agree to our Terms of Service and Privacy Policy.</p>
         <p className="mt-2">Need help? Contact our support team.</p>
       </div>
+      
+      {isPaymentModalOpen && selectedPlan && (
+        <PaymentForm
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          item={selectedPlan}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </motion.div>
   );
 };

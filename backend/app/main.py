@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 import os
 import socketio
 from starlette.middleware.sessions import SessionMiddleware
-from .routers import auth, user, robot, robot_request, purchase, mpesa, ai_trading_signals, chat
+from .routers import auth, user, robot, robot_request, purchase, mpesa, ai_trading_signals, chat, subscription, card_payment
 
 # Initialize Socket.io
 sio = socketio.AsyncServer(
@@ -55,6 +55,8 @@ app.include_router(purchase.router, prefix="/api")
 app.include_router(mpesa.router, prefix="/api")
 app.include_router(ai_trading_signals.router)  # Already has /api prefix
 app.include_router(chat.router, prefix="/api")
+app.include_router(subscription.router, prefix="/api/subscription")
+app.include_router(card_payment.router, prefix="/api")
 
 # Socket.io event handlers
 @sio.event

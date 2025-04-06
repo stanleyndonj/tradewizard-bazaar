@@ -11,6 +11,9 @@ class PurchaseBase(BaseModel):
 class PurchaseCreate(PurchaseBase):
     robot_id: str
 
+class PurchaseUpdate(BaseModel):
+    status: Optional[str] = None
+    
 class PurchaseResponse(PurchaseBase):
     id: str
     user_id: str

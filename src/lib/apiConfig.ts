@@ -1,3 +1,4 @@
+
 const API_URL = 'http://localhost:8000';
 
 const API_ENDPOINTS = {
@@ -27,7 +28,9 @@ const API_ENDPOINTS = {
   
   // Payment endpoints
   MPESA_INITIATE: `${API_URL}/api/payments/mpesa/initiate`,
-  MPESA_VERIFY: `${API_URL}/api/payments/mpesa/verify`,
+  MPESA_VERIFY: `${API_URL}/api/payments/mpesa/verify/{transaction_id}`,
+  CARD_PAYMENT_PROCESS: `${API_URL}/api/payments/card/process`,
+  CARD_PAYMENT_VERIFY: `${API_URL}/api/payments/card/verify/{payment_id}`,
   
   // AI Trading endpoints
   AI_TRADING_SIGNALS: `${API_URL}/api/ai/trading-signals`,
@@ -40,8 +43,13 @@ const API_ENDPOINTS = {
   CHAT_UNREAD_COUNT: `${API_URL}/api/chat/unread-count`,
   
   // Subscription endpoints
-  SUBSCRIPTION_PRICES: `${API_URL}/api/subscription/prices`,
-  UPDATE_SUBSCRIPTION_PRICE: (planId: string) => `${API_URL}/api/subscription/prices/${planId}`,
+  SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
+  SUBSCRIPTION_PLAN_BY_ID: (planId: string) => `${API_URL}/api/subscription/plans/${planId}`,
+  CREATE_SUBSCRIPTION: `${API_URL}/api/subscription/subscribe`,
+  USER_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/subscriptions`,
+  USER_ACTIVE_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/active`,
+  CHECK_SUBSCRIPTION: (planId: string) => `${API_URL}/api/subscription/check/${planId}`,
+  CANCEL_SUBSCRIPTION: (subscriptionId: string) => `${API_URL}/api/subscription/cancel/${subscriptionId}`,
 };
 
 export default API_ENDPOINTS;

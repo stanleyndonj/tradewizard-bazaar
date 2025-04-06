@@ -1,3 +1,4 @@
+
 import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from './apiConfig';
 
 // Types for user management
@@ -82,6 +83,21 @@ export interface Purchase {
   status: string;
   created_at: string;
   updated_at?: string;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  status: string;
+  start_date: string;
+  end_date?: string;
+  created_at: string;
+  updated_at?: string;
+  is_active: boolean;
 }
 
 export interface RobotRequestParams {
@@ -178,14 +194,17 @@ export interface Conversation {
   unreadCount: number;
 }
 
-// New interface for subscription pricing
+// Interface for subscription plan
 export interface SubscriptionPlan {
   id: string;
   name: string;
+  description?: string;
   price: number;
   currency: string;
   interval: 'monthly' | 'yearly';
   features: string[];
+  created_at: string;
+  updated_at?: string;
 }
 
 // Authentication APIs
@@ -373,31 +392,67 @@ export const makePurchase = async (
 };
 
 // M-Pesa Payment APIs
-export const initiateMpesaPayment = async (phone: string, amount: number, robotId: string) => {
+export const initiateMpesaPayment = async (phone: string, amount: number, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
   const response = await fetch(API_ENDPOINTS.MPESA_INITIATE, {
     method: 'POST',
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ phone, amount, robot_id: robotId }),
+    body: JSON.stringify({ 
+      phone_number: phone, 
+      amount, 
+      item_id: itemId,
+      payment_type: paymentType
+    }),
   });
 
   return handleApiResponse(response);
 };
 
-export const verifyMpesaPayment = async (checkoutRequestId: string) => {
-  const response = await fetch(API_ENDPOINTS.MPESA_VERIFY, {
+export const verifyMpesaPayment = async (transactionId: string) => {
+  const response = await fetch(API_ENDPOINTS.MPESA_VERIFY.replace('{transaction_id}', transactionId), {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    }
+  });
+
+  const result = await handleApiResponse(response);
+  return result.success;
+};
+
+// Card Payment APIs
+export const processCardPayment = async (cardDetails: any, amount: number, currency: string, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
+  const response = await fetch(API_ENDPOINTS.CARD_PAYMENT_PROCESS, {
     method: 'POST',
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ checkout_request_id: checkoutRequestId }),
+    body: JSON.stringify({
+      card_details: cardDetails,
+      amount,
+      currency,
+      item_id: itemId,
+      payment_type: paymentType
+    }),
   });
 
-  const result = await handleApiResponse(response);
-  return result.success;
+  return handleApiResponse(response);
+};
+
+export const verifyCardPayment = async (paymentId: string) => {
+  const response = await fetch(API_ENDPOINTS.CARD_PAYMENT_VERIFY.replace('{payment_id}', paymentId), {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    }
+  });
+
+  return handleApiResponse(response);
 };
 
 // User Management APIs
@@ -445,16 +500,16 @@ export const analyzeMarket = async (symbol: string, timeframe?: string) => {
   return handleApiResponse(response);
 };
 
-// Subscription Pricing APIs
-export const getSubscriptionPrices = async () => {
+// Subscription APIs
+export const getSubscriptionPlans = async () => {
   try {
-    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PRICES, {
+    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLANS, {
       headers: getAuthHeaders(),
     });
     
     return handleApiResponse(response);
   } catch (error) {
-    console.error('Error fetching subscription prices:', error);
+    console.error('Error fetching subscription plans:', error);
     // Return default plans as fallback
     return [
       {
@@ -488,14 +543,96 @@ export const getSubscriptionPrices = async () => {
   }
 };
 
-export const updateSubscriptionPrice = async (planId: string, price: number) => {
-  const response = await fetch(API_ENDPOINTS.UPDATE_SUBSCRIPTION_PRICE(planId), {
+export const getSubscriptionPlanById = async (planId: string) => {
+  const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const createSubscriptionPlan = async (plan: Omit<SubscriptionPlan, 'id' | 'created_at'>) => {
+  const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLANS, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(plan),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const updateSubscriptionPlan = async (planId: string, updates: Partial<SubscriptionPlan>) => {
+  const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
     method: 'PUT',
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ price }),
+    body: JSON.stringify(updates),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const deleteSubscriptionPlan = async (planId: string) => {
+  const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const createSubscription = async (planId: string, amount: number, currency: string, paymentMethod: string) => {
+  const response = await fetch(API_ENDPOINTS.CREATE_SUBSCRIPTION, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      plan_id: planId,
+      amount,
+      currency,
+      payment_method: paymentMethod,
+    }),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const getUserSubscriptions = async () => {
+  const response = await fetch(API_ENDPOINTS.USER_SUBSCRIPTIONS, {
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const getUserActiveSubscriptions = async () => {
+  const response = await fetch(API_ENDPOINTS.USER_ACTIVE_SUBSCRIPTIONS, {
+    headers: getAuthHeaders(),
+  });
+
+  return handleApiResponse(response);
+};
+
+export const checkSubscription = async (planId: string) => {
+  const response = await fetch(API_ENDPOINTS.CHECK_SUBSCRIPTION(planId), {
+    headers: getAuthHeaders(),
+  });
+
+  const result = await handleApiResponse(response);
+  return result.has_subscription;
+};
+
+export const cancelSubscription = async (subscriptionId: string) => {
+  const response = await fetch(API_ENDPOINTS.CANCEL_SUBSCRIPTION(subscriptionId), {
+    method: 'PUT',
+    headers: getAuthHeaders(),
   });
 
   return handleApiResponse(response);
