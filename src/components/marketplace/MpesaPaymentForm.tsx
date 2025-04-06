@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
 import { Loader2, CheckCircle, XCircle, Smartphone } from 'lucide-react';
+import { Dispatch, SetStateAction } from 'react';
 
 interface MpesaPaymentFormProps {
   amount: number;
@@ -13,6 +14,8 @@ interface MpesaPaymentFormProps {
   paymentType?: 'purchase' | 'subscription';
   onSuccess: () => void;
   onCancel: () => void;
+  onError?: (error: any) => void;
+  onSubmitStateChange?: Dispatch<SetStateAction<boolean>>;
 }
 
 const MpesaPaymentForm = ({ 
@@ -20,7 +23,9 @@ const MpesaPaymentForm = ({
   itemId, 
   paymentType = 'purchase',
   onSuccess, 
-  onCancel 
+  onCancel,
+  onError,
+  onSubmitStateChange
 }: MpesaPaymentFormProps) => {
   const { toast } = useToast();
   const { initiateMpesaPayment, verifyPayment } = useBackend();
@@ -34,11 +39,13 @@ const MpesaPaymentForm = ({
     
     // Basic validation
     if (!phoneNumber.trim()) {
+      const errorMsg = "Please enter your phone number";
       toast({
         title: "Missing Information",
-        description: "Please enter your phone number",
+        description: errorMsg,
         variant: "destructive"
       });
+      if (onError) onError(new Error(errorMsg));
       return;
     }
 
@@ -53,6 +60,7 @@ const MpesaPaymentForm = ({
     try {
       setIsLoading(true);
       setPaymentStatus('processing');
+      if (onSubmitStateChange) onSubmitStateChange(true);
       
       // Initiate M-Pesa payment
       const response = await initiateMpesaPayment(formattedPhone, amount, itemId, paymentType);
@@ -78,8 +86,10 @@ const MpesaPaymentForm = ({
         description: error instanceof Error ? error.message : "Failed to initiate M-Pesa payment",
         variant: "destructive"
       });
+      if (onError) onError(error);
     } finally {
       setIsLoading(false);
+      if (onSubmitStateChange) onSubmitStateChange(false);
     }
   };
 
@@ -106,11 +116,13 @@ const MpesaPaymentForm = ({
         attempts++;
         if (attempts >= maxAttempts) {
           setPaymentStatus('failed');
+          const errorMsg = "We couldn't verify your payment. Please contact support if funds were deducted.";
           toast({
             title: "Payment Verification Failed",
-            description: "We couldn't verify your payment. Please contact support if funds were deducted.",
+            description: errorMsg,
             variant: "destructive"
           });
+          if (onError) onError(new Error(errorMsg));
           return;
         }
         
@@ -119,6 +131,7 @@ const MpesaPaymentForm = ({
       } catch (error) {
         console.error('Error verifying payment:', error);
         setPaymentStatus('failed');
+        if (onError) onError(error);
       }
     };
     

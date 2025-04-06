@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { Dispatch, SetStateAction } from 'react';
 
 interface CardPaymentFormProps {
   amount: number;
@@ -13,6 +13,8 @@ interface CardPaymentFormProps {
   paymentType?: 'purchase' | 'subscription';
   onSuccess: () => void;
   onCancel: () => void;
+  onError?: (error: any) => void;
+  onSubmitStateChange?: Dispatch<SetStateAction<boolean>>;
 }
 
 export const CardPaymentForm = ({
@@ -20,7 +22,9 @@ export const CardPaymentForm = ({
   itemId,
   paymentType = 'purchase',
   onSuccess,
-  onCancel
+  onCancel,
+  onError,
+  onSubmitStateChange
 }: CardPaymentFormProps) => {
   const { toast } = useToast();
   const { processCardPayment, verifyCardPayment } = useBackend();
@@ -37,17 +41,20 @@ export const CardPaymentForm = ({
     
     // Basic validation
     if (!cardNumber.trim() || !expiryDate.trim() || !cvv.trim() || !cardHolderName.trim()) {
+      const errorMsg = "Please fill in all card details";
       toast({
         title: "Missing Information",
-        description: "Please fill in all card details",
+        description: errorMsg,
         variant: "destructive"
       });
+      if (onError) onError(new Error(errorMsg));
       return;
     }
 
     try {
       setIsLoading(true);
       setPaymentStatus('processing');
+      if (onSubmitStateChange) onSubmitStateChange(true);
       
       // Process card payment
       const cardDetails = {
@@ -75,8 +82,10 @@ export const CardPaymentForm = ({
         description: error instanceof Error ? error.message : "Failed to process card payment",
         variant: "destructive"
       });
+      if (onError) onError(error);
     } finally {
       setIsLoading(false);
+      if (onSubmitStateChange) onSubmitStateChange(false);
     }
   };
 
@@ -95,20 +104,24 @@ export const CardPaymentForm = ({
         }, 2000);
       } else {
         setPaymentStatus('failed');
+        const errorMsg = "We couldn't process your payment. Please try again or use a different method.";
         toast({
           title: "Payment Failed",
-          description: "We couldn't process your payment. Please try again or use a different method.",
+          description: errorMsg,
           variant: "destructive"
         });
+        if (onError) onError(new Error(errorMsg));
       }
     } catch (error) {
       console.error('Error verifying card payment:', error);
       setPaymentStatus('failed');
+      const errorMsg = "We couldn't verify your payment status. Please contact support.";
       toast({
         title: "Verification Failed",
-        description: "We couldn't verify your payment status. Please contact support.",
+        description: errorMsg,
         variant: "destructive"
       });
+      if (onError) onError(error);
     }
   };
 
