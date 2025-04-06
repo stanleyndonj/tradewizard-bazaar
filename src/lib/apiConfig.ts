@@ -32,17 +32,17 @@ const API_ENDPOINTS = {
   CARD_PAYMENT_PROCESS: `${API_URL}/api/payments/card/process`,
   CARD_PAYMENT_VERIFY: `${API_URL}/api/payments/card/verify/{payment_id}`,
   
-  // AI Trading endpoints
-  AI_TRADING_SIGNALS: `${API_URL}/api/ai/trading-signals`,
-  AI_MARKET_ANALYSIS: `${API_URL}/api/ai/market-analysis`,
+  // AI Trading endpoints - Fixed to match backend structure
+  AI_TRADING_SIGNALS: `${API_URL}/api/ai-trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_URL}/api/ai-trading-signals/analyze`,
   
-  // Chat endpoints - Fixing the path to match the backend
+  // Chat endpoints
   CHAT_CONVERSATIONS: `${API_URL}/api/chat/conversations`,
   CHAT_MESSAGES: (conversationId: string) => `${API_URL}/api/chat/conversations/${conversationId}/messages`,
   CHAT_MARK_READ: (messageId: string) => `${API_URL}/api/chat/messages/${messageId}/read`,
   CHAT_UNREAD_COUNT: `${API_URL}/api/chat/unread-count`,
   
-  // Subscription endpoints - Fixing the path to match the backend
+  // Subscription endpoints - Fixed to match backend structure
   SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
   SUBSCRIPTION_PLAN_BY_ID: (planId: string) => `${API_URL}/api/subscription/plans/${planId}`,
   CREATE_SUBSCRIPTION: `${API_URL}/api/subscription/subscribe`,

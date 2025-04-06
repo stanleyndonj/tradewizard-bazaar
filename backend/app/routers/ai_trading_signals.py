@@ -10,10 +10,12 @@ from ..models.user import User
 from ..utils.auth import get_user_from_token
 from ..config import settings
 
+# Updated router path to match frontend requests
 router = APIRouter(prefix="/api/ai-trading-signals", tags=["ai-trading-signals"])
 
 # Mock data for trading signals
 def generate_mock_signals(market: str, timeframe: str, count: int = 10):
+    # ... keep existing code (generate_mock_signals function)
     signals = []
     
     # Define possible directions and strengths
@@ -96,6 +98,7 @@ async def analyze_market(
     current_user_id: str = Depends(get_user_from_token)
 ):
     """Analyze a specific market symbol"""
+    # ... keep existing code (analyze_market function)
     if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

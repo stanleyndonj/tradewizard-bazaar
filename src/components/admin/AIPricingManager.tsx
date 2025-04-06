@@ -45,67 +45,67 @@ const AIPricingManager = () => {
 
   // Load subscription plans on component mount
   useEffect(() => {
-    const loadPrices = async () => {
-      try {
-        setInitialLoading(true);
-        console.log("Loading subscription prices...");
-        
-        // Use default plans as fallback if API call fails
-        const defaultPlans = [
-          {
-            id: 'basic-monthly',
-            name: 'Basic AI Trading Signals',
-            price: 29.99,
-            currency: 'USD',
-            interval: 'monthly' as const,
-            features: [
-              'Access to AI trading signals',
-              'Basic market analysis',
-              'Daily signal updates',
-              'Email notifications'
-            ]
-          },
-          {
-            id: 'premium-monthly',
-            name: 'Premium AI Trading Signals',
-            price: 99.99,
-            currency: 'USD',
-            interval: 'monthly' as const,
-            features: [
-              'All Basic features',
-              'Advanced market analysis',
-              'Real-time signal updates',
-              'Direct AI chat support',
-              'Custom alerts and notifications'
-            ]
-          }
-        ];
-        
-        try {
-          const pricingData = await getSubscriptionPrices();
-          if (pricingData && Array.isArray(pricingData) && pricingData.length > 0) {
-            console.log("Loaded pricing data:", pricingData);
-            setPlans(pricingData);
-          } else {
-            console.log("No pricing data returned, using default plans");
-            setPlans(defaultPlans);
-          }
-        } catch (error) {
-          console.error('Error in API call for subscription prices:', error);
-          setPlans(defaultPlans);
-          toast({
-            title: "Using default pricing",
-            description: "Using default pricing plans due to API error",
-            variant: "default",
-          });
-        }
-      } finally {
-        setInitialLoading(false);
-      }
-    };
+    loadPlans();
+  }, []);
 
-    loadPrices();
-  }, [getSubscriptionPrices, toast]);
+  const loadPlans = async () => {
+    try {
+      setInitialLoading(true);
+      console.log("Loading subscription prices...");
+      
+      // Use default plans as fallback if API call fails
+      const defaultPlans = [
+        {
+          id: 'basic-monthly',
+          name: 'Basic AI Trading Signals',
+          price: 29.99,
+          currency: 'USD',
+          interval: 'monthly' as const,
+          features: [
+            'Access to AI trading signals',
+            'Basic market analysis',
+            'Daily signal updates',
+            'Email notifications'
+          ]
+        },
+        {
+          id: 'premium-monthly',
+          name: 'Premium AI Trading Signals',
+          price: 99.99,
+          currency: 'USD',
+          interval: 'monthly' as const,
+          features: [
+            'All Basic features',
+            'Advanced market analysis',
+            'Real-time signal updates',
+            'Direct AI chat support',
+            'Custom alerts and notifications'
+          ]
+        }
+      ];
+      
+      try {
+        const pricingData = await getSubscriptionPrices();
+        if (pricingData && Array.isArray(pricingData) && pricingData.length > 0) {
+          console.log("Loaded pricing data:", pricingData);
+          setPlans(pricingData);
+        } else {
+          console.log("No pricing data returned, using default plans");
+          setPlans(defaultPlans);
+        }
+      } catch (error) {
+        console.error('Error in API call for subscription prices:', error);
+        setPlans(defaultPlans);
+        toast({
+          title: "Using default pricing",
+          description: "Using default pricing plans due to API error",
+          variant: "default",
+        });
+      }
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const handleOpenDialog = (plan: PricingPlan) => {
     setEditingPlan({...plan});
@@ -143,6 +143,11 @@ const AIPricingManager = () => {
         title: "Price updated",
         description: `The price for ${editingPlan.name} has been updated to ${editingPlan.currency} ${editingPlan.price}`,
       });
+      
+      // Reload plans to ensure we have the latest data
+      setTimeout(() => {
+        loadPlans();
+      }, 1000);
     } catch (error) {
       console.error("Error updating price:", error);
       toast({
@@ -175,6 +180,17 @@ const AIPricingManager = () => {
         <h2 className="text-3xl font-bold tracking-tight">AI Trading Signal Pricing</h2>
         <p className="text-muted-foreground">Manage the pricing for AI trading signal subscriptions.</p>
       </motion.div>
+      
+      <div className="flex justify-end mb-4">
+        <Button 
+          onClick={loadPlans} 
+          variant="outline" 
+          className="flex items-center gap-2"
+        >
+          <Loader2 className="h-4 w-4" />
+          Refresh Plans
+        </Button>
+      </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {plans.map((plan, index) => (

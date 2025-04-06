@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -18,10 +17,11 @@ from ..schemas.subscription import (
     SubscriptionUpdate
 )
 
-router = APIRouter(prefix="/subscription", tags=["subscription"])
+# Changed router prefix to match the main.py prefix setup
+router = APIRouter(tags=["subscription"])
 
 # Subscription Plans Endpoints (Admin only)
-@router.post("/plans", response_model=SubscriptionPlanResponse)
+@router.post("/subscription/plans", response_model=SubscriptionPlanResponse)
 async def create_subscription_plan(
     plan: SubscriptionPlanCreate,
     db: Session = Depends(get_db),
@@ -42,13 +42,13 @@ async def create_subscription_plan(
     db.refresh(new_plan)
     return new_plan
 
-@router.get("/plans", response_model=List[SubscriptionPlanResponse])
+@router.get("/subscription/plans", response_model=List[SubscriptionPlanResponse])
 async def get_subscription_plans(db: Session = Depends(get_db)):
     """Get all subscription plans (public)"""
     plans = db.query(SubscriptionPlan).all()
     return plans
 
-@router.get("/plans/{plan_id}", response_model=SubscriptionPlanResponse)
+@router.get("/subscription/plans/{plan_id}", response_model=SubscriptionPlanResponse)
 async def get_subscription_plan(plan_id: str, db: Session = Depends(get_db)):
     """Get a specific subscription plan by ID (public)"""
     plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
@@ -59,7 +59,7 @@ async def get_subscription_plan(plan_id: str, db: Session = Depends(get_db)):
         )
     return plan
 
-@router.put("/plans/{plan_id}", response_model=SubscriptionPlanResponse)
+@router.put("/subscription/plans/{plan_id}", response_model=SubscriptionPlanResponse)
 async def update_subscription_plan(
     plan_id: str,
     plan_update: SubscriptionPlanUpdate,
@@ -83,7 +83,7 @@ async def update_subscription_plan(
     db.refresh(plan)
     return plan
 
-@router.delete("/plans/{plan_id}")
+@router.delete("/subscription/plans/{plan_id}")
 async def delete_subscription_plan(
     plan_id: str,
     db: Session = Depends(get_db),
@@ -102,7 +102,7 @@ async def delete_subscription_plan(
     return {"message": "Subscription plan deleted successfully"}
 
 # User subscriptions endpoints
-@router.post("/subscribe", response_model=SubscriptionResponse)
+@router.post("/subscription/subscribe", response_model=SubscriptionResponse)
 async def create_subscription(
     subscription: SubscriptionCreate,
     db: Session = Depends(get_db),
@@ -159,7 +159,7 @@ async def create_subscription(
     db.refresh(new_subscription)
     return new_subscription
 
-@router.get("/user/subscriptions", response_model=List[SubscriptionResponse])
+@router.get("/subscription/user/subscriptions", response_model=List[SubscriptionResponse])
 async def get_user_subscriptions(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_user_from_token)
@@ -168,7 +168,7 @@ async def get_user_subscriptions(
     subscriptions = db.query(Subscription).filter(Subscription.user_id == user_id).all()
     return subscriptions
 
-@router.get("/user/active", response_model=List[SubscriptionResponse])
+@router.get("/subscription/user/active", response_model=List[SubscriptionResponse])
 async def get_active_subscriptions(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_user_from_token)
@@ -181,7 +181,7 @@ async def get_active_subscriptions(
     ).all()
     return active_subs
 
-@router.get("/check/{plan_id}")
+@router.get("/subscription/check/{plan_id}")
 async def check_subscription(
     plan_id: str,
     db: Session = Depends(get_db),
@@ -200,7 +200,7 @@ async def check_subscription(
     
     return {"has_subscription": active_sub is not None}
 
-@router.put("/cancel/{subscription_id}")
+@router.put("/subscription/cancel/{subscription_id}")
 async def cancel_subscription(
     subscription_id: str,
     db: Session = Depends(get_db),
