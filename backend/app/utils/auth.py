@@ -72,3 +72,42 @@ async def get_user_from_token(authorization: str = Header(None)):
         return user_id
     except JWTError:
         return None
+
+async def get_admin_user(authorization: str = Header(None), db: Session = Depends(get_db)):
+    """
+    Get the admin user from the Authorization header token.
+    
+    Args:
+        authorization: The Authorization header value.
+        db: The database session.
+    
+    Returns:
+        The admin user if the token is valid and the user is an admin, raises an exception otherwise.
+    """
+    # Get the user ID from the token
+    user_id = await get_user_from_token(authorization)
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get the user from the database
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Check if the user is an admin
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized - admin access required"
+        )
+    
+    return user
