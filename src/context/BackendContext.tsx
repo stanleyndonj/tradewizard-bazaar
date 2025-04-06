@@ -70,7 +70,7 @@ interface BackendContextType {
   loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
   getRobots: () => Promise<void>;
-  getRobotById: () => Promise<void>;
+  getRobotById: (id: string) => Promise<void>;
   addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
   updateRobot: (robot: Robot) => Promise<void>;
   deleteRobot: (id: string) => Promise<void>;
@@ -84,7 +84,7 @@ interface BackendContextType {
   getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<void>;
   analyzeMarket: (symbol: string, timeframe?: string) => Promise<void>;
   getConversations: () => Promise<void>;
-  getMessages: (conversationId: string) => Promise<void>;
+  getMessages: (conversationId: string) => Promise<ChatMessage[]>;
   sendChatMessage: (conversationId: string, text: string) => Promise<void>;
   markMessageRead: (messageId: string) => Promise<void>;
   createNewConversation: (userId: string, userName: string, userEmail: string) => Promise<void>;
@@ -132,7 +132,7 @@ const BackendContext = createContext<BackendContextType>({
   getTradingSignals: async () => {},
   analyzeMarket: async () => {},
   getConversations: async () => {},
-  getMessages: async () => {},
+  getMessages: async () => [],
   sendChatMessage: async () => {},
   markMessageRead: async () => {},
   createNewConversation: async () => {},
