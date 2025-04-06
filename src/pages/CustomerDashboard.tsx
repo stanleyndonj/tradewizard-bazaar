@@ -9,7 +9,7 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Robot, Bot, ShoppingCart, Plus, Clock, Check, AlertCircle } from 'lucide-react';
+import { Bot, ShoppingCart, Plus, Clock, Check, AlertCircle } from 'lucide-react';
 
 // Import correct types
 import { RobotRequest, Purchase, Robot as RobotType } from '@/lib/backend';
@@ -221,7 +221,7 @@ const CustomerDashboard = () => {
                       </CardDescription>
                     </div>
                     <div className="p-2 rounded-full bg-purple-900/30 text-purple-400">
-                      <Robot className="h-5 w-5" />
+                      <Bot className="h-5 w-5" />
                     </div>
                   </div>
                 </CardHeader>

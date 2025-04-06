@@ -1,161 +1,182 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, Loader2 } from 'lucide-react';
+import { CreditCard, Check, Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useBackend } from '@/context/BackendContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
-  features: string[];
-  popularity?: 'popular' | 'best';
+interface SubscriptionUpgradeProps {
+  onSubscribe?: () => void;
 }
 
-const SubscriptionUpgrade = () => {
-  const { getSubscriptionPrices } = useBackend();
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
+  const { user, purchaseRobot } = useBackend();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadPrices = async () => {
-      setIsLoading(true);
-      try {
-        const prices = await getSubscriptionPrices();
-        
-        // Convert subscription prices to plans
-        const planData: Plan[] = [
-          {
-            id: 'basic',
-            name: 'Basic Plan',
-            price: prices.basic || 29,
-            features: [
-              'Access to 5 trading robots',
-              'Basic market analysis',
-              'Email support',
-              'Weekly trading signals'
-            ]
-          },
-          {
-            id: 'premium',
-            name: 'Premium Plan',
-            price: prices.premium || 79,
-            features: [
-              'Access to 15 trading robots',
-              'Advanced market analysis',
-              'Priority email & chat support',
-              'Daily trading signals',
-              'Customization options'
-            ],
-            popularity: 'popular'
-          },
-          {
-            id: 'enterprise',
-            name: 'Enterprise Plan',
-            price: prices.enterprise || 199,
-            features: [
-              'Unlimited trading robots',
-              'Real-time market analysis',
-              '24/7 dedicated support',
-              'Real-time trading signals',
-              'Advanced customization',
-              'API access',
-              'Custom robot development'
-            ],
-            popularity: 'best'
-          }
-        ];
-        
-        setPlans(planData);
-      } catch (error) {
-        console.error('Error loading subscription prices:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load subscription plans. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const plans = [
+    {
+      id: 'basic-monthly',
+      name: 'Basic Plan',
+      price: 29.99,
+      currency: 'USD',
+      interval: 'monthly',
+      features: [
+        'Access to AI trading signals',
+        'Basic market analysis',
+        'Daily signal updates',
+        'Email notifications'
+      ]
+    },
+    {
+      id: 'premium-monthly',
+      name: 'Premium Plan',
+      price: 99.99,
+      currency: 'USD',
+      interval: 'monthly',
+      features: [
+        'All Basic features',
+        'Advanced market analysis',
+        'Real-time signal updates',
+        'Direct AI chat support',
+        'Custom alerts and notifications'
+      ]
+    },
+    {
+      id: 'enterprise-monthly',
+      name: 'Enterprise Plan',
+      price: 299.99,
+      currency: 'USD',
+      interval: 'monthly',
+      features: [
+        'All Premium features',
+        'Dedicated account manager',
+        'Custom robot creation',
+        'Priority support',
+        'White-label solutions',
+        'API access'
+      ]
+    }
+  ];
+
+  const handleSubscribe = async (planId: string, price: number) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to subscribe",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    setIsProcessing(true);
+    setSelectedPlan(planId);
     
-    loadPrices();
-  }, [getSubscriptionPrices]);
+    try {
+      // Mock robot ID for subscription purchase
+      const subscriptionRobotId = "subscription-" + planId;
+      
+      await purchaseRobot(
+        subscriptionRobotId,
+        price,
+        'USD',
+        'card'
+      );
 
-  const handleUpgrade = (planId: string) => {
-    // Placeholder for upgrade functionality
-    toast({
-      title: "Subscription Update",
-      description: `You'll be redirected to the payment page for the ${planId} plan shortly.`,
-    });
+      toast({
+        title: "Subscription successful",
+        description: "You now have access to AI Trading Signals",
+      });
+
+      if (onSubscribe) {
+        onSubscribe();
+      } else {
+        // Refresh the page to update access
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      toast({
+        title: "Subscription failed",
+        description: "Please try again or contact support",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+      setSelectedPlan(null);
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-96 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading plans...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold">Upgrade Your Subscription</h2>
-        <p className="text-muted-foreground mt-2">Choose the plan that best fits your trading needs</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-xl"
+    >
+      <div className="text-center mb-10">
+        <Shield className="h-16 w-16 mx-auto text-blue-500 mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Upgrade Your Trading Experience</h2>
+        <p className="text-gray-400">
+          Gain access to our powerful AI-driven trading signals and market analysis
+        </p>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {plans.map((plan) => (
-          <Card key={plan.id} className={`flex flex-col ${plan.popularity ? 'border-primary shadow-lg' : ''}`}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>For {plan.id === 'basic' ? 'beginner' : plan.id === 'premium' ? 'serious' : 'professional'} traders</CardDescription>
-                </div>
-                
-                {plan.popularity && (
-                  <Badge variant={plan.popularity === 'popular' ? 'default' : 'secondary'}>
-                    {plan.popularity === 'popular' ? 'Popular' : 'Best Value'}
-                  </Badge>
-                )}
+          <motion.div
+            key={plan.id}
+            whileHover={{ scale: 1.02 }}
+            className="bg-gray-900 rounded-xl overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300"
+          >
+            <div className="p-6 border-b border-gray-700">
+              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+              <div className="mt-4 flex items-baseline">
+                <span className="text-3xl font-extrabold text-white">{plan.currency} {plan.price}</span>
+                <span className="ml-1 text-gray-400">/{plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
               </div>
-            </CardHeader>
-            
-            <CardContent className="flex-grow">
-              <div className="mb-6">
-                <span className="text-3xl font-bold">${plan.price}</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-              
-              <ul className="space-y-2">
+            </div>
+            <div className="p-6">
+              <ul className="space-y-4">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                    <span>{feature}</span>
+                    <Check className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                    <span className="text-gray-300">{feature}</span>
                   </li>
                 ))}
               </ul>
-            </CardContent>
-            
-            <CardFooter>
               <Button 
-                className="w-full" 
-                variant={plan.popularity ? 'default' : 'outline'}
-                onClick={() => handleUpgrade(plan.id)}
+                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+                onClick={() => handleSubscribe(plan.id, plan.price)}
+                disabled={isProcessing && selectedPlan === plan.id}
               >
-                {plan.id === 'basic' ? 'Get Started' : 'Upgrade Now'}
+                {isProcessing && selectedPlan === plan.id ? (
+                  <>
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Subscribe Now
+                  </>
+                )}
               </Button>
-            </CardFooter>
-          </Card>
+            </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+
+      <div className="mt-10 text-center text-gray-400 text-sm">
+        <p>By subscribing, you agree to our Terms of Service and Privacy Policy.</p>
+        <p className="mt-2">Need help? Contact our support team.</p>
+      </div>
+    </motion.div>
   );
 };
 
