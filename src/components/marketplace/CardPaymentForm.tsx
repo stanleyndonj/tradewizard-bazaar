@@ -1,18 +1,11 @@
 
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useBackend } from '@/context/BackendContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { useBackend } from '@/context/BackendContext';
-import { 
-  Loader2, 
-  CheckCircle, 
-  XCircle, 
-  CreditCard,
-  Calendar,
-  Lock 
-} from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, CreditCard } from 'lucide-react';
 
 interface CardPaymentFormProps {
   amount: number;
@@ -22,21 +15,19 @@ interface CardPaymentFormProps {
   onCancel: () => void;
 }
 
-export const CardPaymentForm = ({ 
-  amount, 
-  itemId, 
+export const CardPaymentForm = ({
+  amount,
+  itemId,
   paymentType = 'purchase',
-  onSuccess, 
-  onCancel 
+  onSuccess,
+  onCancel
 }: CardPaymentFormProps) => {
   const { toast } = useToast();
   const { processCardPayment, verifyCardPayment } = useBackend();
-  
   const [cardNumber, setCardNumber] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
-  
+  const [cardHolderName, setCardHolderName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
   const [paymentId, setPaymentId] = useState<string | null>(null);
@@ -45,7 +36,7 @@ export const CardPaymentForm = ({
     e.preventDefault();
     
     // Basic validation
-    if (!cardNumber.trim() || !cardHolder.trim() || !expiryDate.trim() || !cvv.trim()) {
+    if (!cardNumber.trim() || !expiryDate.trim() || !cvv.trim() || !cardHolderName.trim()) {
       toast({
         title: "Missing Information",
         description: "Please fill in all card details",
@@ -54,30 +45,25 @@ export const CardPaymentForm = ({
       return;
     }
 
-    const cardDetails = {
-      number: cardNumber.replace(/\s/g, ''),
-      holder: cardHolder,
-      expiry: expiryDate,
-      cvv: cvv
-    };
-
     try {
       setIsLoading(true);
       setPaymentStatus('processing');
       
       // Process card payment
+      const cardDetails = {
+        cardNumber: cardNumber.replace(/\s/g, ''),
+        expiryDate,
+        cvv,
+        cardHolderName
+      };
+      
       const response = await processCardPayment(cardDetails, amount, 'USD', itemId, paymentType);
       
       if (response && response.payment_id) {
         setPaymentId(response.payment_id);
         
-        toast({
-          title: "Payment Processing",
-          description: "Your card payment is being processed",
-        });
-        
-        // Verify payment status
-        checkPaymentStatus(response.payment_id);
+        // Start verifying payment
+        verifyCardPaymentStatus(response.payment_id);
       } else {
         throw new Error("Failed to process payment");
       }
@@ -94,11 +80,11 @@ export const CardPaymentForm = ({
     }
   };
 
-  const checkPaymentStatus = async (id: string) => {
+  const verifyCardPaymentStatus = async (id: string) => {
     try {
-      const paymentStatus = await verifyCardPayment(id);
+      const result = await verifyCardPayment(id);
       
-      if (paymentStatus && paymentStatus.status === 'succeeded') {
+      if (result && result.status === 'success') {
         setPaymentStatus('success');
         toast({
           title: "Payment Successful",
@@ -111,7 +97,7 @@ export const CardPaymentForm = ({
         setPaymentStatus('failed');
         toast({
           title: "Payment Failed",
-          description: "Your payment could not be processed. Please try again or use a different card.",
+          description: "We couldn't process your payment. Please try again or use a different method.",
           variant: "destructive"
         });
       }
@@ -126,17 +112,16 @@ export const CardPaymentForm = ({
     }
   };
 
-  // Format card number with spaces for readability
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     const matches = v.match(/\d{4,16}/g);
     const match = matches && matches[0] || '';
     const parts = [];
-    
+
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4));
     }
-    
+
     if (parts.length) {
       return parts.join(' ');
     } else {
@@ -144,15 +129,9 @@ export const CardPaymentForm = ({
     }
   };
 
-  // Format expiry date
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    
-    if (v.length >= 2) {
-      return `${v.substring(0, 2)}/${v.substring(2, 4)}`;
-    }
-    
-    return value;
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedValue = formatCardNumber(e.target.value);
+    setCardNumber(formattedValue);
   };
 
   return (
@@ -165,69 +144,57 @@ export const CardPaymentForm = ({
       {paymentStatus === 'idle' && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="cardHolderName">Cardholder Name</Label>
+            <Input 
+              id="cardHolderName"
+              placeholder="John Doe"
+              value={cardHolderName}
+              onChange={(e) => setCardHolderName(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="cardNumber">Card Number</Label>
             <div className="relative">
               <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 id="cardNumber"
                 className="pl-10"
-                placeholder="4242 4242 4242 4242"
+                placeholder="4111 1111 1111 1111"
                 value={cardNumber}
-                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                onChange={handleCardNumberChange}
                 maxLength={19}
                 required
               />
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="cardHolder">Card Holder</Label>
-            <Input 
-              id="cardHolder"
-              placeholder="John Doe"
-              value={cardHolder}
-              onChange={(e) => setCardHolder(e.target.value)}
-              required
-            />
-          </div>
-          
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="expiryDate">Expiry Date</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="expiryDate"
-                  className="pl-10"
-                  placeholder="MM/YY"
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                  maxLength={5}
-                  required
-                />
-              </div>
+              <Input 
+                id="expiryDate"
+                placeholder="MM/YY"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                maxLength={5}
+                required
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="cvv">CVV</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="cvv"
-                  className="pl-10"
-                  type="text"
-                  placeholder="123"
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                  maxLength={4}
-                  required
-                />
-              </div>
+              <Input 
+                id="cvv"
+                placeholder="123"
+                value={cvv}
+                onChange={(e) => setCvv(e.target.value)}
+                maxLength={4}
+                type="password"
+                required
+              />
             </div>
-          </div>
-          
-          <div className="text-xs text-muted-foreground">
-            <p>* For testing, use card number 4242 4242 4242 4242 with any future expiry date and any CVV.</p>
           </div>
           
           <div className="flex justify-between pt-4">
@@ -267,7 +234,7 @@ export const CardPaymentForm = ({
           <div>
             <h4 className="font-medium">Payment Successful!</h4>
             <p className="text-sm text-muted-foreground">
-              Your card payment has been processed successfully
+              Your transaction has been completed successfully
             </p>
           </div>
         </div>
@@ -279,7 +246,7 @@ export const CardPaymentForm = ({
           <div>
             <h4 className="font-medium">Payment Failed</h4>
             <p className="text-sm text-muted-foreground">
-              We couldn't process your payment. Please try again or use a different card.
+              We couldn't process your payment. Please try again or use a different method.
             </p>
           </div>
           <div className="flex justify-center gap-3 pt-2">
@@ -303,3 +270,5 @@ export const CardPaymentForm = ({
     </div>
   );
 };
+
+export default CardPaymentForm;

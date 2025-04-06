@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { CreditCard, Phone } from 'lucide-react';
 import { CardPaymentForm } from './CardPaymentForm';
 import MpesaPaymentForm from './MpesaPaymentForm';
@@ -33,6 +32,11 @@ const EnhancedPaymentModal = ({
 
   const handleSuccess = () => {
     onPaymentComplete();
+  };
+
+  // Convert item.type to expected paymentType
+  const getPaymentType = (): 'purchase' | 'subscription' => {
+    return item.type === 'subscription' ? 'subscription' : 'purchase';
   };
 
   return (
@@ -69,7 +73,7 @@ const EnhancedPaymentModal = ({
               <CardPaymentForm 
                 amount={item.price}
                 itemId={item.id}
-                paymentType={item.type}
+                paymentType={getPaymentType()}
                 onSuccess={handleSuccess}
                 onCancel={onClose}
               />
@@ -79,7 +83,7 @@ const EnhancedPaymentModal = ({
               <MpesaPaymentForm 
                 amount={item.price}
                 itemId={item.id}
-                paymentType={item.type}
+                paymentType={getPaymentType()}
                 onSuccess={handleSuccess}
                 onCancel={onClose}
               />

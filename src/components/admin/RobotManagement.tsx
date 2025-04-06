@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash, Upload, Download } from 'lucide-react';
+import { Plus, Edit, Trash, Upload } from 'lucide-react';
 import { TradingLoader } from '@/components/ui/loader';
 import { toast } from '@/hooks/use-toast';
 import { Robot } from '@/lib/backend';
@@ -12,7 +12,7 @@ import { useBackend } from '@/context/BackendContext';
 import RobotManagementModal from './RobotManagementModal';
 
 const RobotManagement = () => {
-  const { robots, isLoading, addRobot, updateRobot, deleteRobot } = useBackend();
+  const { robots, isLoading, updateRobot, deleteRobot } = useBackend();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRobot, setCurrentRobot] = useState<Robot | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,31 +49,6 @@ const RobotManagement = () => {
           variant: "destructive",
         });
       }
-    }
-  };
-
-  const handleSaveRobot = async (robotData: any) => {
-    try {
-      if (robotData.id) {
-        await updateRobot(robotData.id, robotData);
-        toast({
-          title: "Robot updated",
-          description: "The robot has been updated successfully."
-        });
-      } else {
-        await addRobot(robotData);
-        toast({
-          title: "Robot added",
-          description: "The robot has been added successfully."
-        });
-      }
-      setIsModalOpen(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save robot.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -115,15 +90,14 @@ const RobotManagement = () => {
         if (robot) {
           const fileExtension = file.name.split('.').pop()?.toLowerCase();
           const isZip = fileExtension === 'zip';
-          const fileType = isZip ? 'zip' : 'xml';
           
           // Create a complete updated robot object
-          const updatedRobot: Robot = {
+          const updatedRobot = {
             ...robot,
             download_url: `/uploads/${file.name}` // This would be a real URL in production
           };
           
-          updateRobot(updatedRobot.id, updatedRobot);
+          updateRobot(robotId, updatedRobot);
           
           toast({
             title: "File uploaded",

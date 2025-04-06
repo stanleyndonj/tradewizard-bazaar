@@ -1,13 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import SectionHeader from '@/components/ui-elements/SectionHeader';
-import { Bot, Lock, Download, ShoppingCart } from 'lucide-react';
+import { Bot, Download } from 'lucide-react';
 import RobotProductCard from '@/components/marketplace/RobotProductCard';
 import EnhancedPaymentModal from '@/components/marketplace/EnhancedPaymentModal';
 import { useBackend } from '@/context/BackendContext';
@@ -61,14 +60,14 @@ const RobotMarketplace = () => {
     setSelectedRobot(null);
   };
 
-  const handlePaymentComplete = (paymentMethod: string) => {
+  const handlePaymentComplete = () => {
     if (!selectedRobot) return;
     
     purchaseRobot(
       selectedRobot.id,
       selectedRobot.price,
       selectedRobot.currency || 'USD',
-      paymentMethod
+      'Card Payment'
     );
     
     setIsPaymentModalOpen(false);
@@ -193,7 +192,14 @@ const RobotMarketplace = () => {
         <EnhancedPaymentModal
           isOpen={isPaymentModalOpen}
           onClose={handleClosePaymentModal}
-          robot={selectedRobot}
+          item={{
+            id: selectedRobot.id,
+            name: selectedRobot.name,
+            description: selectedRobot.description,
+            price: selectedRobot.price,
+            currency: selectedRobot.currency || 'USD',
+            type: 'robot'
+          }}
           onPaymentComplete={handlePaymentComplete}
         />
       )}

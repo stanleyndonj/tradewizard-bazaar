@@ -68,30 +68,29 @@ interface BackendContextType {
   isLoading: boolean;
   error: string | null;
   registerUser: (name: string, email: string, password: string) => Promise<void>;
-  loginUser: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>; // Alias for loginUser
   register: (name: string, email: string, password: string) => Promise<void>; // Alias for registerUser
+  loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
-  getRobots: () => Promise<void>;
+  getRobots: () => Promise<Robot[]>;
   getRobotById: (id: string) => Promise<Robot | null>;
   addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
-  updateRobot: (robot: Robot) => Promise<void>;
-  updateRobot: (id: string, updates: Partial<Robot>) => Promise<void>; // Overloaded method
+  updateRobot: (robotOrId: Robot | string, updates?: Partial<Robot>) => Promise<void>;
   deleteRobot: (id: string) => Promise<void>;
-  getRobotRequests: (userId: string) => Promise<void>;
-  getUserRobotRequests: (userId: string) => Promise<void>; // Alias for getRobotRequests
-  getAllRobotRequests: () => Promise<void>;
-  fetchAllRobotRequests: () => Promise<void>; // Alias for getAllRobotRequests
+  getRobotRequests: (userId: string) => Promise<RobotRequest[]>;
+  getUserRobotRequests: (userId: string) => Promise<RobotRequest[]>; // Alias for getRobotRequests
+  getAllRobotRequests: () => Promise<RobotRequest[]>;
+  fetchAllRobotRequests: () => Promise<RobotRequest[]>; // Alias for getAllRobotRequests
   submitRobotRequest: (params: RobotRequestParams) => Promise<void>;
   updateRobotRequest: (requestId: string, updates: any) => Promise<void>;
-  getUserPurchases: (userId: string) => Promise<void>;
-  getPurchases: (userId: string) => Promise<void>; // Alias for getUserPurchases
+  getUserPurchases: (userId: string) => Promise<Purchase[]>;
+  getPurchases: (userId: string) => Promise<Purchase[]>; // Alias for getUserPurchases
   purchaseRobot: (robotId: string, amount: number, currency: string, paymentMethod: string) => Promise<void>;
   getUsers: () => Promise<User[]>;
   getTradingSignals: (market?: string, timeframe?: string, count?: number) => Promise<TradingSignal[]>;
   analyzeMarket: (symbol: string, timeframe?: string) => Promise<MarketAnalysis>;
-  getConversations: () => Promise<void>;
-  loadConversations: () => Promise<void>; // Alias for getConversations
+  getConversations: () => Promise<Conversation[]>;
+  loadConversations: () => Promise<Conversation[]>; // Alias for getConversations
   getMessages: (conversationId: string) => Promise<ChatMessage[]>;
   sendChatMessage: (conversationId: string, text: string) => Promise<void>;
   sendMessage: (conversationId: string, text: string) => Promise<void>; // Alias for sendChatMessage
@@ -99,7 +98,7 @@ interface BackendContextType {
   markMessageAsRead: (messageId: string) => Promise<void>; // Alias for markMessageRead
   createNewConversation: (userId: string, userName: string, userEmail: string) => Promise<void>;
   createConversation: (userId: string, userName: string, userEmail: string) => Promise<void>; // Alias for createNewConversation
-  getUnreadMessageCount: () => Promise<void>;
+  getUnreadMessageCount: () => Promise<number>;
   subscriptionPlans: SubscriptionPlan[];
   activeSubscriptions: any[];
   hasActiveSubscription: boolean;
@@ -133,29 +132,29 @@ const BackendContext = createContext<BackendContextType>({
   isLoading: false,
   error: null,
   registerUser: async () => {},
-  loginUser: async () => {},
   login: async () => {},
   register: async () => {},
+  loginUser: async () => {},
   logoutUser: async () => {},
-  getRobots: async () => {},
+  getRobots: async () => [],
   getRobotById: async () => null,
   addRobot: async () => {},
   updateRobot: async () => {},
   deleteRobot: async () => {},
-  getRobotRequests: async () => {},
-  getUserRobotRequests: async () => {},
-  getAllRobotRequests: async () => {},
-  fetchAllRobotRequests: async () => {},
+  getRobotRequests: async () => [],
+  getUserRobotRequests: async () => [],
+  getAllRobotRequests: async () => [],
+  fetchAllRobotRequests: async () => [],
   submitRobotRequest: async () => {},
   updateRobotRequest: async () => {},
-  getUserPurchases: async () => {},
-  getPurchases: async () => {},
+  getUserPurchases: async () => [],
+  getPurchases: async () => [],
   purchaseRobot: async () => {},
   getUsers: async () => [],
   getTradingSignals: async () => [],
   analyzeMarket: async () => ({} as MarketAnalysis),
-  getConversations: async () => {},
-  loadConversations: async () => {},
+  getConversations: async () => [],
+  loadConversations: async () => [],
   getMessages: async () => [],
   sendChatMessage: async () => {},
   sendMessage: async () => {},
@@ -163,7 +162,7 @@ const BackendContext = createContext<BackendContextType>({
   markMessageAsRead: async () => {},
   createNewConversation: async () => {},
   createConversation: async () => {},
-  getUnreadMessageCount: async () => {},
+  getUnreadMessageCount: async () => 0,
   subscriptionPlans: [],
   activeSubscriptions: [],
   hasActiveSubscription: false,
@@ -290,9 +289,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const robotsData = await apiGetRobots();
       setRobots(robotsData || []);
+      return robotsData || [];
     } catch (err: any) {
       setError(err.message || 'Failed to load robots');
       setRobots([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -361,9 +362,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const robotRequestsData = await apiGetRobotRequests(userId);
       setRobotRequests(robotRequestsData || []);
+      return robotRequestsData || [];
     } catch (err: any) {
       setError(err.message || 'Failed to load robot requests');
       setRobotRequests([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -378,9 +381,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const robotRequestsData = await apiGetAllRobotRequests();
       setRobotRequests(robotRequestsData || []);
+      return robotRequestsData || [];
     } catch (err: any) {
       setError(err.message || 'Failed to load robot requests');
       setRobotRequests([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -427,9 +432,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const purchasesData = await apiGetUserPurchases(userId);
       setPurchases(purchasesData || []);
+      return purchasesData || [];
     } catch (err: any) {
       setError(err.message || 'Failed to load purchases');
       setPurchases([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -507,9 +514,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const conversationsData = await apiGetConversations();
       setConversations(conversationsData || []);
+      return conversationsData || [];
     } catch (err: any) {
       setError(err.message || 'Failed to load conversations');
       setConversations([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -594,9 +603,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       const count = await apiGetUnreadMessageCount();
       setUnreadMessageCount(count || 0);
+      return count || 0;
     } catch (err: any) {
       setError(err.message || 'Failed to get unread message count');
       setUnreadMessageCount(0);
+      return 0;
     } finally {
       setIsLoading(false);
     }

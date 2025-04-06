@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useBackend } from '@/context/BackendContext';
@@ -36,9 +35,9 @@ const CustomerDashboard = () => {
       const userPurchases = await getPurchases(user?.id || '');
       const allRobots = await getRobots();
       
-      if (userRobotRequests) setRobotRequests(userRobotRequests);
-      if (userPurchases) setPurchases(userPurchases);
-      if (allRobots) setRobots(allRobots);
+      setRobotRequests(userRobotRequests || []);
+      setPurchases(userPurchases || []);
+      setRobots(allRobots || []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
