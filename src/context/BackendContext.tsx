@@ -70,8 +70,8 @@ interface BackendContextType {
   loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
   getRobots: () => Promise<void>;
-  getRobotById: (id: string) => Promise<void>;
-  addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>> => Promise<void>;
+  getRobotById: () => Promise<void>;
+  addRobot: (robotData: Omit<Robot, 'id' | 'created_at'>) => Promise<void>;
   updateRobot: (robot: Robot) => Promise<void>;
   deleteRobot: (id: string) => Promise<void>;
   getRobotRequests: (userId: string) => Promise<void>;
@@ -590,7 +590,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Payment processing functions
-  const initiateM-PesaPayment = async (phone: string, amount: number, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
+  const initiateMpesaPaymentFunc = async (phone: string, amount: number, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
     if (!user) throw new Error('User not authenticated');
     
     try {
@@ -613,7 +613,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const processCardPayment = async (cardDetails: any, amount: number, currency: string, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
+  const processCardPaymentFunc = async (cardDetails: any, amount: number, currency: string, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
     if (!user) throw new Error('User not authenticated');
     
     try {
@@ -625,7 +625,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const verifyCardPayment = async (paymentId: string) => {
+  const verifyCardPaymentFunc = async (paymentId: string) => {
     if (!user) throw new Error('User not authenticated');
     
     try {
@@ -698,13 +698,13 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     getSubscriptionPlans: loadSubscriptionPlans,
     checkSubscription: checkUserSubscription,
     subscribeToPlan,
-    cancelSubscription,
+    cancelSubscription: cancelUserSubscription,
     
     // Add payment processing functions
-    initiateMpesaPayment: initiateM-PesaPayment,
+    initiateMpesaPayment: initiateMpesaPaymentFunc,
     verifyPayment,
-    processCardPayment,
-    verifyCardPayment
+    processCardPayment: processCardPaymentFunc,
+    verifyCardPayment: verifyCardPaymentFunc
   };
 
   return <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>;
