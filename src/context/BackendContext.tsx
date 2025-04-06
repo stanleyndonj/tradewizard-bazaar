@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useState,
@@ -330,9 +331,27 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       if (typeof robotOrId === 'string' && updates) {
-        await apiUpdateRobot(robotOrId, updates);
+        // Handle case where first argument is an ID string and second is updates
+        await apiUpdateRobot({
+          ...updates,
+          id: robotOrId,
+          // Include required fields that might not be in updates
+          name: updates.name || "",
+          description: updates.description || "",
+          type: updates.type || "",
+          price: updates.price || 0,
+          currency: updates.currency || "USD",
+          category: updates.category || "",
+          features: updates.features || [],
+          image_url: updates.image_url || "",
+          imageUrl: updates.imageUrl || "",
+          created_at: ""  // This will be ignored by the API but needed for type
+        });
       } else if (typeof robotOrId !== 'string') {
+        // Handle case where first argument is a full Robot object
         await apiUpdateRobot(robotOrId);
+      } else {
+        throw new Error('Invalid arguments for updateRobot');
       }
       await getRobots(); // Refresh robots after updating
     } catch (err: any) {
