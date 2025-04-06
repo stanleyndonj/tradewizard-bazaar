@@ -23,7 +23,7 @@ const MpesaPaymentForm = ({
   onCancel 
 }: MpesaPaymentFormProps) => {
   const { toast } = useToast();
-  const { initiateMpesaPayment, verifyMpesaPayment } = useBackend();
+  const { initiateMpesaPayment, verifyPayment } = useBackend();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle');
@@ -90,7 +90,7 @@ const MpesaPaymentForm = ({
     
     const checkStatus = async () => {
       try {
-        const isSuccess = await verifyMpesaPayment(txnId);
+        const isSuccess = await verifyPayment(txnId);
         if (isSuccess) {
           setPaymentStatus('success');
           toast({
