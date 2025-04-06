@@ -13,15 +13,7 @@ pip install -r requirements.txt
 2. Set up environment variables:
 Make sure you have a `.env` file in the backend directory with the following variables:
 ```
-DATABASE_URL=your_postgres_connection_string
-JWT_SECRET_KEY=your_jwt_secret
-M_PESA_API_URL=mpesa_api_url
-M_PESA_CONSUMER_KEY=your_consumer_key
-M_PESA_CONSUMER_SECRET=your_consumer_secret
-M_PESA_SHORTCODE=your_shortcode
-M_PESA_LIPA_NA_MPESA_SHORTCODE=your_shortcode
-M_PESA_LIPA_NA_MPESA_SHORTCODE_LIPA=your_shortcode_lipa
-M_PESA_LIPA_NA_MPESA_PASSKEY=your_passkey
+
 ```
 
 3. Run database migrations:
