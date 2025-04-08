@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.sql import func
 import uuid
@@ -35,3 +34,15 @@ class SubscriptionPlan(Base):
     features = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=datetime.utcnow)
+    trading_strategy = Column(String, nullable=True)
+    
+    # MT5 specific fields
+    account_credentials = Column(String, nullable=True)
+    volume = Column(String, nullable=True)  # Changed from Float to String to match frontend
+    order_type = Column(String, nullable=True)
+    stop_loss = Column(String, nullable=True)  # Changed from Float to String to match frontend
+    take_profit = Column(String, nullable=True)  # Changed from Float to String to match frontend
+    entry_rules = Column(String, nullable=True)
+    exit_rules = Column(String, nullable=True)
+    risk_management = Column(String, nullable=True)
+    additional_parameters = Column(String, nullable=True)
