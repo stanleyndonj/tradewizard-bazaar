@@ -1,5 +1,5 @@
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://' + window.location.hostname.replace('--', '-8000-');
 
 const API_ENDPOINTS = {
   // Auth endpoints
