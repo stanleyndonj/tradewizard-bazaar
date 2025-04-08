@@ -28,8 +28,22 @@ origins = [
     "http://localhost:3000", 
     "http://localhost:8080",
     "https://*.replit.dev",
-    "https://*.repl.co"
+    "https://*.repl.co",
+    "http://0.0.0.0:8080",
+    "https://0.0.0.0:8080",
+    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.co",
+    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.dev"
 ]
+
+# Configure CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
 
 # Add CORS middleware first so it applies to all routes (including errors)
 app.add_middleware(
