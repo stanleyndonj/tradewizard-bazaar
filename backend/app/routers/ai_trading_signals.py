@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -77,8 +76,14 @@ async def get_trading_signals(
     
     # Global override check or admin check
     if settings.DISABLE_SUBSCRIPTION_CHECK or user.is_admin or (user.email in settings.ADMIN_EMAILS):
-        signals = generate_mock_signals(market, timeframe, count)
-        return signals
+        try:
+            signals = generate_mock_signals(market, timeframe, count)
+            return signals
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error generating signals: {str(e)}"
+            )
         
     # Regular user subscription check
     if not user.robots_delivered:
@@ -87,8 +92,14 @@ async def get_trading_signals(
             detail="Subscription required to access AI trading signals"
         )
     
-    signals = generate_mock_signals(market, timeframe, count)
-    return signals
+    try:
+        signals = generate_mock_signals(market, timeframe, count)
+        return signals
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating signals: {str(e)}"
+        )
 
 @router.get("/analyze")
 async def analyze_market(
