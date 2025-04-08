@@ -24,10 +24,11 @@ socket_app = socketio.ASGIApp(sio, app)
 
 # Configure CORS with production and development frontend URLs
 origins = [
-    "http://localhost:5173",  # Development frontend
-    "http://localhost:3000",  # Alternative dev port
-    "http://localhost:8080",  # Vite default port
-    "*"  # Allow all origins for development
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://localhost:8080",
+    "https://*.replit.dev",
+    "https://*.repl.co"
 ]
 
 # Add CORS middleware first so it applies to all routes (including errors)
