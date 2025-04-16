@@ -1,4 +1,4 @@
-const API_URL = window.location.protocol + '//' + window.location.hostname.replace('--', '-8000-');
+const API_URL = window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-');
 
 const API_ENDPOINTS = {
   // Auth endpoints
