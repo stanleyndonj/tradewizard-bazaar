@@ -35,17 +35,25 @@ origins = [
     f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.dev"
 ]
 
-# Configure CORS middleware
+# Configure middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"]
 )
 
-# Add CORS middleware first so it applies to all routes (including errors)
+# Add session middleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("JWT_SECRET_KEY", "default-secret-key"),
+    same_site="none",
+    https_only=True
+)
+
+# Add additional middleware if needed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

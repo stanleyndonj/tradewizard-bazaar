@@ -18,7 +18,7 @@ from ..schemas.subscription import (
 )
 
 # Changed router prefix to match the main.py prefix setup
-router = APIRouter(tags=["subscription"])
+router = APIRouter(prefix="/api/subscription", tags=["subscription"])
 
 # Subscription Plans Endpoints (Admin only)
 @router.post("/subscription/plans", response_model=SubscriptionPlanResponse)
