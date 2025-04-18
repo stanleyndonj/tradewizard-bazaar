@@ -775,62 +775,49 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Prevent constant refreshes by adding error handling
+    let mounted = true;
+    
     const loadInitialData = async () => {
+      if (!mounted) return;
+      
       try {
         await loadCurrentUser();
       } catch (err) {
         console.error("Error loading current user:", err);
       }
 
+      if (!mounted) return;
+      
       try {
         await getRobots();
       } catch (err) {
         console.error("Error loading robots:", err);
       }
 
-      if (user) {
-        try {
-          await getRobotRequests(user.id);
-        } catch (err) {
-          console.error("Error loading robot requests:", err);
-        }
+      if (!mounted || !user) return;
 
-        try {
-          await getUserPurchases(user.id);
-        } catch (err) {
-          console.error("Error loading purchases:", err);
-        }
-      }
+      const userDataPromises = [
+        getRobotRequests(user.id).catch(err => console.error("Error loading robot requests:", err)),
+        getUserPurchases(user.id).catch(err => console.error("Error loading purchases:", err)),
+        loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err))
+      ];
 
-      try {
-        await getConversations();
-      } catch (err) {
-        console.error("Error loading conversations:", err);
-      }
+      const generalDataPromises = [
+        getConversations().catch(err => console.error("Error loading conversations:", err)),
+        getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
+        loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
+      ];
 
-      try {
-        await getUnreadMessageCount();
-      } catch (err) {
-        console.error("Error loading unread count:", err);
-      }
-      
-      try {
-        await loadSubscriptionPlans();
-      } catch (err) {
-        console.error("Error loading subscription plans:", err);
-      }
-      
-      if (user) {
-        try {
-          await loadUserSubscriptions();
-        } catch (err) {
-          console.error("Error loading user subscriptions:", err);
-        }
+      if (mounted) {
+        await Promise.all([...userDataPromises, ...generalDataPromises]);
       }
     };
 
     loadInitialData();
+
+    return () => {
+      mounted = false;
+    };
   }, [user?.id]); // Changed dependency to user?.id instead of user to prevent excess reloads
 
   const contextValue: BackendContextType = {
