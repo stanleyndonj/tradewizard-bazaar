@@ -1,9 +1,9 @@
 
-"""Create users table
+"""Initial enterprise schema
 
-Revision ID: 333d8e7785c0
+Revision ID: 8620c5721456
 Revises: 
-Create Date: 2025-03-26 13:15:29.304286
+Create Date: 2025-04-07 14:10:55.984396
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '333d8e7785c0'
+revision = '8620c5721456'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -29,6 +29,8 @@ def upgrade() -> None:
     sa.Column('category', sa.String(), nullable=False),
     sa.Column('features', sa.ARRAY(sa.String()), nullable=False),
     sa.Column('image_url', sa.String(), nullable=True),
+    sa.Column('imageUrl', sa.String(), nullable=True),
+    sa.Column('download_url', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -41,6 +43,8 @@ def upgrade() -> None:
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('role', sa.String(length=50), nullable=True),
+    sa.Column('has_requested_robot', sa.Boolean(), nullable=True),
+    sa.Column('robots_delivered', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -48,28 +52,50 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('purchases',
-    sa.Column('id', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=False),
-    sa.Column('robot_id', sa.String(), nullable=False),
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('user_id', sa.String(length=36), nullable=False),
+    sa.Column('robot_id', sa.String(length=36), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('currency', sa.String(), nullable=False),
-    sa.Column('payment_method', sa.String(), nullable=False),
-    sa.Column('status', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('currency', sa.String(length=3), nullable=False),
+    sa.Column('payment_method', sa.String(length=50), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['robot_id'], ['robots.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.Column('mpesa_checkout_request_id', sa.String(length=50), nullable=True),
+    sa.Column('card_payment_id', sa.String(length=50), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_purchases_id'), 'purchases', ['id'], unique=False)
     op.create_table('robot_requests',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('user_id', sa.String(), nullable=False),
     sa.Column('robot_type', sa.String(), nullable=False),
     sa.Column('trading_pairs', sa.String(), nullable=False),
     sa.Column('timeframe', sa.String(), nullable=False),
-    sa.Column('risk_level', sa.Integer(), nullable=False),
+    sa.Column('risk_level', sa.String(), nullable=False),
     sa.Column('status', sa.String(), nullable=True),
+    sa.Column('is_delivered', sa.Boolean(), nullable=True),
+    sa.Column('delivery_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('download_url', sa.String(), nullable=True),
+    sa.Column('notes', sa.String(), nullable=True),
+    sa.Column('progress', sa.Integer(), nullable=True),
+    sa.Column('currency', sa.String(), nullable=True),
+    sa.Column('bot_name', sa.String(), nullable=True),
+    sa.Column('market', sa.String(), nullable=True),
+    sa.Column('stake_amount', sa.String(), nullable=True),
+    sa.Column('contract_type', sa.String(), nullable=True),
+    sa.Column('duration', sa.String(), nullable=True),
+    sa.Column('prediction', sa.String(), nullable=True),
+    sa.Column('trading_strategy', sa.String(), nullable=True),
+    sa.Column('account_credentials', sa.String(), nullable=True),
+    sa.Column('volume', sa.String(), nullable=True),
+    sa.Column('order_type', sa.String(), nullable=True),
+    sa.Column('stop_loss', sa.String(), nullable=True),
+    sa.Column('take_profit', sa.String(), nullable=True),
+    sa.Column('entry_rules', sa.String(), nullable=True),
+    sa.Column('exit_rules', sa.String(), nullable=True),
+    sa.Column('risk_management', sa.String(), nullable=True),
+    sa.Column('additional_parameters', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
@@ -83,7 +109,6 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_index(op.f('ix_robot_requests_id'), table_name='robot_requests')
     op.drop_table('robot_requests')
-    op.drop_index(op.f('ix_purchases_id'), table_name='purchases')
     op.drop_table('purchases')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')

@@ -1,9 +1,9 @@
 
-"""Add a new thing
+"""create subscription_plans table
 
-Revision ID: 5756f93e6046
-Revises: 90948dbe1fad
-Create Date: 2025-03-30 22:13:43.929344
+Revision ID: eba42703495c
+Revises: 8620c5721456
+Create Date: 2025-04-08 13:12:47.758390
 
 """
 from alembic import op
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5756f93e6046'
-down_revision = '90948dbe1fad'
+revision = 'eba42703495c'
+down_revision = '8620c5721456'
 branch_labels = None
 depends_on = None
 
