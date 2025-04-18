@@ -1,4 +1,4 @@
-modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14"]
+modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14", "nodejs-23", "nodejs-22", "postgresql-17", "postgresql-16", "python-3.9", "python-3.8"]
 run = "npm run dev"
 
 [nix]
