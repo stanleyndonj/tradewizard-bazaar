@@ -527,16 +527,26 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getConversations = async () => {
+    if (!user) {
+      console.log('No user logged in, skipping conversation fetch');
+      return [];
+    }
+    
     setIsLoading(true);
     setError(null);
     try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.log('No auth token found');
+        return [];
+      }
+      
       const conversationsData = await apiGetConversations();
       setConversations(conversationsData || []);
       return conversationsData || [];
     } catch (err: any) {
       console.error('Error fetching conversations:', err.message);
       setError(err.message || 'Failed to load conversations');
-      // Don't throw the error further, just return empty array
       return [];
     } finally {
       setIsLoading(false);

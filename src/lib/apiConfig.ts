@@ -1,5 +1,4 @@
-
-const API_URL = 'http://localhost:8000';
+const API_URL = window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-');
 
 const API_ENDPOINTS = {
   // Auth endpoints
@@ -7,41 +6,41 @@ const API_ENDPOINTS = {
   LOGIN: `${API_URL}/api/auth/login`,
   LOGOUT: `${API_URL}/api/auth/logout`,
   CURRENT_USER: `${API_URL}/api/auth/users/me`,
-  
+
   // User endpoints
   USERS: `${API_URL}/api/users`,
   USER_BY_ID: (id: string) => `${API_URL}/api/users/${id}`,
   USER_ROBOT_REQUESTS: (userId: string) => `${API_URL}/api/users/${userId}/robot-requests`,
   USER_PURCHASES: (userId: string) => `${API_URL}/api/users/${userId}/purchases`,
-  
+
   // Robot endpoints
   ROBOTS: `${API_URL}/api/robots`,
   ROBOT_BY_ID: (id: string) => `${API_URL}/api/robots/${id}`,
-  
+
   // Robot request endpoints
   ROBOT_REQUESTS: `${API_URL}/api/robot-requests`,
   ROBOT_REQUEST_BY_ID: (id: string) => `${API_URL}/api/robot-requests/${id}`,
-  
+
   // Purchase endpoints
   PURCHASES: `${API_URL}/api/purchases`,
   PURCHASE_BY_ID: (id: string) => `${API_URL}/api/purchases/${id}`,
-  
+
   // Payment endpoints
   MPESA_INITIATE: `${API_URL}/api/payments/mpesa/initiate`,
   MPESA_VERIFY: `${API_URL}/api/payments/mpesa/verify/{transaction_id}`,
   CARD_PAYMENT_PROCESS: `${API_URL}/api/payments/card/process`,
   CARD_PAYMENT_VERIFY: `${API_URL}/api/payments/card/verify/{payment_id}`,
-  
+
   // AI Trading endpoints - Fixed to match backend structure
   AI_TRADING_SIGNALS: `${API_URL}/api/ai-trading-signals`,
   AI_MARKET_ANALYSIS: `${API_URL}/api/ai-trading-signals/analyze`,
-  
+
   // Chat endpoints
   CHAT_CONVERSATIONS: `${API_URL}/api/chat/conversations`,
   CHAT_MESSAGES: (conversationId: string) => `${API_URL}/api/chat/conversations/${conversationId}/messages`,
   CHAT_MARK_READ: (messageId: string) => `${API_URL}/api/chat/messages/${messageId}/read`,
   CHAT_UNREAD_COUNT: `${API_URL}/api/chat/unread-count`,
-  
+
   // Subscription endpoints - Fixed to match backend structure
   SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
   SUBSCRIPTION_PLAN_BY_ID: (planId: string) => `${API_URL}/api/subscription/plans/${planId}`,
@@ -70,7 +69,7 @@ export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     const errorText = await response.text();
     let errorMessage;
-    
+
     try {
       // Try to parse as JSON for structured error messages
       const errorJson = JSON.parse(errorText);
@@ -79,16 +78,16 @@ export const handleApiResponse = async (response: Response) => {
       // Fallback to plain text error
       errorMessage = errorText || `HTTP error ${response.status}`;
     }
-    
+
     throw new Error(errorMessage);
   }
-  
+
   // Check if response is empty
   const text = await response.text();
   if (!text) {
     return null;
   }
-  
+
   // Parse JSON response
   return JSON.parse(text);
 };

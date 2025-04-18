@@ -24,13 +24,36 @@ socket_app = socketio.ASGIApp(sio, app)
 
 # Configure CORS with production and development frontend URLs
 origins = [
-    "http://localhost:5173",  # Development frontend
-    "http://localhost:3000",  # Alternative dev port
-    "http://localhost:8080",  # Vite default port
-    "*"  # Allow all origins for development
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://localhost:8080",
+    "https://*.replit.dev",
+    "https://*.repl.co",
+    "http://0.0.0.0:8080",
+    "https://0.0.0.0:8080",
+    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.co",
+    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.dev"
 ]
 
-# Add CORS middleware first so it applies to all routes (including errors)
+# Configure middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
+
+# Add session middleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("JWT_SECRET_KEY", "default-secret-key"),
+    same_site="none",
+    https_only=True
+)
+
+# Add additional middleware if needed
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
