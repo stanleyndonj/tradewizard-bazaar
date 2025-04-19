@@ -1,7 +1,14 @@
+
 // Get correct backend URL based on environment
-const API_URL = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')
-  ? window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-')
-  : 'http://' + window.location.hostname + ':8000';
+const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co');
+
+// For Replit: use the repl hostname with port 8000
+// For local: use explicit http://localhost:8000
+const API_URL = isReplit 
+  ? `${window.location.protocol}//${window.location.hostname.replace('-00-', '-8000-')}`
+  : `http://${window.location.hostname}:8000`;
+
+console.log('API_URL configured as:', API_URL);
 
 const API_ENDPOINTS = {
   // Auth endpoints
@@ -93,4 +100,12 @@ export const handleApiResponse = async (response: Response) => {
 
   // Parse JSON response
   return JSON.parse(text);
+};
+
+// Get the socket.io URL based on environment
+export const getSocketIOUrl = () => {
+  if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
+    return window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-');
+  }
+  return 'http://localhost:8000';
 };

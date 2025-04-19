@@ -22,20 +22,7 @@ app = FastAPI(
 # Mount Socket.io to FastAPI app
 socket_app = socketio.ASGIApp(sio, app)
 
-# Configure CORS with production and development frontend URLs
-origins = [
-    "http://localhost:5173",
-    "http://localhost:3000", 
-    "http://localhost:8080",
-    "https://*.replit.dev",
-    "https://*.repl.co",
-    "http://0.0.0.0:8080",
-    "https://0.0.0.0:8080",
-    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.co",
-    f"https://{os.getenv('REPL_SLUG')}.{os.getenv('REPL_OWNER')}.repl.dev"
-]
-
-# Configure middleware
+# Configure CORS to allow all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
