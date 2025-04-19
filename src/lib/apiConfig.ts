@@ -5,8 +5,11 @@ const isReplit = window.location.hostname.includes('replit.dev') || window.locat
 // For Replit: use the repl hostname with port 8000
 // For local: use explicit http://localhost:8000
 const API_URL = isReplit 
-  ? `${window.location.protocol}//${window.location.hostname.replace('-00-', '-8000-')}`
-  : `http://${window.location.hostname}:8000`;
+  ? `${window.location.protocol}//${window.location.hostname.replace('-0000-', '-8000-')}`
+  : `http://localhost:8000`;
+
+// Log API URL for debugging
+console.log('API_URL configured as:', API_URL);
 
 console.log('API_URL configured as:', API_URL);
 
@@ -105,7 +108,7 @@ export const handleApiResponse = async (response: Response) => {
 // Get the socket.io URL based on environment
 export const getSocketIOUrl = () => {
   if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
-    return window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-');
+    return window.location.protocol + '//' + window.location.hostname.replace('-0000-', '-8000-');
   }
   return 'http://localhost:8000';
 };
