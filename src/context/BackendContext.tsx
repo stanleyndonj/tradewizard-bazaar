@@ -210,11 +210,21 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      await apiRegisterUser(name, email, password);
-      // Optionally, automatically log the user in after registration
-      await loginUser(email, password);
+      const response = await apiRegisterUser(name, email, password);
+      
+      if (response && response.success) {
+        // Automatically log the user in after successful registration
+        await loginUser(email, password);
+        return response;
+      } else {
+        throw new Error(response?.message || 'Registration failed');
+      }
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      console.error('Registration error:', err);
+      // Extract the error message from the response if available
+      const errorMessage = err.message || 'Registration failed';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -225,6 +235,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const data = await apiLoginUser(email, password);
+      
       if (data && data.access_token) {
         // Fetch the current user immediately after login
         await loadCurrentUser();
@@ -233,11 +244,16 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
         const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
         localStorage.removeItem('redirectAfterAuth');
         navigate(redirectPath);
+        return data;
       } else {
-        throw new Error('Login failed: access token not received');
+        throw new Error(data?.message || 'Login failed: access token not received');
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      // Extract the error message from the response if available
+      const errorMessage = err.message || 'Invalid email or password';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }

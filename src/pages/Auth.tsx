@@ -81,9 +81,18 @@ const Auth = () => {
     try {
       await login(values.email, values.password);
       // The redirect will happen in the useEffect when user state is updated
-    } catch (error) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! Redirecting to your dashboard...",
+        variant: "default",
+      });
+    } catch (error: any) {
       console.error('Login error:', error);
-      // Error toast is shown in the login function
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -95,9 +104,25 @@ const Auth = () => {
     try {
       await registerUser(values.name, values.email, values.password);
       // The redirect will happen in the useEffect when user state is updated
-    } catch (error) {
+      toast({
+        title: "Registration Successful",
+        description: "Your account has been created! Redirecting to dashboard...",
+        variant: "default",
+      });
+    } catch (error: any) {
       console.error('Registration error:', error);
-      // Toast is shown in the register function
+      let errorMessage = "Registration failed. Please try again.";
+      
+      // Check for specific error messages
+      if (error.message && error.message.includes("already registered")) {
+        errorMessage = "This email is already registered. Please log in or use a different email.";
+      }
+      
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -81,8 +81,16 @@ export const getAuthHeaders = () => {
 // Helper function to handle API responses
 export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorText = await response.text();
     let errorMessage;
+    try {
+      // Try to parse as JSON first
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorData.message || `Error: ${response.status} ${response.statusText}`;
+    } catch (e) {
+      // If not JSON, get as text
+      const errorText = await response.text();
+      errorMessage = errorText || `Error: ${response.status} ${response.statusText}`;
+    }
 
     try {
       // Try to parse as JSON for structured error messages
