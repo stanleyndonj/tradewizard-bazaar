@@ -20,16 +20,26 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    // Only try to connect if we have an auth token
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.log('No auth token found, skipping socket connection');
+      return;
+    }
+
     // Get the correct Socket.IO URL
     const socketUrl = getSocketIOUrl();
     console.log('Connecting to Socket.IO at:', socketUrl);
     
-    // Create socket connection
+    // Create socket connection with auth token
     const socketInstance = io(socketUrl, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
+      extraHeaders: {
+        Authorization: `Bearer ${token}`
+      }
     });
 
     socketInstance.on('connect', () => {
@@ -50,6 +60,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSocket(socketInstance);
 
     return () => {
+      console.log('Disconnecting Socket.IO');
       socketInstance.disconnect();
     };
   }, []);

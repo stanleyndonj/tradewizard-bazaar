@@ -10,6 +10,9 @@ from .routers import auth, user, robot, robot_request, purchase, mpesa, ai_tradi
 sio = socketio.AsyncServer(
     async_mode='asgi',
     cors_allowed_origins=["*"],  # Allow all origins for development
+    async_handlers=True,
+    logger=True,
+    engineio_logger=True
 )
 
 # Create FastAPI app

@@ -3,13 +3,16 @@
 const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co');
 
 // For Replit: use the repl hostname with port 8000
-// For local: use explicit http://localhost:8000
+// For local: use explicit http://0.0.0.0:8000
 const API_URL = isReplit 
   ? `${window.location.protocol}//${window.location.hostname.replace('-0000-', '-8000-')}`
   : `http://0.0.0.0:8000`;
 
 // Log API URL for debugging
 console.log('API_URL configured as:', API_URL);
+
+// Export for direct use in other modules
+export const API_BASE_URL = API_URL;
 
 const API_ENDPOINTS = {
   // Auth endpoints
@@ -108,5 +111,14 @@ export const getSocketIOUrl = () => {
   if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
     return window.location.protocol + '//' + window.location.hostname.replace('-0000-', '-8000-');
   }
-  return 'http://0.0.0.0:8000';
+  // Make sure we're using same origin for WebSocket in development
+  return window.location.protocol === 'https:' ? 'https://0.0.0.0:8000' : 'http://0.0.0.0:8000';
+};
+
+// Function to get auth headers with the JWT token
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('auth_token');
+  return token 
+    ? { 'Authorization': `Bearer ${token}` }
+    : {};
 };

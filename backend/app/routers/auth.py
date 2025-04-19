@@ -77,9 +77,19 @@ def logout():
     return {"message": "Successfully logged out"}
 
 @router.get("/users/me", response_model=UserResponse)
-async def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
     from ..utils.auth import get_user_from_token
-    user_id = await get_user_from_token(f"Bearer {token}")
+    
+    # Get the authorization header
+    authorization = request.headers.get("Authorization")
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user_id = await get_user_from_token(authorization)
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
