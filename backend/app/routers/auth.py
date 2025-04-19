@@ -23,6 +23,13 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)) -> Any:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="All fields are required: name, email, and password"
         )
+    
+    # Validate password length
+    if len(user_data.password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters long"
+        )
         
     # Check if user already exists
     user_exists = db.query(User).filter(User.email == user_data.email).first()
@@ -55,6 +62,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)) -> Any:
         }
     except Exception as e:
         db.rollback()
+        print(f"Registration error: {str(e)}")  # Add logging for debugging
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Registration failed: {str(e)}"

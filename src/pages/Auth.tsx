@@ -113,9 +113,20 @@ const Auth = () => {
       console.error('Registration error:', error);
       let errorMessage = "Registration failed. Please try again.";
       
-      // Check for specific error messages
-      if (error.message && error.message.includes("already registered")) {
+      // Extract the most specific error message
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check for specific error patterns to provide friendly messages
+      if (errorMessage.toLowerCase().includes("email already registered")) {
         errorMessage = "This email is already registered. Please log in or use a different email.";
+      } else if (errorMessage.toLowerCase().includes("all fields are required")) {
+        errorMessage = "Please fill out all required fields.";
+      } else if (errorMessage.toLowerCase().includes("password")) {
+        errorMessage = "Please check your password format.";
+      } else if (errorMessage.toLowerCase().includes("email")) {
+        errorMessage = "Please check your email format.";
       }
       
       toast({

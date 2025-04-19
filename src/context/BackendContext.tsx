@@ -222,7 +222,19 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error('Registration error:', err);
       // Extract the error message from the response if available
-      const errorMessage = err.message || 'Registration failed';
+      let errorMessage = 'Registration failed';
+      
+      if (err.response && err.response.data) {
+        // Extract detailed error from API response
+        errorMessage = err.response.data.detail || errorMessage;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      if (errorMessage.includes('Email already registered')) {
+        errorMessage = 'This email is already registered. Please use a different email or login.';
+      }
+      
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
