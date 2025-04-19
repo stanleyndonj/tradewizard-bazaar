@@ -16,7 +16,7 @@ localPort = 8080
 externalPort = 80
 
 [workflows]
-runButton = "Full Stack Dev"
+runButton = "Full Stack Development"
 
 [[workflows.workflow]]
 name = "Backend Server"
@@ -72,7 +72,7 @@ task = "shell.exec"
 args = "npm run dev"
 
 [[workflows.workflow]]
-name = "Full Stack Dev"
+name = "Full Stack Development"
 author = 41673428
 mode = "parallel"
 

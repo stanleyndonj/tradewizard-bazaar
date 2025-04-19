@@ -40,6 +40,9 @@ app.add_middleware(
     https_only=True
 )
 
+# Define allowed origins
+origins = ["*"]  # In production, you should specify exact origins instead of "*"
+
 # Add additional middleware if needed
 app.add_middleware(
     CORSMiddleware,
