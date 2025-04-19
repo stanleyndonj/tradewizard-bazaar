@@ -123,10 +123,4 @@ export const getSocketIOUrl = () => {
   return window.location.protocol === 'https:' ? 'https://0.0.0.0:8000' : 'http://0.0.0.0:8000';
 };
 
-// Function to get auth headers with the JWT token
-export const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token');
-  return token 
-    ? { 'Authorization': `Bearer ${token}` }
-    : {};
-};
+// Note: getAuthHeaders function is already defined above - removed duplicate declaration
