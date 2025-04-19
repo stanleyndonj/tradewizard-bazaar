@@ -82,23 +82,24 @@ export const getAuthHeaders = () => {
 export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     let errorMessage;
+    let errorText;
+    
     try {
       // Try to parse as JSON first
       const errorData = await response.json();
       errorMessage = errorData.detail || errorData.message || `Error: ${response.status} ${response.statusText}`;
     } catch (e) {
       // If not JSON, get as text
-      const errorText = await response.text();
+      errorText = await response.text();
       errorMessage = errorText || `Error: ${response.status} ${response.statusText}`;
-    }
-
-    try {
-      // Try to parse as JSON for structured error messages
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.detail || errorJson.message || `HTTP error ${response.status}`;
-    } catch (e) {
-      // Fallback to plain text error
-      errorMessage = errorText || `HTTP error ${response.status}`;
+      
+      try {
+        // Try to parse as JSON for structured error messages
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorJson.message || `HTTP error ${response.status}`;
+      } catch (parseError) {
+        // Already using errorText as the message, no need to do anything here
+      }
     }
 
     throw new Error(errorMessage);
