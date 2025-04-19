@@ -627,19 +627,17 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const createConversation = createNewConversation;
 
   const getUnreadMessageCount = async () => {
-    setIsLoading(true);
-    setError(null);
+    // Don't set loading state for this lightweight operation
+    // as it might trigger unnecessary re-renders
     try {
       const count = await apiGetUnreadMessageCount();
       setUnreadMessageCount(count || 0);
       return count || 0;
     } catch (err: any) {
       console.error('Error fetching unread count:', err.message);
-      setError(err.message || 'Failed to get unread message count');
+      // Don't set error state for this operation
       // Don't throw the error further
       return 0;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -796,29 +794,34 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
       if (!mounted || !user) return;
 
-      const userDataPromises = [
-        getRobotRequests(user.id).catch(err => console.error("Error loading robot requests:", err)),
-        getUserPurchases(user.id).catch(err => console.error("Error loading purchases:", err)),
-        loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err))
-      ];
+      // Only load these if user exists and component is still mounted
+      if (user?.id) {
+        const userDataPromises = [
+          getRobotRequests(user.id).catch(err => console.error("Error loading robot requests:", err)),
+          getUserPurchases(user.id).catch(err => console.error("Error loading purchases:", err)),
+          loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err))
+        ];
 
-      const generalDataPromises = [
-        getConversations().catch(err => console.error("Error loading conversations:", err)),
-        getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
-        loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
-      ];
+        const generalDataPromises = [
+          getConversations().catch(err => console.error("Error loading conversations:", err)),
+          getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
+          loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
+        ];
 
-      if (mounted) {
-        await Promise.all([...userDataPromises, ...generalDataPromises]);
+        if (mounted) {
+          await Promise.all([...userDataPromises, ...generalDataPromises]);
+        }
       }
     };
 
     loadInitialData();
 
+    // No recurring interval or timers that might cause refreshes
+
     return () => {
       mounted = false;
     };
-  }, [user?.id]); // Changed dependency to user?.id instead of user to prevent excess reloads
+  }, [user?.id]); // Only run when user ID changes
 
   const contextValue: BackendContextType = {
     user,
