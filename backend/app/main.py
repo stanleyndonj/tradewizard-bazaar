@@ -22,12 +22,25 @@ app = FastAPI(
 # Mount Socket.io to FastAPI app
 socket_app = socketio.ASGIApp(sio, app)
 
-# Configure CORS to allow all origins
+# Define allowed origins
+origins = [
+    "http://0.0.0.0:8080",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://0.0.0.0:3000",
+    "http://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "http://0.0.0.0",
+    "https://0.0.0.0",
+]
+
+# Configure CORS to allow specific origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"]
 )
@@ -36,20 +49,8 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("JWT_SECRET_KEY", "default-secret-key"),
-    same_site="none",
-    https_only=True
-)
-
-# Define allowed origins
-origins = ["*"]  # In production, you should specify exact origins instead of "*"
-
-# Add additional middleware if needed
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    same_site="lax",
+    https_only=False
 )
 
 # Add session middleware with a secret key

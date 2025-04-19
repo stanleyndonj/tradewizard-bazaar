@@ -6,11 +6,9 @@ const isReplit = window.location.hostname.includes('replit.dev') || window.locat
 // For local: use explicit http://localhost:8000
 const API_URL = isReplit 
   ? `${window.location.protocol}//${window.location.hostname.replace('-0000-', '-8000-')}`
-  : `http://localhost:8000`;
+  : `http://0.0.0.0:8000`;
 
 // Log API URL for debugging
-console.log('API_URL configured as:', API_URL);
-
 console.log('API_URL configured as:', API_URL);
 
 const API_ENDPOINTS = {
@@ -110,5 +108,5 @@ export const getSocketIOUrl = () => {
   if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
     return window.location.protocol + '//' + window.location.hostname.replace('-0000-', '-8000-');
   }
-  return 'http://localhost:8000';
+  return 'http://0.0.0.0:8000';
 };

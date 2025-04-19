@@ -19,6 +19,19 @@ export default defineConfig(({ mode }) => ({
       interval: 1000,
     },
     allowedHosts: ["all"],
+    proxy: {
+      '/api': {
+        target: 'http://0.0.0.0:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/socket.io': {
+        target: 'http://0.0.0.0:8000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    }
   },
   plugins: [
     react(),
