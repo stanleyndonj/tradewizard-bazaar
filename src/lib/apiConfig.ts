@@ -1,7 +1,7 @@
 // Get correct backend URL based on environment
 const API_URL = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')
   ? window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-')
-  : window.location.protocol + '//' + window.location.hostname + ':8000';
+  : 'http://' + window.location.hostname + ':8000';
 
 const API_ENDPOINTS = {
   // Auth endpoints
