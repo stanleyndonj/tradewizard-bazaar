@@ -2,7 +2,7 @@ import time
 import json
 import logging
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -73,9 +73,9 @@ app.include_router(robot.router, prefix="/api")
 app.include_router(robot_request.router, prefix="/api")
 app.include_router(purchase.router, prefix="/api")
 app.include_router(mpesa.router, prefix="/api")
-app.include_router(ai_trading_signals.router, prefix="/api")  # Fixed: add prefix
+app.include_router(ai_trading_signals.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
-app.include_router(subscription.router, prefix="/api")  # Fixed: changed from /api/subscription to /api
+app.include_router(subscription.router, prefix="/api")
 app.include_router(card_payment.router, prefix="/api")
 
 # Socket.io event handlers

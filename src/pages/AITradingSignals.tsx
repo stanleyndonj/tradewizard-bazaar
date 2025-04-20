@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -25,11 +24,13 @@ const AITradingSignals = () => {
   const [analysisData, setAnalysisData] = useState<MarketAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState(tab || 'signals');
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
+  // State to track API error and prevent refresh loops
+  const [hasApiError, setHasApiError] = useState(false);
 
   useEffect(() => {
     // Set page title
     document.title = 'AI Trading Signals | TradeWizard';
-    
+
     // Check if user is logged in
     if (!user) {
       toast({
@@ -40,7 +41,12 @@ const AITradingSignals = () => {
       navigate('/auth');
       return;
     }
-    
+
+    // If we've already encountered an API error, don't keep trying
+    if (hasApiError) {
+      return;
+    }
+
     // Load subscription plans
     const loadSubscriptionPlans = async () => {
       try {
@@ -50,14 +56,53 @@ const AITradingSignals = () => {
         }
       } catch (error) {
         console.error('Error loading subscription plans:', error);
+        setHasApiError(true);
+        // Show a toast to inform the user about the error
+        toast({
+          title: "Connection issue",
+          description: "Could not load subscription data. Using fallback data.",
+          variant: "destructive",
+        });
+        // Set fallback plans if API fails
+        setSubscriptionPlans([
+          {
+            id: 'basic-monthly',
+            name: 'Basic AI Trading Signals',
+            price: 29.99,
+            currency: 'USD',
+            interval: 'monthly',
+            features: [
+              'Access to AI trading signals',
+              'Basic market analysis',
+              'Daily signal updates',
+              'Email notifications'
+            ],
+            created_at: new Date().toISOString()
+          },
+          {
+            id: 'premium-monthly',
+            name: 'Premium AI Trading Signals',
+            price: 99.99,
+            currency: 'USD',
+            interval: 'monthly',
+            features: [
+              'All Basic features',
+              'Advanced market analysis',
+              'Real-time signal updates',
+              'Direct AI chat support',
+              'Custom alerts and notifications'
+            ],
+            created_at: new Date().toISOString()
+          }
+        ]);
       }
     };
-    
+
     // Load initial data
     loadData();
     loadSubscriptionPlans();
-    
-  }, [user, tab, navigate, getSubscriptionPrices]);
+
+  }, [user, tab, navigate, getSubscriptionPrices, hasApiError]);
 
   // Update URL when tab changes
   useEffect(() => {
@@ -68,12 +113,12 @@ const AITradingSignals = () => {
 
   const loadData = async () => {
     setIsLoading(true);
-    
+
     try {
       // Load signals
       const signalsData = await getTradingSignals();
       setSignals(signalsData || []);
-      
+
       // Load market analysis for a default symbol
       if (!analysisData) {
         try {
@@ -100,7 +145,7 @@ const AITradingSignals = () => {
       setIsLoading(true);
       const analysis = await analyzeMarket(symbol, timeframe);
       setAnalysisData(analysis);
-      
+
       toast({
         title: "Analysis Complete",
         description: `Market analysis for ${symbol} (${timeframe}) is ready`,
@@ -124,17 +169,17 @@ const AITradingSignals = () => {
   const generateChartData = () => {
     const data = [];
     const now = new Date();
-    
+
     for (let i = 30; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      
+
       data.push({
         date: date.toLocaleDateString(),
         value: Math.random() * 10 + 90,
       });
     }
-    
+
     return data;
   };
 
@@ -143,7 +188,7 @@ const AITradingSignals = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-gray-800">
       <Navbar />
-      
+
       <main className="flex-grow pt-24 pb-10">
         <div className="container mx-auto px-4 max-w-7xl">
           <motion.div 
@@ -157,7 +202,7 @@ const AITradingSignals = () => {
               Advanced AI-powered tools to enhance your trading decisions
             </p>
           </motion.div>
-          
+
           {hasAccess ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
               <TabsList className="grid grid-cols-4 md:w-[600px] bg-gray-800 p-1 rounded-xl">
@@ -178,7 +223,7 @@ const AITradingSignals = () => {
                   Backtesting
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signals" className="mt-6">
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -188,7 +233,7 @@ const AITradingSignals = () => {
                 >
                   <h2 className="text-2xl font-semibold mb-4 text-white">Trading Signals</h2>
                   <p className="text-gray-300 mb-6">Our AI algorithms analyze market data to provide you with high-probability trading signals.</p>
-                  
+
                   {isLoading ? (
                     <div className="mt-8 text-center">
                       <TradingLoader text="Loading trading signals..." />
@@ -222,7 +267,7 @@ const AITradingSignals = () => {
                           </ResponsiveContainer>
                         </div>
                       </div>
-                      
+
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3].map((_, index) => (
                           <div key={index} className="bg-gray-800 p-5 rounded-xl border border-gray-700 hover:border-blue-500 transition-all">
@@ -271,7 +316,7 @@ const AITradingSignals = () => {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="flex justify-center mt-4">
                         <Button variant="outline" className="border-blue-500 text-blue-400 hover:bg-blue-900 hover:text-blue-100">
                           Load More Signals
@@ -281,7 +326,7 @@ const AITradingSignals = () => {
                   )}
                 </motion.div>
               </TabsContent>
-              
+
               <TabsContent value="analysis" className="mt-6">
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -291,7 +336,7 @@ const AITradingSignals = () => {
                 >
                   <h2 className="text-2xl font-semibold mb-4 text-white">Market Analysis</h2>
                   <p className="text-gray-300 mb-6">Get detailed AI-powered market analysis for any trading pair, including support/resistance levels, trend detection, and trade recommendations.</p>
-                  
+
                   {isLoading ? (
                     <div className="mt-8 text-center">
                       <TradingLoader text="Loading market analysis..." />
@@ -316,7 +361,7 @@ const AITradingSignals = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gray-800 p-5 rounded-xl border border-gray-700">
                           <h3 className="text-lg font-medium text-white mb-4">Technical Indicators</h3>
                           <div className="space-y-3">
@@ -334,7 +379,7 @@ const AITradingSignals = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gray-800 p-5 rounded-xl border border-gray-700">
                           <h3 className="text-lg font-medium text-white mb-4">Trade Recommendation</h3>
                           <div className="space-y-3">
@@ -357,14 +402,14 @@ const AITradingSignals = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="bg-gray-800 p-5 rounded-xl border border-gray-700">
                         <h3 className="text-lg font-medium text-white mb-4">Analysis Summary</h3>
                         <p className="text-gray-300">
                           EURUSD is showing bullish momentum with price action above key moving averages. RSI indicates room for further upside without being overbought. The recent breakout above 1.0700 resistance suggests continuation of the uptrend. Traders should look for buying opportunities near the support level at 1.0685 with a tight stop below 1.0650.
                         </p>
                       </div>
-                      
+
                       <div className="flex justify-center mt-4">
                         <Button className="bg-blue-600 hover:bg-blue-700">
                           Analyze Different Symbol
@@ -374,7 +419,7 @@ const AITradingSignals = () => {
                   )}
                 </motion.div>
               </TabsContent>
-              
+
               <TabsContent value="assistant" className="mt-6">
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -385,7 +430,7 @@ const AITradingSignals = () => {
                   <AITradingChat />
                 </motion.div>
               </TabsContent>
-              
+
               <TabsContent value="backtesting" className="mt-6">
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -416,7 +461,7 @@ const AITradingSignals = () => {
           )}
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
