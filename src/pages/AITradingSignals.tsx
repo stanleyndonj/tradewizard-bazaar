@@ -26,7 +26,7 @@ const AITradingSignals = () => {
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
   // State to track API error and prevent refresh loops
   const [hasApiError, setHasApiError] = useState(false);
-  
+
   // Log when component mounts
   useEffect(() => {
     console.log("AITradingSignals component mounted");
@@ -190,7 +190,7 @@ const AITradingSignals = () => {
         } catch (analysisError) {
           console.error('Failed to load market analysis:', analysisError);
           setHasApiError(true);
-          
+
           // Set fallback analysis data
           setAnalysisData({
             symbol: 'EURUSD',
@@ -228,7 +228,7 @@ const AITradingSignals = () => {
         description: "Failed to load trading data. Using sample data instead.",
         variant: "destructive",
       });
-      
+
       // Use fallback mock data
       setSignals([
         {
@@ -271,7 +271,7 @@ const AITradingSignals = () => {
     try {
       setIsLoading(true);
       const analysis = await analyzeMarket(symbol, timeframe);
-      
+
       if (analysis) {
         setAnalysisData(analysis);
         toast({
@@ -310,7 +310,7 @@ const AITradingSignals = () => {
         created_at: new Date().toISOString(),
         summary: `Analysis for ${symbol} could not be loaded from API. Using fallback data.`
       });
-      
+
       toast({
         title: "Using Fallback Analysis",
         description: "Could not connect to analysis server. Using sample data instead.",
