@@ -110,9 +110,20 @@ const AITradingSignals = () => {
       }
     };
 
-    // Load initial data
-    loadData();
-    loadSubscriptionPlans();
+    // Load initial data, handle loading state
+    const loadInitialData = async () => {
+      try {
+        await loadData();
+        await loadSubscriptionPlans();
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+        setHasApiError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
 
   }, [user, tab, navigate, getSubscriptionPrices, hasApiError]);
 
