@@ -1,0 +1,52 @@
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:492 Received subscription plans data: []
+backend.ts:492 Received subscription plans data: []
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+backend.ts:492 Received subscription plans data: []
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:492 Received subscription plans data: []
+backend.ts:492 Received subscription plans data: []
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
