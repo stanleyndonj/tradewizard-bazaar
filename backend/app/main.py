@@ -73,9 +73,9 @@ app.include_router(robot.router, prefix="/api")
 app.include_router(robot_request.router, prefix="/api")
 app.include_router(purchase.router, prefix="/api")
 app.include_router(mpesa.router, prefix="/api")
-app.include_router(ai_trading_signals.router, prefix="/api")
+app.include_router(ai_trading_signals.router) # ai_trading_signals already has prefix in its router
 app.include_router(chat.router, prefix="/api")
-app.include_router(subscription.router, prefix="/api")
+app.include_router(subscription.router) # subscription router already has prefix in its router
 app.include_router(card_payment.router, prefix="/api")
 
 # Socket.io event handlers

@@ -53,6 +53,8 @@ const AITradingSignals = () => {
         const plans = await getSubscriptionPrices();
         if (plans && Array.isArray(plans)) {
           setSubscriptionPlans(plans);
+        } else {
+          throw new Error("Invalid plans data format");
         }
       } catch (error) {
         console.error('Error loading subscription plans:', error);
@@ -126,15 +128,53 @@ const AITradingSignals = () => {
           setAnalysisData(analysis);
         } catch (error) {
           console.error('Failed to load market analysis:', error);
+          // Mark error to prevent further retries
+          setHasApiError(true);
         }
       }
     } catch (error) {
       console.error('Error loading AI trading data:', error);
+      // Mark API error to prevent infinite refresh
+      setHasApiError(true);
       toast({
         title: "Error",
-        description: "Failed to load trading data. Please try again.",
+        description: "Failed to load trading data. Using sample data instead.",
         variant: "destructive",
       });
+      
+      // Use fallback mock data
+      setSignals([
+        {
+          id: '1',
+          symbol: 'EUR/USD',
+          direction: 'buy',
+          strength: 'Strong',
+          confidence: 0.85,
+          entry_price: 1.1045,
+          stop_loss: 1.0980,
+          take_profit: 1.1150,
+          timeframe: '1h',
+          market: 'forex',
+          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          status: 'active'
+        },
+        {
+          id: '2',
+          symbol: 'BTC/USD',
+          direction: 'sell',
+          strength: 'Moderate',
+          confidence: 0.72,
+          entry_price: 36500,
+          stop_loss: 37100,
+          take_profit: 35500,
+          timeframe: '4h',
+          market: 'crypto',
+          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          status: 'active'
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }
