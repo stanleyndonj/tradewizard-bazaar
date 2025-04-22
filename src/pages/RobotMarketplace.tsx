@@ -23,6 +23,23 @@ const RobotMarketplace = () => {
     // Set page title
     document.title = 'Robot Marketplace | TradeWizard';
     
+    // Load robots data
+    const loadRobots = async () => {
+      try {
+        await getRobots();
+        console.log("Robots loaded:", robots);
+      } catch (error) {
+        console.error("Error loading robots:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load robots. Please try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    loadRobots();
+    
     // Check if user is logged in
     if (!isLoading && !user) {
       toast({

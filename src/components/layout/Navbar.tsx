@@ -35,8 +35,10 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    logoutUser(); // Use logoutUser instead of logout
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/auth');
   };
 
   const isHomePage = location.pathname === '/';
