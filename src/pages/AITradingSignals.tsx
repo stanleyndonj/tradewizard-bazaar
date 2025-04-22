@@ -577,7 +577,7 @@ const AITradingSignals = () => {
             </Tabs>
           ) : (
             <SubscriptionRequired 
-              message="Subscribe to unlock AI Trading Signals" 
+              message="Subscribe to unlock AI Trading Signals and access our powerful AI-driven trading tools" 
               plans={subscriptionPlans}
             />
           )}

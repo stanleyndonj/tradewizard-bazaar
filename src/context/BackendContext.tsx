@@ -703,12 +703,23 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Function to update subscription price
   const updateSubscriptionPrice = async (planId: string, price: number) => {
     try {
-      // Implementation would go here in a real application
+      setIsLoading(true);
       console.log(`Updating price for plan ${planId} to ${price}`);
-      // Refresh subscription plans after update
+      
+      const success = await updateSubscriptionPlanPrice(planId, price);
+      if (!success) {
+        throw new Error("Failed to update subscription price");
+      }
+      
+      // Refresh plans after update
       await loadSubscriptionPlans();
+      return true;
     } catch (error) {
       console.error('Error updating subscription price:', error);
+      setError("Failed to update subscription price");
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
