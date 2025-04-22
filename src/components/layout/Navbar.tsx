@@ -35,7 +35,7 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    logoutUser(); // Use logoutUser instead of logout
+    logout(); // Using the logout function from BackendContext
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/auth');
