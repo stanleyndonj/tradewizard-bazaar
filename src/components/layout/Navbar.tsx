@@ -35,10 +35,13 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    logout(); // Using the logout function from BackendContext
+    // First clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/auth');
+    // Then call the context logout function
+    logout();
+    // Redirect to home page instead of auth to prevent immediate re-login
+    navigate('/');
   };
 
   const isHomePage = location.pathname === '/';
