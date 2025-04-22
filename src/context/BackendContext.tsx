@@ -917,6 +917,19 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id]); // Only run when user ID changes
 
+  // Add logout function to the context
+  const logout = () => {
+    // Clear user data from state
+    setUser(null);
+
+    // Clear local storage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    // Set loading to false
+    setIsLoading(false);
+  };
+
   const contextValue: BackendContextType = {
     user,
     robots,
@@ -934,6 +947,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     loginUser,
     login: loginUser,
     logoutUser,
+    logout,
     getRobots,
     getRobotById,
     addRobot,

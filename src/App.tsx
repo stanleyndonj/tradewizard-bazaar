@@ -39,6 +39,8 @@ function App() {
         {/* Trading features */}
         <Route path="/ai-trading-signals" element={<AITradingSignals />} />
         <Route path="/ai-trading-signals/:tab" element={<AITradingSignals />} />
+        <Route path="/trading-signals" element={<AITradingSignals />} />
+        <Route path="/trading" element={<AITradingSignals />} />
         
         {/* Messaging */}
         <Route path="/messages" element={<Messages />} />

@@ -128,9 +128,9 @@ const AdminDashboard = () => {
         </aside>
         
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gray-950">
           <ScrollArea className="h-[calc(100vh-4rem)] w-full">
-            <div className="container px-4 py-8 max-w-7xl">
+            <div className="container px-4 py-8 max-w-7xl mx-auto">
               {/* Mobile navigation tabs */}
               <div className="md:hidden flex overflow-x-auto pb-3 gap-2 mb-4">
                 <TabButton 
