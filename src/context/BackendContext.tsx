@@ -222,22 +222,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  // Function to update subscription price
-  const updateSubscriptionPrice = async (planId: string, price: number) => {
-    try {
-      setIsLoading(true);
-      console.log(`Updating subscription price for ${planId} to ${price}`);
-      await updateSubscriptionPlanPrice(planId, price);
-      await getSubscriptionPrices(); // Refresh plans after update
-      return true;
-    } catch (error) {
-      console.error("Error updating subscription price:", error);
-      setError("Failed to update subscription price");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // This function has been moved elsewhere in the file
 
   const registerUser = async (name: string, email: string, password: string) => {
     setIsLoading(true);
