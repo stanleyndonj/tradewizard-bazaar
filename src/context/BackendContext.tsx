@@ -168,6 +168,8 @@ const BackendContext = createContext<BackendContextType>({
   hasActiveSubscription: false,
   getSubscriptionPlans: async () => [],
   getSubscriptionPrices: async () => [],
+  updateSubscriptionPrice: async () => false,
+  getSubscriptionPrices: async () => [],
   checkSubscription: async () => false,
   subscribeToPlan: async () => {},
   cancelSubscription: async () => {},
@@ -206,6 +208,37 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
+  
+  // Function to get subscription prices
+  const getSubscriptionPrices = async () => {
+    try {
+      console.log("Getting subscription plans...");
+      const plans = await getSubscriptionPlans();
+      setSubscriptionPlans(plans);
+      return plans;
+    } catch (error) {
+      console.error("Error fetching subscription prices:", error);
+      setError("Failed to load subscription plans");
+      return [];
+    }
+  };
+  
+  // Function to update subscription price
+  const updateSubscriptionPrice = async (planId: string, price: number) => {
+    try {
+      setIsLoading(true);
+      console.log(`Updating subscription price for ${planId} to ${price}`);
+      await updateSubscriptionPlanPrice(planId, price);
+      await getSubscriptionPrices(); // Refresh plans after update
+      return true;
+    } catch (error) {
+      console.error("Error updating subscription price:", error);
+      setError("Failed to update subscription price");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const registerUser = async (name: string, email: string, password: string) => {
     setIsLoading(true);
@@ -961,6 +994,10 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     chatMessages,
     currentConversation,
     setCurrentConversationId,
+    
+    // Subscription price management
+    getSubscriptionPrices,
+    updateSubscriptionPrice,
   };
 
   return <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>;

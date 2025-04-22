@@ -575,6 +575,9 @@ export const updateSubscriptionPrice = async (planId: string, price: number) => 
   }
 };
 
+// Alias for consistency with context function naming
+export const updateSubscriptionPlanPrice = updateSubscriptionPrice;
+
 export const deleteSubscriptionPlan = async (planId: string) => {
   const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
     method: 'DELETE',
