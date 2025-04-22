@@ -1,4 +1,3 @@
-
 // Get correct backend URL based on environment
 const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co');
 
@@ -57,8 +56,8 @@ const API_ENDPOINTS = {
 
   // Subscription endpoints - Fixed to match backend structure
   SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
-  SUBSCRIPTION_PLAN_BY_ID: (planId: string) => `${API_URL}/api/subscription/plans/${planId}`,
-  CREATE_SUBSCRIPTION: `${API_URL}/api/subscription/subscribe`,
+  SUBSCRIBE: `${API_URL}/api/subscription/subscribe`,
+  UPDATE_SUBSCRIPTION_PRICE: `${API_URL}/api/subscription/plans`,
   USER_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/subscriptions`,
   USER_ACTIVE_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/active`,
   CHECK_SUBSCRIPTION: (planId: string) => `${API_URL}/api/subscription/check/${planId}`,
@@ -83,7 +82,7 @@ export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
     let errorMessage;
     let errorText;
-    
+
     try {
       // Try to parse as JSON first
       const errorData = await response.json();
@@ -92,7 +91,7 @@ export const handleApiResponse = async (response: Response) => {
       // If not JSON, get as text
       errorText = await response.text();
       errorMessage = errorText || `Error: ${response.status} ${response.statusText}`;
-      
+
       try {
         // Try to parse as JSON for structured error messages
         const errorJson = JSON.parse(errorText);

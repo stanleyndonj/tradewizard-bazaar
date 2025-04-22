@@ -44,7 +44,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   getSubscriptionPlans,
-  createSubscription,
   getUserActiveSubscriptions,
   checkSubscription,
   cancelSubscription,
@@ -113,6 +112,7 @@ interface BackendContextType {
   verifyMpesaPayment: (transactionId: string) => Promise<boolean>; // Alias for verifyPayment
   processCardPayment: (cardDetails: any, amount: number, currency: string, itemId: string, paymentType?: 'purchase' | 'subscription') => Promise<any>;
   verifyCardPayment: (paymentId: string) => Promise<any>;
+  createSubscription: (subscriptionData: any) => Promise<any>;
   // Chat related properties
   chatMessages: Record<string, ChatMessage[]>;
   currentConversation: string | null;
@@ -177,6 +177,7 @@ const BackendContext = createContext<BackendContextType>({
   verifyMpesaPayment: async () => false,
   processCardPayment: async () => {},
   verifyCardPayment: async () => {},
+  createSubscription: async () => {},
   chatMessages: {},
   currentConversation: null,
   setCurrentConversationId: () => {},
@@ -205,13 +206,13 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
-  
+
   const registerUser = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await apiRegisterUser(name, email, password);
-      
+
       if (response && response.success) {
         // Automatically log the user in after successful registration
         await loginUser(email, password);
@@ -223,18 +224,18 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       console.error('Registration error:', err);
       // Extract the error message from the response if available
       let errorMessage = 'Registration failed';
-      
+
       if (err.response && err.response.data) {
         // Extract detailed error from API response
         errorMessage = err.response.data.detail || errorMessage;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       if (errorMessage.includes('Email already registered')) {
         errorMessage = 'This email is already registered. Please use a different email or login.';
       }
-      
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -247,11 +248,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       const data = await apiLoginUser(email, password);
-      
+
       if (data && data.access_token) {
         // Fetch the current user immediately after login
         await loadCurrentUser();
-        
+
         // Redirect user after successful login
         const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
         localStorage.removeItem('redirectAfterAuth');
@@ -559,7 +560,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       console.log('No user logged in, skipping conversation fetch');
       return [];
     }
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -568,7 +569,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
         console.log('No auth token found');
         return [];
       }
-      
+
       const conversationsData = await apiGetConversations();
       setConversations(conversationsData || []);
       return conversationsData || [];
@@ -700,7 +701,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Function to load user's active subscriptions with better error handling
   const loadUserSubscriptions = async () => {
     if (!user) return;
-    
+
     try {
       const subscriptions = await getUserActiveSubscriptions();
       setActiveSubscriptions(subscriptions || []);
@@ -716,7 +717,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Check if user has access to a specific plan
   const checkUserSubscription = async (planId: string) => {
     if (!user) return false;
-    
+
     try {
       const hasAccess = await checkSubscription(planId);
       return hasAccess;
@@ -729,9 +730,9 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Function to subscribe to a plan
   const subscribeToPlan = async (planId: string, amount: number, currency: string, paymentMethod: string) => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
-      const subscription = await createSubscription(planId, amount, currency, paymentMethod);
+      const subscription = await createSubscription({planId, amount, currency, paymentMethod});
       await loadUserSubscriptions();
       return subscription;
     } catch (error) {
@@ -743,7 +744,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Function to cancel a subscription
   const cancelUserSubscription = async (subscriptionId: string) => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
       await cancelSubscription(subscriptionId);
       await loadUserSubscriptions();
@@ -756,7 +757,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   // Payment processing functions
   const initiateMpesaPaymentFunc = async (phone: string, amount: number, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
       const response = await initiateMpesaPayment(phone, amount, itemId, paymentType);
       return response;
@@ -768,7 +769,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
   const verifyMpesaPaymentFunc = async (transactionId: string) => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
       return await verifyMpesaPayment(transactionId);
     } catch (error) {
@@ -779,7 +780,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
   const processCardPaymentFunc = async (cardDetails: any, amount: number, currency: string, itemId: string, paymentType: 'purchase' | 'subscription' = 'purchase') => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
       const response = await processCardPayment(cardDetails, amount, currency, itemId, paymentType);
       return response;
@@ -791,7 +792,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
   const verifyCardPaymentFunc = async (paymentId: string) => {
     if (!user) throw new Error('User not authenticated');
-    
+
     try {
       return await verifyCardPayment(paymentId);
     } catch (error) {
@@ -800,12 +801,75 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const createSubscription = async (subscriptionData: any) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.SUBSCRIBE, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subscriptionData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create subscription: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
+    }
+  };
+
+  const submitRobotRequest = async (requestData: any) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit robot request: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error submitting robot request:', error);
+      throw error;
+    }
+  };
+
+
+  const deleteRobotRequest = async (id: string) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.ROBOT_REQUESTS}/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete robot request: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting robot request:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
-    
+
     const loadInitialData = async () => {
       if (!mounted) return;
-      
+
       try {
         await loadCurrentUser();
       } catch (err) {
@@ -813,7 +877,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!mounted) return;
-      
+
       try {
         await getRobots();
       } catch (err) {
@@ -895,7 +959,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     createNewConversation,
     createConversation,
     getUnreadMessageCount,
-    
+
     // Subscription-related properties
     subscriptionPlans,
     activeSubscriptions,
@@ -906,14 +970,15 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     subscribeToPlan,
     cancelSubscription: cancelUserSubscription,
     updateSubscriptionPrice,
-    
+    createSubscription,
+
     // Payment processing functions
     initiateMpesaPayment: initiateMpesaPaymentFunc,
     verifyPayment: verifyMpesaPaymentFunc,
     verifyMpesaPayment: verifyMpesaPaymentFunc,
     processCardPayment: processCardPaymentFunc,
     verifyCardPayment: verifyCardPaymentFunc,
-    
+
     // Chat related properties
     chatMessages,
     currentConversation,

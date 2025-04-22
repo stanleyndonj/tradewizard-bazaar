@@ -129,25 +129,27 @@ const AIPricingManager = () => {
     
     try {
       // Update the price in the backend
-      await updateSubscriptionPrice(editingPlan.id, editingPlan.price);
+      const success = await updateSubscriptionPrice(editingPlan.id, editingPlan.price);
       
-      // Update local state
-      setPlans(plans.map(plan => 
-        plan.id === editingPlan.id ? editingPlan : plan
-      ));
-      
-      setIsDialogOpen(false);
-      setEditingPlan(null);
-      
-      toast({
-        title: "Price updated",
-        description: `The price for ${editingPlan.name} has been updated to ${editingPlan.currency} ${editingPlan.price}`,
-      });
-      
-      // Reload plans to ensure we have the latest data
-      setTimeout(() => {
-        loadPlans();
-      }, 1000);
+      if (success) {
+        // Immediately update local state
+        setPlans(plans.map(plan => 
+          plan.id === editingPlan.id ? editingPlan : plan
+        ));
+        
+        setIsDialogOpen(false);
+        setEditingPlan(null);
+        
+        toast({
+          title: "Price updated",
+          description: `The price for ${editingPlan.name} has been updated to ${editingPlan.currency} ${editingPlan.price}`,
+        });
+        
+        // Reload plans to ensure we have the latest data (with shorter timeout)
+        await loadPlans();
+      } else {
+        throw new Error("Backend returned unsuccessful status");
+      }
     } catch (error) {
       console.error("Error updating price:", error);
       toast({

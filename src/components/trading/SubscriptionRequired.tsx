@@ -1,11 +1,11 @@
-
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Shield, Check, CreditCard } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Shield, CheckCircle, CreditCard, Smartphone, Building2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useBackend } from '@/context/BackendContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
+import { useBackend } from "@/context/BackendContext";
 
 interface SubscriptionRequiredProps {
   message: string;
@@ -14,45 +14,75 @@ interface SubscriptionRequiredProps {
 
 const SubscriptionRequired = ({ message, plans = [] }: SubscriptionRequiredProps) => {
   const navigate = useNavigate();
-  const { purchaseRobot, user } = useBackend();
   const { toast } = useToast();
+  const { createSubscription } = useBackend();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubscribe = async (planId: string, price: number) => {
-    if (!user) {
+  const handleSubscribeClick = (plan: any) => {
+    setSelectedPlan(plan);
+    setIsDialogOpen(true);
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setPaymentMethod(method);
+  };
+
+  const handleProcessPayment = async () => {
+    if (!selectedPlan || !paymentMethod) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to subscribe",
+        title: "Payment Error",
+        description: "Please select a payment method to continue",
         variant: "destructive",
       });
-      navigate('/auth');
       return;
     }
 
     setIsProcessing(true);
+
     try {
-      // Mock robot ID for subscription purchase
-      const subscriptionRobotId = "subscription-" + planId;
-      
-      await purchaseRobot(
-        subscriptionRobotId,
-        price,
-        'USD',
-        'card'
-      );
+      // Create subscription with the selected payment method
+      const subscriptionData = {
+        plan_id: selectedPlan.id,
+        amount: selectedPlan.price,
+        currency: selectedPlan.currency,
+        payment_method: paymentMethod
+      };
 
-      toast({
-        title: "Subscription successful",
-        description: "You now have access to AI Trading Signals",
-      });
+      // Call the backend to create a subscription
+      const response = await createSubscription(subscriptionData);
 
-      // Refresh the page to update access
-      window.location.reload();
+      if (response && response.id) {
+        // Close dialog
+        setIsDialogOpen(false);
+
+        // Show success message
+        toast({
+          title: "Subscription Initiated",
+          description: "Redirecting to payment...",
+        });
+
+        // Redirect based on payment method
+        if (paymentMethod === 'card') {
+          navigate(`/payment/card?subscription_id=${response.id}`);
+        } else if (paymentMethod === 'mpesa') {
+          navigate(`/payment/mpesa?subscription_id=${response.id}`);
+        } else if (paymentMethod === 'bank') {
+          navigate(`/payment/bank?subscription_id=${response.id}`);
+        } else {
+          navigate('/customer-dashboard?tab=subscription');
+        }
+      } else {
+        throw new Error("Failed to create subscription");
+      }
     } catch (error) {
-      console.error('Subscription error:', error);
+      console.error("Payment processing error:", error);
       toast({
-        title: "Subscription failed",
-        description: "Please try again or contact support",
+        title: "Payment Error",
+        description: "There was a problem processing your payment. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -60,104 +90,152 @@ const SubscriptionRequired = ({ message, plans = [] }: SubscriptionRequiredProps
     }
   };
 
-  // Default plans if none are provided
-  const defaultPlans = [
-    {
-      id: 'basic-monthly',
-      name: 'Basic AI Trading Signals',
-      price: 29.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'Access to AI trading signals',
-        'Basic market analysis',
-        'Daily signal updates',
-        'Email notifications'
-      ]
-    },
-    {
-      id: 'premium-monthly',
-      name: 'Premium AI Trading Signals',
-      price: 99.99,
-      currency: 'USD',
-      interval: 'monthly',
-      features: [
-        'All Basic features',
-        'Advanced market analysis',
-        'Real-time signal updates',
-        'Direct AI chat support',
-        'Custom alerts and notifications'
-      ]
-    }
-  ];
-
-  const displayPlans = plans && plans.length > 0 ? plans : defaultPlans;
-
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-xl"
-    >
-      <div className="text-center mb-10">
-        <Shield className="h-16 w-16 mx-auto text-blue-500 mb-4" />
-        <h2 className="text-2xl font-bold text-white mb-2">{message}</h2>
-        <p className="text-gray-400">
-          Gain access to our powerful AI-driven trading signals and market analysis
-        </p>
-      </div>
+    <>
+      <div className="p-6 bg-gray-800 rounded-xl border border-gray-700">
+        <div className="text-center mb-8">
+          <Shield className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">{message}</h2>
+          <p className="text-gray-400 max-w-lg mx-auto">
+            Access premium AI-powered trading signals and market analysis to improve your trading decisions.
+          </p>
+        </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {displayPlans.map((plan) => (
-          <motion.div
-            key={plan.id}
-            whileHover={{ scale: 1.05 }}
-            className="bg-gray-900 rounded-xl overflow-hidden border border-gray-700 hover:border-blue-500 transition-all duration-300"
-          >
-            <div className="p-6 border-b border-gray-700">
-              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-              <div className="mt-4 flex items-baseline">
-                <span className="text-3xl font-extrabold text-white">{plan.currency} {plan.price}</span>
-                <span className="ml-1 text-gray-400">/{plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
-              </div>
-            </div>
-            <div className="p-6">
-              <ul className="space-y-4">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <Check className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-300">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button 
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
-                onClick={() => handleSubscribe(plan.id, plan.price)}
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
+        <div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
+          {plans && plans.length > 0 ? (
+            plans.map((plan, index) => (
+              <Card key={index} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-blue-500 transition-all">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                <CardHeader>
+                  <CardTitle className="text-white">{plan.name}</CardTitle>
+                  <CardDescription className="text-gray-400">{plan.interval === 'monthly' ? 'Monthly' : 'Yearly'} plan</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline mb-4">
+                    <span className="text-3xl font-bold text-white">{plan.currency} {plan.price}</span>
+                    <span className="text-gray-400 ml-1">/{plan.interval === 'monthly' ? 'mo' : 'yr'}</span>
+                  </div>
+
+                  <ul className="space-y-2">
+                    {plan.features && plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                        <span className="text-gray-300">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleSubscribeClick(plan)}
+                  >
                     Subscribe Now
-                  </>
-                )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-2 text-center p-8 bg-gray-800 rounded-xl border border-gray-700">
+              <p className="text-gray-300">Subscription plans are not available at the moment. Please try again later.</p>
+              <Button 
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => navigate('/customer-dashboard')}
+              >
+                Go to Dashboard
               </Button>
             </div>
-          </motion.div>
-        ))}
+          )}
+        </div>
       </div>
 
-      <div className="mt-10 text-center text-gray-400 text-sm">
-        <p>By subscribing, you agree to our Terms of Service and Privacy Policy.</p>
-        <p className="mt-2">Need help? Contact our support team.</p>
-      </div>
-    </motion.div>
+      {/* Payment Method Selection Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Choose Payment Method</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Select how you'd like to pay for your subscription.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPlan && (
+            <div className="py-4">
+              <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+                <p className="text-gray-300">Selected Plan:</p>
+                <h3 className="font-medium text-white">{selectedPlan.name}</h3>
+                <p className="text-blue-400 font-semibold">{selectedPlan.currency} {selectedPlan.price}/{selectedPlan.interval === 'monthly' ? 'mo' : 'yr'}</p>
+              </div>
+
+              <div className="space-y-3">
+                <div
+                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
+                    paymentMethod === 'card' 
+                      ? 'border-blue-500 bg-blue-900/20' 
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                  onClick={() => handlePaymentMethodSelect('card')}
+                >
+                  <CreditCard className="h-5 w-5 mr-3 text-blue-400" />
+                  <div>
+                    <p className="font-medium text-white">Credit/Debit Card</p>
+                    <p className="text-sm text-gray-400">Pay securely with your card</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
+                    paymentMethod === 'mpesa' 
+                      ? 'border-blue-500 bg-blue-900/20' 
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                  onClick={() => handlePaymentMethodSelect('mpesa')}
+                >
+                  <Smartphone className="h-5 w-5 mr-3 text-green-400" />
+                  <div>
+                    <p className="font-medium text-white">M-PESA</p>
+                    <p className="text-sm text-gray-400">Pay using M-PESA mobile money</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
+                    paymentMethod === 'bank' 
+                      ? 'border-blue-500 bg-blue-900/20' 
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                  onClick={() => handlePaymentMethodSelect('bank')}
+                >
+                  <Building2 className="h-5 w-5 mr-3 text-yellow-400" />
+                  <div>
+                    <p className="font-medium text-white">Bank Transfer</p>
+                    <p className="text-sm text-gray-400">Pay via direct bank transfer</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              disabled={isProcessing}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleProcessPayment}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={!paymentMethod || isProcessing}
+            >
+              {isProcessing ? "Processing..." : "Continue to Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
