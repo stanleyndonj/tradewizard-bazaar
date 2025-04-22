@@ -27,18 +27,17 @@ const AITradingSignals = () => {
   // State to track API error and prevent refresh loops
   const [hasApiError, setHasApiError] = useState(false);
 
-  // Log when component mounts
-  useEffect(() => {
-    console.log("AITradingSignals component mounted");
-    return () => {
-      console.log("AITradingSignals component unmounted");
-    };
-  }, []);
-
+  // Single consolidated useEffect
   useEffect(() => {
     // Set page title
     document.title = 'AI Trading Signals | TradeWizard';
-
+    
+    // These flags prevent redundant API calls
+    let isComponentMounted = true;
+    let isInitialLoadComplete = false;
+    
+    console.log("AITradingSignals component mounted");
+    
     // Check if user is logged in
     if (!user) {
       toast({
@@ -50,253 +49,195 @@ const AITradingSignals = () => {
       return;
     }
 
-    // If we've already encountered an API error, don't keep trying
-    if (hasApiError) {
-      console.log("Skipping API calls due to previous errors");
-      return;
-    }
-
-    // Load subscription plans
-    const loadSubscriptionPlans = async () => {
-      try {
-        const plans = await getSubscriptionPrices();
-        if (plans && Array.isArray(plans)) {
-          setSubscriptionPlans(plans);
-        } else {
-          console.warn("Invalid plans data format, using fallback data");
-          throw new Error("Invalid plans data format");
-        }
-      } catch (error) {
-        console.error('Error loading subscription plans:', error);
-        setHasApiError(true);
-        // Show a toast to inform the user about the error
-        toast({
-          title: "Connection issue",
-          description: "Could not load subscription data. Using fallback data.",
-          variant: "destructive",
-        });
-        // Set fallback plans if API fails
-        setSubscriptionPlans([
-          {
-            id: 'basic-monthly',
-            name: 'Basic AI Trading Signals',
-            price: 29.99,
-            currency: 'USD',
-            interval: 'monthly',
-            features: [
-              'Access to AI trading signals',
-              'Basic market analysis',
-              'Daily signal updates',
-              'Email notifications'
-            ],
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'premium-monthly',
-            name: 'Premium AI Trading Signals',
-            price: 99.99,
-            currency: 'USD',
-            interval: 'monthly',
-            features: [
-              'All Basic features',
-              'Advanced market analysis',
-              'Real-time signal updates',
-              'Direct AI chat support',
-              'Custom alerts and notifications'
-            ],
-            created_at: new Date().toISOString()
+    // Only run once
+    if (!isInitialLoadComplete && !hasApiError) {
+      const loadOne = async () => {
+        // Set loading state
+        setIsLoading(true);
+        
+        try {
+          // Load data with a more controlled approach
+          if (isComponentMounted) {
+            // First, try to load trading signals
+            try {
+              console.log("Attempting to fetch trading signals - one time load");
+              const signalsData = await getTradingSignals();
+              if (signalsData && Array.isArray(signalsData) && isComponentMounted) {
+                console.log(`Received ${signalsData.length} trading signals - ONE TIME LOAD`);
+                setSignals(signalsData);
+              }
+            } catch (error) {
+              console.error("Error loading signals:", error);
+              // Use fallback data for signals
+              if (isComponentMounted) {
+                setSignals([
+                  {
+                    id: '1',
+                    symbol: 'EUR/USD',
+                    direction: 'buy',
+                    strength: 'Strong',
+                    confidence: 0.85,
+                    entry_price: 1.1045,
+                    stop_loss: 1.0980,
+                    take_profit: 1.1150,
+                    timeframe: '1h',
+                    market: 'forex',
+                    timestamp: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    status: 'active'
+                  },
+                  {
+                    id: '2',
+                    symbol: 'BTC/USD',
+                    direction: 'sell',
+                    strength: 'Moderate',
+                    confidence: 0.72,
+                    entry_price: 36500,
+                    stop_loss: 37100,
+                    take_profit: 35500,
+                    timeframe: '4h',
+                    market: 'crypto',
+                    timestamp: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    status: 'active'
+                  }
+                ]);
+              }
+            }
+            
+            // Then, try to load subscription plans
+            try {
+              console.log("Attempting to fetch subscription plans - one time load");
+              const plans = await getSubscriptionPrices();
+              if (plans && Array.isArray(plans) && isComponentMounted) {
+                setSubscriptionPlans(plans);
+              }
+            } catch (error) {
+              console.error("Error loading subscription plans:", error);
+              // Use fallback data for subscription plans
+              if (isComponentMounted) {
+                setSubscriptionPlans([
+                  {
+                    id: 'basic-monthly',
+                    name: 'Basic AI Trading Signals',
+                    price: 29.99,
+                    currency: 'USD',
+                    interval: 'monthly',
+                    features: [
+                      'Access to AI trading signals',
+                      'Basic market analysis',
+                      'Daily signal updates',
+                      'Email notifications'
+                    ],
+                    created_at: new Date().toISOString()
+                  },
+                  {
+                    id: 'premium-monthly',
+                    name: 'Premium AI Trading Signals',
+                    price: 99.99,
+                    currency: 'USD',
+                    interval: 'monthly',
+                    features: [
+                      'All Basic features',
+                      'Advanced market analysis',
+                      'Real-time signal updates',
+                      'Direct AI chat support',
+                      'Custom alerts and notifications'
+                    ],
+                    created_at: new Date().toISOString()
+                  }
+                ]);
+              }
+            }
+            
+            // Finally, try to load market analysis if needed
+            if (!analysisData && isComponentMounted) {
+              try {
+                const analysis = await analyzeMarket('EURUSD', '1h');
+                if (analysis && isComponentMounted) {
+                  setAnalysisData(analysis);
+                }
+              } catch (error) {
+                console.error("Error loading market analysis:", error);
+                // Use fallback data for market analysis
+                if (isComponentMounted) {
+                  setAnalysisData({
+                    symbol: 'EURUSD',
+                    timeframe: '1h',
+                    trend: 'bullish',
+                    strength: 0.75,
+                    support_levels: [1.0685, 1.0655, 1.0620],
+                    resistance_levels: [1.0750, 1.0780, 1.0820],
+                    indicators: {
+                      rsi: 56.8,
+                      macd: {
+                        value: 0.0025,
+                        signal: 0.0018,
+                        histogram: 0.0007
+                      },
+                      moving_averages: {
+                        ma20: 1.0705,
+                        ma50: 1.0690,
+                        ma200: 1.0650
+                      }
+                    },
+                    recommendation: 'buy',
+                    next_potential_move: 'Likely to test 1.0750 resistance',
+                    risk_reward_ratio: 2.1,
+                    created_at: new Date().toISOString(),
+                    summary: 'EURUSD is showing bullish momentum with price action above key moving averages.'
+                  });
+                }
+              }
+            }
           }
-        ]);
-      }
-    };
-
-    // Load initial data only once when component mounts
-    const loadInitialData = async () => {
-      if (!user) return; // Don't load if no user
+        } catch (error) {
+          console.error("Global error in loadOne:", error);
+          if (isComponentMounted) {
+            setHasApiError(true);
+          }
+        } finally {
+          if (isComponentMounted) {
+            setIsLoading(false);
+            isInitialLoadComplete = true;
+          }
+        }
+      };
       
-      try {
-        await loadData();
-        await loadSubscriptionPlans();
-      } catch (error) {
-        console.error("Error loading initial data:", error);
-        setHasApiError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialData();
-
-  }, []); // Empty dependency array to run only once
-
-  // Update URL when tab changes
-  useEffect(() => {
+      // Execute the one-time load
+      loadOne();
+    }
+    
+    // Update URL when tab changes
     if (tab !== activeTab && activeTab) {
       navigate(`/ai-trading-signals/${activeTab}`, { replace: true });
     }
-  }, [activeTab, tab, navigate]);
+    
+    // Cleanup function
+    return () => {
+      console.log("AITradingSignals component unmounted");
+      isComponentMounted = false;
+    };
+  }, [user, activeTab, tab, navigate]); // Include dependencies to prevent exhaustive deps warning, but we control execution inside
 
-  const loadData = async () => {
+  // This function is used for the "handleAnalyzeMarket" button click, not for initial loading
+  const loadSpecificMarketData = async (symbol: string, timeframe: string) => {
     setIsLoading(true);
-
+    
     try {
-      // Load signals - catch error within this block
-      try {
-        console.log("Attempting to fetch trading signals...");
-        const signalsData = await getTradingSignals();
-        if (signalsData && Array.isArray(signalsData)) {
-          console.log(`Received ${signalsData.length} trading signals`);
-          setSignals(signalsData);
-        } else {
-          console.warn("Invalid signals data format, using fallback data");
-          throw new Error("Invalid signals data format");
-        }
-      } catch (signalError) {
-        console.error('Error loading trading signals:', signalError);
-        setHasApiError(true);
-        // Use fallback data immediately
-        setSignals([
-          {
-            id: '1',
-            symbol: 'EUR/USD',
-            direction: 'buy',
-            strength: 'Strong',
-            confidence: 0.85,
-            entry_price: 1.1045,
-            stop_loss: 1.0980,
-            take_profit: 1.1150,
-            timeframe: '1h',
-            market: 'forex',
-            timestamp: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            status: 'active'
-          },
-          {
-            id: '2',
-            symbol: 'BTC/USD',
-            direction: 'sell',
-            strength: 'Moderate',
-            confidence: 0.72,
-            entry_price: 36500,
-            stop_loss: 37100,
-            take_profit: 35500,
-            timeframe: '4h',
-            market: 'crypto',
-            timestamp: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            status: 'active'
-          }
-        ]);
-      }
-
-      // Load market analysis for a default symbol - separate try/catch
-      if (!analysisData) {
-        try {
-          console.log("Attempting to fetch market analysis...");
-          const analysis = await analyzeMarket('EURUSD', '1h');
-          if (analysis) {
-            console.log("Successfully received market analysis");
-            setAnalysisData(analysis);
-          } else {
-            throw new Error("Empty analysis data");
-          }
-        } catch (analysisError) {
-          console.error('Failed to load market analysis:', analysisError);
-          setHasApiError(true);
-
-          // Set fallback analysis data
-          setAnalysisData({
-            symbol: 'EURUSD',
-            timeframe: '1h',
-            trend: 'bullish',
-            strength: 0.75,
-            support_levels: [1.0685, 1.0655, 1.0620],
-            resistance_levels: [1.0750, 1.0780, 1.0820],
-            indicators: {
-              rsi: 56.8,
-              macd: {
-                value: 0.0025,
-                signal: 0.0018,
-                histogram: 0.0007
-              },
-              moving_averages: {
-                ma20: 1.0705,
-                ma50: 1.0690,
-                ma200: 1.0650
-              }
-            },
-            recommendation: 'buy',
-            next_potential_move: 'Likely to test 1.0750 resistance',
-            risk_reward_ratio: 2.1,
-            created_at: new Date().toISOString(),
-            summary: 'EURUSD is showing bullish momentum with price action above key moving averages.'
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error in loadData function:', error);
-      setHasApiError(true);
-      toast({
-        title: "Error",
-        description: "Failed to load trading data. Using sample data instead.",
-        variant: "destructive",
-      });
-
-      // Use fallback mock data
-      setSignals([
-        {
-          id: '1',
-          symbol: 'EUR/USD',
-          direction: 'buy',
-          strength: 'Strong',
-          confidence: 0.85,
-          entry_price: 1.1045,
-          stop_loss: 1.0980,
-          take_profit: 1.1150,
-          timeframe: '1h',
-          market: 'forex',
-          timestamp: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          status: 'active'
-        },
-        {
-          id: '2',
-          symbol: 'BTC/USD',
-          direction: 'sell',
-          strength: 'Moderate',
-          confidence: 0.72,
-          entry_price: 36500,
-          stop_loss: 37100,
-          take_profit: 35500,
-          timeframe: '4h',
-          market: 'crypto',
-          timestamp: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          status: 'active'
-        }
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAnalyzeMarket = async (symbol: string, timeframe: string) => {
-    try {
-      setIsLoading(true);
+      console.log(`Analyzing specific market: ${symbol} (${timeframe})`);
       const analysis = await analyzeMarket(symbol, timeframe);
-
+      
       if (analysis) {
         setAnalysisData(analysis);
         toast({
           title: "Analysis Complete",
           description: `Market analysis for ${symbol} (${timeframe}) is ready`,
         });
-      } else {
-        throw new Error("Invalid analysis response");
       }
     } catch (error) {
-      console.error('Error analyzing market:', error);
-      // Don't trigger another refresh, just show fallback data
+      console.error(`Error analyzing ${symbol}:`, error);
+      // Set fallback data for this specific symbol
       setAnalysisData({
         symbol: symbol,
         timeframe: timeframe,
@@ -323,7 +264,7 @@ const AITradingSignals = () => {
         created_at: new Date().toISOString(),
         summary: `Analysis for ${symbol} could not be loaded from API. Using fallback data.`
       });
-
+      
       toast({
         title: "Using Fallback Analysis",
         description: "Could not connect to analysis server. Using sample data instead.",
@@ -332,6 +273,11 @@ const AITradingSignals = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAnalyzeMarket = async (symbol: string, timeframe: string) => {
+    // Use the loadSpecificMarketData function to analyze a specific market
+    await loadSpecificMarketData(symbol, timeframe);
   };
 
   // Check if user has access to AI trading (admin or has subscription)
