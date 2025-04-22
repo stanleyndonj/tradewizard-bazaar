@@ -139,7 +139,7 @@ const SubscriptionRequired = ({ message = "Subscribe to access this feature", pl
               <div className="p-6">
                 <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
                 <div className="flex items-baseline mb-4">
-                  <span className="text-3xl font-bold text-white">${plan.price}</span>
+                  <span className="text-3xl font-bold text-white">${typeof plan.price === 'number' ? plan.price.toFixed(2) : plan.price}</span>
                   <span className="text-gray-400 ml-1">/ {plan.interval}</span>
                 </div>
                 <ul className="space-y-2 mb-6">

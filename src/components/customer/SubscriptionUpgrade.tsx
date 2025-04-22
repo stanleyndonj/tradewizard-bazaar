@@ -29,10 +29,19 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
   const loadSubscriptionPlans = async () => {
     setIsLoading(true);
     try {
+      console.log('Loading subscription plans for customers...');
+      
+      // Add a small delay to ensure backend sync
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const subscriptionPlans = await getSubscriptionPlans();
-      if (Array.isArray(subscriptionPlans)) {
+      console.log('Received subscription plans:', subscriptionPlans);
+      
+      if (Array.isArray(subscriptionPlans) && subscriptionPlans.length > 0) {
+        console.log('Setting subscription plans from API:', subscriptionPlans);
         setPlans(subscriptionPlans);
       } else {
+        console.warn('API returned invalid data, using fallback plans');
         // Fallback to default plans if API fails
         setPlans([
           {
