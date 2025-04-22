@@ -1,11 +1,11 @@
-modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14", "nodejs-23", "nodejs-22", "postgresql-17", "postgresql-16", "python-3.9", "python-3.8"]
+modules = ["nodejs-20", "python-3.12", "web", "nodejs-23", "nodejs-22", "postgresql-17"]
 run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "cd backend && pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 & npm run dev"]
+run = ["sh", "-c", "npm run dev"]
 
 [[ports]]
 localPort = 8000
