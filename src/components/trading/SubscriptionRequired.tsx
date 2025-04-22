@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Shield, CheckCircle, CreditCard, Smartphone, Building2 } from "lucide-react";
+import { Shield, CheckCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { useBackend } from "@/context/BackendContext";
+import EnhancedPaymentModal from "@/components/marketplace/EnhancedPaymentModal";
 
 interface SubscriptionRequiredProps {
   message: string;
@@ -15,78 +15,43 @@ interface SubscriptionRequiredProps {
 const SubscriptionRequired = ({ message, plans = [] }: SubscriptionRequiredProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createSubscription } = useBackend();
+  const { subscribeToPlan } = useBackend();
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>("");
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubscribeClick = (plan: any) => {
-    setSelectedPlan(plan);
-    setIsDialogOpen(true);
+    setSelectedPlan({
+      id: plan.id,
+      name: plan.name,
+      description: `${plan.name} - ${plan.interval === 'monthly' ? 'Monthly' : 'Yearly'} Plan`,
+      price: plan.price,
+      currency: plan.currency,
+      type: 'subscription'
+    });
+    setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentMethodSelect = (method: string) => {
-    setPaymentMethod(method);
-  };
-
-  const handleProcessPayment = async () => {
-    if (!selectedPlan || !paymentMethod) {
-      toast({
-        title: "Payment Error",
-        description: "Please select a payment method to continue",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-
+  const handlePaymentComplete = async () => {
+    setIsPaymentModalOpen(false);
+    
     try {
-      // Create subscription with the selected payment method
-      const subscriptionData = {
-        plan_id: selectedPlan.id,
-        amount: selectedPlan.price,
-        currency: selectedPlan.currency,
-        payment_method: paymentMethod
-      };
-
-      // Call the backend to create a subscription
-      const response = await createSubscription(subscriptionData);
-
-      if (response && response.id) {
-        // Close dialog
-        setIsDialogOpen(false);
-
-        // Show success message
-        toast({
-          title: "Subscription Initiated",
-          description: "Redirecting to payment...",
-        });
-
-        // Redirect based on payment method
-        if (paymentMethod === 'card') {
-          navigate(`/payment/card?subscription_id=${response.id}`);
-        } else if (paymentMethod === 'mpesa') {
-          navigate(`/payment/mpesa?subscription_id=${response.id}`);
-        } else if (paymentMethod === 'bank') {
-          navigate(`/payment/bank?subscription_id=${response.id}`);
-        } else {
-          navigate('/customer-dashboard?tab=subscription');
-        }
-      } else {
-        throw new Error("Failed to create subscription");
-      }
-    } catch (error) {
-      console.error("Payment processing error:", error);
+      // Show success message
       toast({
-        title: "Payment Error",
-        description: "There was a problem processing your payment. Please try again.",
+        title: "Subscription Successful",
+        description: "You now have access to AI Trading Signals",
+      });
+      
+      // Refresh or redirect
+      navigate('/ai-trading-signals/signals');
+      window.location.reload();
+    } catch (error) {
+      console.error("Error finalizing subscription:", error);
+      toast({
+        title: "Subscription Error",
+        description: "There was a problem completing your subscription. Please contact support.",
         variant: "destructive",
       });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -149,92 +114,15 @@ const SubscriptionRequired = ({ message, plans = [] }: SubscriptionRequiredProps
         </div>
       </div>
 
-      {/* Payment Method Selection Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-gray-800 border-gray-700 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-white">Choose Payment Method</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Select how you'd like to pay for your subscription.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPlan && (
-            <div className="py-4">
-              <div className="mb-4 p-3 bg-gray-700 rounded-lg">
-                <p className="text-gray-300">Selected Plan:</p>
-                <h3 className="font-medium text-white">{selectedPlan.name}</h3>
-                <p className="text-blue-400 font-semibold">{selectedPlan.currency} {selectedPlan.price}/{selectedPlan.interval === 'monthly' ? 'mo' : 'yr'}</p>
-              </div>
-
-              <div className="space-y-3">
-                <div
-                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'card' 
-                      ? 'border-blue-500 bg-blue-900/20' 
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                  onClick={() => handlePaymentMethodSelect('card')}
-                >
-                  <CreditCard className="h-5 w-5 mr-3 text-blue-400" />
-                  <div>
-                    <p className="font-medium text-white">Credit/Debit Card</p>
-                    <p className="text-sm text-gray-400">Pay securely with your card</p>
-                  </div>
-                </div>
-
-                <div
-                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'mpesa' 
-                      ? 'border-blue-500 bg-blue-900/20' 
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                  onClick={() => handlePaymentMethodSelect('mpesa')}
-                >
-                  <Smartphone className="h-5 w-5 mr-3 text-green-400" />
-                  <div>
-                    <p className="font-medium text-white">M-PESA</p>
-                    <p className="text-sm text-gray-400">Pay using M-PESA mobile money</p>
-                  </div>
-                </div>
-
-                <div
-                  className={`p-3 border rounded-lg flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'bank' 
-                      ? 'border-blue-500 bg-blue-900/20' 
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                  onClick={() => handlePaymentMethodSelect('bank')}
-                >
-                  <Building2 className="h-5 w-5 mr-3 text-yellow-400" />
-                  <div>
-                    <p className="font-medium text-white">Bank Transfer</p>
-                    <p className="text-sm text-gray-400">Pay via direct bank transfer</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDialogOpen(false)}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleProcessPayment}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={!paymentMethod || isProcessing}
-            >
-              {isProcessing ? "Processing..." : "Continue to Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Enhanced Payment Modal */}
+      {isPaymentModalOpen && selectedPlan && (
+        <EnhancedPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          item={selectedPlan}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </>
   );
 };
