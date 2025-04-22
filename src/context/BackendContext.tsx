@@ -823,28 +823,6 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const submitRobotRequest = async (requestData: any) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.ROBOT_REQUESTS, {
-        method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to submit robot request: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error submitting robot request:', error);
-      throw error;
-    }
-  };
-
 
   const deleteRobotRequest = async (id: string) => {
     try {
