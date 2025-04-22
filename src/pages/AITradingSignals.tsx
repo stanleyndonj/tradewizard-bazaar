@@ -110,8 +110,10 @@ const AITradingSignals = () => {
       }
     };
 
-    // Load initial data, handle loading state
+    // Load initial data only once when component mounts
     const loadInitialData = async () => {
+      if (!user) return; // Don't load if no user
+      
       try {
         await loadData();
         await loadSubscriptionPlans();
@@ -125,7 +127,7 @@ const AITradingSignals = () => {
 
     loadInitialData();
 
-  }, [user, tab, navigate, getSubscriptionPrices, hasApiError]);
+  }, []); // Empty dependency array to run only once
 
   // Update URL when tab changes
   useEffect(() => {
@@ -354,6 +356,10 @@ const AITradingSignals = () => {
   };
 
   const chartData = generateChartData();
+
+  if (!user) {
+    return null; // Don't render anything if no user
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-gray-800">
