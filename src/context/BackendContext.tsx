@@ -715,9 +715,6 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Alias for loadSubscriptionPlans
-  const getSubscriptionPrices = loadSubscriptionPlans;
-
   // Function to update subscription price
   const updateSubscriptionPrice = async (planId: string, price: number) => {
     try {
