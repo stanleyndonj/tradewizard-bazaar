@@ -21,6 +21,59 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
+async def get_user_from_token(authorization: str = None):
+    """
+    Get the user ID from the token in the Authorization header.
+    
+    Args:
+        authorization: The Authorization header value.
+    
+    Returns:
+        The user ID if the token is valid, None otherwise.
+    """
+    if not authorization:
+        return None
+    
+    try:
+        # Extract token from 'Bearer {token}'
+        if authorization.startswith('Bearer '):
+            token = authorization.replace('Bearer ', '')
+        else:
+            token = authorization
+            
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        
+        if user_id is None:
+            return None
+            
+        return user_id
+    except JWTError:
+        return None
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """
+    Create a new JWT access token.
+    
+    Args:
+        data: The data to encode in the token.
+        expires_delta: The time delta after which the token expires.
+    
+    Returns:
+        The encoded JWT token.
+    """
+    to_encode = data.copy()
+    
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+        
+    to_encode.update({"exp": expire})
+    
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     

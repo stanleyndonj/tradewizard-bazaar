@@ -2,20 +2,20 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Environment variables
-    DATABASE_URL: str
-    JWT_SECRET_KEY: str
+    # Environment variables - with development defaults for Replit
+    DATABASE_URL: str = "sqlite:///./tradewizard.db"
+    JWT_SECRET_KEY: str = "development_secret_key_change_in_production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours by default
     
-    # M-Pesa API settings
-    M_PESA_API_URL: str
-    M_PESA_CONSUMER_KEY: str
-    M_PESA_CONSUMER_SECRET: str
-    M_PESA_SHORTCODE: str
-    M_PESA_LIPA_NA_MPESA_SHORTCODE: str
-    M_PESA_LIPA_NA_MPESA_SHORTCODE_LIPA: str
-    M_PESA_LIPA_NA_MPESA_PASSKEY: str = ""
+    # M-Pesa API settings - with placeholders for development
+    M_PESA_API_URL: str = "https://sandbox.safaricom.co.ke"
+    M_PESA_CONSUMER_KEY: str = "dummy_consumer_key"
+    M_PESA_CONSUMER_SECRET: str = "dummy_consumer_secret"
+    M_PESA_SHORTCODE: str = "174379"
+    M_PESA_LIPA_NA_MPESA_SHORTCODE: str = "174379"
+    M_PESA_LIPA_NA_MPESA_SHORTCODE_LIPA: str = "174379"
+    M_PESA_LIPA_NA_MPESA_PASSKEY: str = "dummy_passkey"
     
     # API base URL for callbacks
     API_BASE_URL: str = "http://localhost:8000"

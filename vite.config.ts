@@ -10,9 +10,28 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     hmr: {
       clientPort: 443,
-      host: '1c32c126-2796-4222-8b6e-a3bb9e9977b8-00-1yzbrjqgg9mxr.spock.replit.dev'
+      timeout: 120000,
+      protocol: 'wss',
+      overlay: false
     },
-    allowedHosts: ["1c32c126-2796-4222-8b6e-a3bb9e9977b8-00-1yzbrjqgg9mxr.spock.replit.dev", ".replit.dev"],
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
+    allowedHosts: ["all"],
+    proxy: {
+      '/api': {
+        target: 'http://0.0.0.0:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/socket.io': {
+        target: 'http://0.0.0.0:8000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
+    }
   },
   plugins: [
     react(),

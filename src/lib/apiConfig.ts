@@ -1,4 +1,18 @@
-const API_URL = window.location.protocol + '//' + window.location.hostname.replace('-00-', '-8000-');
+
+// Get correct backend URL based on environment
+const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co');
+
+// For Replit: use the repl hostname with port 8000
+// For local: use explicit http://0.0.0.0:8000
+const API_URL = isReplit 
+  ? `${window.location.protocol}//${window.location.hostname.replace('-0000-', '-8000-')}`
+  : `http://0.0.0.0:8000`;
+
+// Log API URL for debugging
+console.log('API_URL configured as:', API_URL);
+
+// Export for direct use in other modules
+export const API_BASE_URL = API_URL;
 
 const API_ENDPOINTS = {
   // Auth endpoints
@@ -67,16 +81,25 @@ export const getAuthHeaders = () => {
 // Helper function to handle API responses
 export const handleApiResponse = async (response: Response) => {
   if (!response.ok) {
-    const errorText = await response.text();
     let errorMessage;
-
+    let errorText;
+    
     try {
-      // Try to parse as JSON for structured error messages
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.detail || errorJson.message || `HTTP error ${response.status}`;
+      // Try to parse as JSON first
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorData.message || `Error: ${response.status} ${response.statusText}`;
     } catch (e) {
-      // Fallback to plain text error
-      errorMessage = errorText || `HTTP error ${response.status}`;
+      // If not JSON, get as text
+      errorText = await response.text();
+      errorMessage = errorText || `Error: ${response.status} ${response.statusText}`;
+      
+      try {
+        // Try to parse as JSON for structured error messages
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorJson.message || `HTTP error ${response.status}`;
+      } catch (parseError) {
+        // Already using errorText as the message, no need to do anything here
+      }
     }
 
     throw new Error(errorMessage);
@@ -91,3 +114,14 @@ export const handleApiResponse = async (response: Response) => {
   // Parse JSON response
   return JSON.parse(text);
 };
+
+// Get the socket.io URL based on environment
+export const getSocketIOUrl = () => {
+  if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
+    return window.location.protocol + '//' + window.location.hostname.replace('-0000-', '-8000-');
+  }
+  // Make sure we're using same origin for WebSocket in development
+  return window.location.protocol === 'https:' ? 'https://0.0.0.0:8000' : 'http://0.0.0.0:8000';
+};
+
+// Note: getAuthHeaders function is already defined above - removed duplicate declaration

@@ -1,11 +1,11 @@
-modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14"]
+modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14", "nodejs-23", "nodejs-22", "postgresql-17", "postgresql-16", "python-3.9", "python-3.8"]
 run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "npm run dev"]
+run = ["sh", "-c", "cd backend && pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 & npm run dev"]
 
 [[ports]]
 localPort = 8000
@@ -16,7 +16,7 @@ localPort = 8080
 externalPort = 80
 
 [workflows]
-runButton = "Start Dev Environment"
+runButton = "Full Stack Dev"
 
 [[workflows.workflow]]
 name = "Backend Server"
@@ -53,6 +53,32 @@ mode = "parallel"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Dev Environment"
+author = 41673428
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python -m pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Full Stack Dev"
+author = 41673428
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && pip install --break-system-packages -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

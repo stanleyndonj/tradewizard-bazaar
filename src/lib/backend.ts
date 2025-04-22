@@ -44,13 +44,13 @@ export interface RobotRequest {
   delivery_date?: string;
   download_url?: string;
   notes?: string;
-  
+
   // Fields for robot configuration
   trading_pairs: string;
   timeframe: string;
   risk_level: string;
   currency?: string;
-  
+
   // Optional fields
   bot_name?: string;
   market?: string;
@@ -59,7 +59,7 @@ export interface RobotRequest {
   duration?: string;
   prediction?: string;
   trading_strategy?: string;
-  
+
   // MT5 specific fields
   account_credentials?: string;
   volume?: string;
@@ -105,7 +105,7 @@ export interface RobotRequestParams {
   timeframe: string;
   risk_level: string;
   currency?: string;
-  
+
   // Optional fields based on robot type
   bot_name?: string;
   market?: string;
@@ -114,7 +114,7 @@ export interface RobotRequestParams {
   duration?: string;
   prediction?: string;
   trading_strategy?: string;
-  
+
   // MT5 specific fields
   account_credentials?: string;
   volume?: string;
@@ -208,15 +208,27 @@ export interface SubscriptionPlan {
 
 // Authentication APIs
 export const registerUser = async (name: string, email: string, password: string) => {
-  const response = await fetch(API_ENDPOINTS.REGISTER, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ name, email, password }),
-  });
+  try {
+    console.log(`Sending registration request to: ${API_ENDPOINTS.REGISTER}`);
+    const response = await fetch(API_ENDPOINTS.REGISTER, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password }),
+    });
 
-  return handleApiResponse(response);
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMessage = errorData.detail || response.statusText;
+      throw new Error(errorMessage);
+    }
+
+    return handleApiResponse(response);
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    throw error; // Re-throw for handling in calling component
+  }
 };
 
 export const loginUser = async (email: string, password: string) => {
@@ -229,19 +241,19 @@ export const loginUser = async (email: string, password: string) => {
   });
 
   const data = await handleApiResponse(response);
-  
+
   // Store the token in localStorage for subsequent API calls
   if (data && data.access_token) {
     localStorage.setItem('auth_token', data.access_token);
   }
-  
+
   return data;
 };
 
 export const logoutUser = async () => {
   // Remove token from localStorage
   localStorage.removeItem('auth_token');
-  
+
   const response = await fetch(API_ENDPOINTS.LOGOUT, {
     method: 'POST',
     headers: {
@@ -470,12 +482,12 @@ export const getSubscriptionPlans = async () => {
     const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLANS, {
       headers: getAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       console.error('Error response from subscription plans API:', response.status, response.statusText);
       throw new Error(`Failed to fetch subscription plans: ${response.status} ${response.statusText}`);
     }
-    
+
     const data = await handleApiResponse(response);
     console.log('Received subscription plans data:', data);
     return data;
@@ -548,14 +560,14 @@ export const updateSubscriptionPrice = async (planId: string, price: number) => 
       },
       body: JSON.stringify({ price }),
     });
-    
+
     if (!response.ok) {
       console.error('Error updating subscription price:', response.status, response.statusText);
       const errorText = await response.text();
       console.error('Error response:', errorText);
       throw new Error(`Failed to update subscription price: ${response.status} ${response.statusText}`);
     }
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error('Error updating subscription price:', error);
@@ -631,7 +643,7 @@ export const getConversations = async () => {
   });
 
   const conversations = await handleApiResponse(response);
-  
+
   // Format the conversations to match the expected interface
   return conversations.map((conversation: any) => ({
     id: conversation.id,
@@ -650,7 +662,7 @@ export const getMessages = async (conversationId: string) => {
   });
 
   const messages = await handleApiResponse(response);
-  
+
   // Format the messages to match the expected interface
   return messages.map((message: any) => ({
     id: message.id,
@@ -713,26 +725,26 @@ export const getUnreadMessageCount = async () => {
 export const getTradingSignals = async (market?: string, timeframe?: string, count?: number) => {
   let url = API_ENDPOINTS.AI_TRADING_SIGNALS;
   const params = new URLSearchParams();
-  
+
   if (market) params.append('market', market);
   if (timeframe) params.append('timeframe', timeframe);
   if (count) params.append('count', count.toString());
-  
+
   const queryString = params.toString();
   if (queryString) url += `?${queryString}`;
-  
+
   console.log('Fetching trading signals from:', url);
-  
+
   try {
     const response = await fetch(url, {
       headers: getAuthHeaders(),
     });
-    
+
     if (!response.ok) {
       console.error('Error response from trading signals API:', response.status, response.statusText);
       throw new Error(`Failed to fetch trading signals: ${response.status} ${response.statusText}`);
     }
-    
+
     return handleApiResponse(response);
   } catch (error) {
     console.error('Error fetching trading signals:', error);
@@ -750,11 +762,11 @@ const generateMockSignals = (market: string, timeframe: string, count: number) =
     : market === 'crypto' 
       ? ["BTC/USD", "ETH/USD", "XRP/USD"] 
       : ["AAPL", "MSFT", "AMZN"];
-  
+
   for (let i = 0; i < count; i++) {
     const now = new Date();
     now.setHours(now.getHours() - i * 2);
-    
+
     signals.push({
       id: `mock-${i}`,
       symbol: symbols[Math.floor(Math.random() * symbols.length)],
@@ -771,20 +783,20 @@ const generateMockSignals = (market: string, timeframe: string, count: number) =
       status: ["active", "completed", "pending"][Math.floor(Math.random() * 3)]
     });
   }
-  
+
   return signals;
 };
 
 export const analyzeMarket = async (symbol: string, timeframe?: string) => {
   let url = API_ENDPOINTS.AI_MARKET_ANALYSIS;
   const params = new URLSearchParams();
-  
+
   params.append('symbol', symbol);
   if (timeframe) params.append('timeframe', timeframe);
-  
+
   const queryString = params.toString();
   url += `?${queryString}`;
-  
+
   const response = await fetch(url, {
     headers: getAuthHeaders(),
   });

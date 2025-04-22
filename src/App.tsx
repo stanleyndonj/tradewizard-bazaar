@@ -15,10 +15,13 @@ import AITradingSignals from './pages/AITradingSignals';
 import Messages from './pages/Messages';
 import NotFound from './pages/NotFound';
 
+import { SocketProvider } from './context/SocketContext';
+
 function App() {
   return (
     <BackendProvider>
-      <Routes>
+      <SocketProvider>
+        <Routes>
         {/* Main routes */}
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth />} />
@@ -43,6 +46,7 @@ function App() {
         {/* Not found - must be last */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </SocketProvider>
     </BackendProvider>
   );
 }

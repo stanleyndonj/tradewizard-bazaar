@@ -11,7 +11,7 @@ Before you begin, ensure you have the following installed:
 - Python 3.9+ (for backend)
 - Node.js 18+ 
 - pip (Python package manager)
-- npm or bun
+- npm 
 
 ## Backend Setup
 
