@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Check, Shield } from 'lucide-react';
@@ -26,80 +25,40 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
     loadSubscriptionPlans();
   }, []);
 
-  const loadSubscriptionPlans = async () => {
-    setIsLoading(true);
+  const loadSubscriptionPlans = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
-      console.log('Loading subscription plans for customers...');
-      
-      // Add a small delay to ensure backend sync
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const subscriptionPlans = await getSubscriptionPlans();
-      console.log('Received subscription plans:', subscriptionPlans);
-      
-      if (Array.isArray(subscriptionPlans) && subscriptionPlans.length > 0) {
-        console.log('Setting subscription plans from API:', subscriptionPlans);
-        setPlans(subscriptionPlans);
+      const plansData = await getSubscriptionPlans();
+      if (plansData && Array.isArray(plansData)) {
+        // Compare with existing plans to see if prices have changed
+        const pricesChanged = plans.length > 0 && plansData.some((newPlan, index) => 
+          index < plans.length && newPlan.price !== plans[index].price
+        );
+
+        setPlans(plansData);
+
+        // Notify user if prices have changed and it's not the initial load
+        if (pricesChanged && plans.length > 0 && !silent) {
+          toast({
+            title: "Pricing Updated",
+            description: "Subscription prices have been updated by the administrator.",
+            variant: "default",
+          });
+        }
       } else {
-        console.warn('API returned invalid data, using fallback plans');
-        // Fallback to default plans if API fails
-        setPlans([
-          {
-            id: 'basic-monthly',
-            name: 'Basic Plan',
-            price: 29.99,
-            currency: 'USD',
-            interval: 'monthly',
-            features: [
-              'Access to AI trading signals',
-              'Basic market analysis',
-              'Daily signal updates',
-              'Email notifications'
-            ],
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'premium-monthly',
-            name: 'Premium Plan',
-            price: 99.99,
-            currency: 'USD',
-            interval: 'monthly',
-            features: [
-              'All Basic features',
-              'Advanced market analysis',
-              'Real-time signal updates',
-              'Direct AI chat support',
-              'Custom alerts and notifications'
-            ],
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 'enterprise-monthly',
-            name: 'Enterprise Plan',
-            price: 299.99,
-            currency: 'USD',
-            interval: 'monthly',
-            features: [
-              'All Premium features',
-              'Dedicated account manager',
-              'Custom robot creation',
-              'Priority support',
-              'White-label solutions',
-              'API access'
-            ],
-            created_at: new Date().toISOString()
-          }
-        ]);
+        throw new Error('Invalid plans data format');
       }
     } catch (error) {
       console.error('Error loading subscription plans:', error);
-      toast({
-        title: "Error loading plans",
-        description: "Could not load subscription plans. Please try again later.",
-        variant: "destructive"
-      });
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: "Failed to load subscription plans. Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -206,7 +165,7 @@ const SubscriptionUpgrade = ({ onSubscribe }: SubscriptionUpgradeProps) => {
         <p>By subscribing, you agree to our Terms of Service and Privacy Policy.</p>
         <p className="mt-2">Need help? Contact our support team.</p>
       </div>
-      
+
       {isPaymentModalOpen && selectedPlan && (
         <PaymentForm
           isOpen={isPaymentModalOpen}

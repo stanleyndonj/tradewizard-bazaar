@@ -134,24 +134,47 @@ const SubscriptionRequired = ({ message = "Subscribe to access this feature", pl
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700 hover:border-blue-500 transition-all"
+              className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl overflow-hidden border border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 transition-all"
             >
+              {/* Header with gradient accent */}
+              <div className="h-2 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+              
               <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                <div className="flex items-baseline mb-4">
-                  <span className="text-3xl font-bold text-white">${typeof plan.price === 'number' ? plan.price.toFixed(2) : plan.price}</span>
-                  <span className="text-gray-400 ml-1">/ {plan.interval}</span>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded-full">
+                    {plan.interval === 'monthly' ? 'Monthly' : 'Yearly'}
+                  </span>
                 </div>
-                <ul className="space-y-2 mb-6">
+                
+                <div className="flex items-baseline mb-6">
+                  {plan.currency === 'USD' ? (
+                    <span className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      ${typeof plan.price === 'number' ? plan.price.toFixed(2) : plan.price}
+                    </span>
+                  ) : (
+                    <span className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      {plan.currency} {typeof plan.price === 'number' ? plan.price.toFixed(2) : plan.price}
+                    </span>
+                  )}
+                  <span className="text-gray-400 ml-2 text-sm">/ {plan.interval === 'monthly' ? 'month' : 'year'}</span>
+                </div>
+                
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent mb-6"></div>
+                
+                <ul className="space-y-3 mb-8">
                   {plan.features.map((feature: string, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300">{feature}</span>
+                    <li key={i} className="flex items-start group">
+                      <div className="rounded-full bg-blue-900/20 p-1 mr-3 group-hover:bg-blue-800/40 transition-colors">
+                        <CheckCircle2 className="h-4 w-4 text-blue-400 group-hover:text-blue-300" />
+                      </div>
+                      <span className="text-gray-300 text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
+                
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0"
                   onClick={() => handleSubscribeClick(plan)}
                 >
                   Upgrade Now

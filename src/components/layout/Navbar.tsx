@@ -1,367 +1,238 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, LogOut, User, ShoppingCart, Settings, MessageSquare, BarChart2, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
+import { Menu, X, Bell, ChevronDown, User, Settings, LogOut, BarChart2, Home, DollarSign, MessageSquare, ShoppingBag } from 'lucide-react';
+import { useBackend } from '@/context/BackendContext';
+import { Button } from '@/components/ui/button';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useBackend } from '@/context/BackendContext';
-import { motion } from 'framer-motion';
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useMobile } from '@/hooks/use-mobile';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { user, logout } = useBackend();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logoutUser } = useBackend();
+  const isMobile = useMobile();
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 10);
+      setScrolled(window.scrollY > 20);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when navigating to a new page
   useEffect(() => {
+    // Close mobile menu when route changes
     setIsOpen(false);
   }, [location.pathname]);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   const isHomePage = location.pathname === '/';
+  const isAuthPage = location.pathname === '/auth';
+  const isRobotMarketplace = location.pathname === '/robots';
+  const isAITradingSignals = location.pathname.includes('/signals');
+  const isActiveLink = (path: string) => location.pathname === path;
 
-  // Handle scroll to section on home page or navigate to home page and then scroll
-  const handleSectionNavigation = (sectionId: string) => {
-    if (isHomePage) {
-      // If already on home page, just scroll to the section
-      const section = document.getElementById(sectionId);
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth' });
-      }
-    } else {
-      // If on another page, navigate to home and then scroll after the page loads
-      navigate('/');
-      // Wait for the navigation to complete and DOM to update
-      setTimeout(() => {
-        const section = document.getElementById(sectionId);
-        if (section) {
-          section.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
-  };
-
-  const handleLogout = async () => {
-    await logoutUser();
-  };
-
-  // Get initials for avatar
-  const getInitials = () => {
-    if (!user?.name) return 'U';
-    return user.name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  if (isAuthPage) return null;
 
   return (
-    <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'py-3 bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-lg shadow-lg'
-          : 'py-5 bg-gradient-to-r from-gray-900/80 to-gray-800/80 backdrop-blur-md'
+    <header 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled || !isHomePage 
+          ? 'bg-gray-900/95 backdrop-blur-md shadow-md py-2' 
+          : 'bg-transparent py-4'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="flex items-center justify-between">
-          <motion.div 
-            className="flex items-center space-x-4"
+      <div className="container mx-auto px-4 flex items-center justify-between">
+        {/* Logo */}
+        <Link 
+          to="/" 
+          className="flex items-center space-x-2"
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
             whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            className="relative"
           >
-            <Link to="/" className="flex items-center">
-              <img 
-                src="/tradeWizard-logo.png" 
-                alt="TradeWizard Logo" 
-                className="h-10 w-10 mr-3 filter drop-shadow-lg"
-              />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 text-transparent bg-clip-text">
-                TradeWizard
-              </span>
-            </Link>
+            <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <BarChart2 className="text-white h-6 w-6" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900" />
           </motion.div>
+          <div className="font-bold text-white text-xl">TradeWizard</div>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            {/* Nav Items with hover effects */}
-            <motion.button 
-              onClick={() => handleSectionNavigation('services')} 
-              className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors relative px-2 py-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              <span className="relative z-10">Services</span>
-              <motion.span 
-                className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500" 
-                whileHover={{ width: '100%' }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.button>
-            
-            <motion.button 
-              onClick={() => handleSectionNavigation('expertise')} 
-              className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors relative px-2 py-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              <span className="relative z-10">Expertise</span>
-              <motion.span 
-                className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500" 
-                whileHover={{ width: '100%' }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.button>
-            
-            <motion.button 
-              onClick={() => handleSectionNavigation('testimonials')} 
-              className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors relative px-2 py-1"
-              whileHover={{ scale: 1.05 }}
-            >
-              <span className="relative z-10">Testimonials</span>
-              <motion.span 
-                className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500" 
-                whileHover={{ width: '100%' }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.button>
-            
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <Link 
-                to="/about-us" 
-                className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors relative px-2 py-1"
-              >
-                <span className="relative z-10">About Us</span>
-                <motion.span 
-                  className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500" 
-                  whileHover={{ width: '100%' }}
-                  transition={{ duration: 0.2 }}
-                />
-              </Link>
-            </motion.div>
-            
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <Link 
-                to="/robot-marketplace" 
-                className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors relative px-2 py-1"
-              >
-                <span className="relative z-10">Marketplace</span>
-                <motion.span 
-                  className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500" 
-                  whileHover={{ width: '100%' }}
-                  transition={{ duration: 0.2 }}
-                />
-              </Link>
-            </motion.div>
-            
-            {user ? (
-              <div className="flex items-center space-x-5">
-                <motion.div whileHover={{ scale: 1.05 }}>
-                  <Link 
-                    to="/customer-dashboard" 
-                    className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                </motion.div>
-                
-                <motion.div whileHover={{ scale: 1.05 }}>
-                  <Link 
-                    to="/ai-trading-signals" 
-                    className="text-sm font-medium text-white/90 hover:text-blue-400 transition-colors"
-                  >
-                    Trading Signals
-                  </Link>
-                </motion.div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="p-1 h-auto bg-gray-800/60 hover:bg-gray-700/80 border border-gray-700 rounded-lg" aria-label="User menu">
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-8 w-8 border-2 border-blue-500">
-                          <AvatarFallback className="bg-blue-600 text-white font-medium">{getInitials()}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium text-white/90 mr-1">{user.name}</span>
-                        <ChevronDown className="h-4 w-4 text-blue-400" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-gray-800 border border-gray-700" align="end">
-                    <DropdownMenuLabel className="text-white/90">My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-gray-700" />
-                    <DropdownMenuItem asChild className="focus:bg-gray-700">
-                      <Link to="/customer-dashboard" className="flex items-center text-white/80 hover:text-white">
-                        <User className="mr-2 h-4 w-4 text-blue-400" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="focus:bg-gray-700">
-                      <Link to="/robot-marketplace" className="flex items-center text-white/80 hover:text-white">
-                        <ShoppingCart className="mr-2 h-4 w-4 text-blue-400" />
-                        Marketplace
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="focus:bg-gray-700">
-                      <Link to="/ai-trading-signals" className="flex items-center text-white/80 hover:text-white">
-                        <BarChart2 className="mr-2 h-4 w-4 text-blue-400" />
-                        Trading Signals
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="focus:bg-gray-700">
-                      <Link to="/messages" className="flex items-center text-white/80 hover:text-white">
-                        <MessageSquare className="mr-2 h-4 w-4 text-blue-400" />
-                        Messages
-                      </Link>
-                    </DropdownMenuItem>
-                    {user.is_admin && (
-                      <DropdownMenuItem asChild className="focus:bg-gray-700">
-                        <Link to="/admin-dashboard" className="flex items-center text-white/80 hover:text-white">
-                          <Settings className="mr-2 h-4 w-4 text-blue-400" />
-                          Admin Panel
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator className="bg-gray-700" />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-400 hover:text-red-300 focus:bg-gray-700">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg shadow-lg transition-all duration-200 border border-blue-500/30" asChild>
-                  <Link to="/auth">Get Started</Link>
-                </Button>
-              </motion.div>
+        {/* Desktop Navigation */}
+        {!isMobile && (
+          <nav className="hidden md:flex items-center space-x-1">
+            <NavItem to="/" label="Home" icon={<Home className="w-4 h-4 mr-1" />} isActive={isActiveLink('/')} />
+            <NavItem to="/robots" label="Robot Marketplace" icon={<ShoppingBag className="w-4 h-4 mr-1" />} isActive={isActiveLink('/robots')} />
+            <NavItem to="/signals" label="AI Trading Signals" icon={<BarChart2 className="w-4 h-4 mr-1" />} isActive={isActiveLink('/signals')} />
+
+            {user && (
+              <NavItem to="/dashboard" label="Dashboard" icon={<Settings className="w-4 h-4 mr-1" />} isActive={isActiveLink('/dashboard')} />
             )}
-          </div>
+          </nav>
+        )}
 
-          {/* Mobile Navigation Toggle */}
-          <div className="md:hidden">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+        {/* Right side actions */}
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <>
+              {/* Notifications */}
+              <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  2
+                </span>
+              </Button>
+
+              {/* User menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative border border-gray-700 bg-gray-800/70 hover:bg-gray-800 rounded-full p-1">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-medium uppercase">
+                      {user.name ? user.name.charAt(0) : user.email?.charAt(0)}
+                    </div>
+                    <ChevronDown className="h-4 w-4 ml-1 text-gray-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 mt-1 py-2 bg-gray-900 border border-gray-700 text-white">
+                  <div className="px-4 py-2 border-b border-gray-700">
+                    <p className="text-sm font-medium">{user.name || user.email}</p>
+                    <p className="text-xs text-gray-400">{user.email}</p>
+                  </div>
+
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="hover:bg-gray-800 cursor-pointer mt-1">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+
+                  {user.is_admin && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')} className="hover:bg-gray-800 cursor-pointer">
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem onClick={() => navigate('/messages')} className="hover:bg-gray-800 cursor-pointer">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    <span>Messages</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="bg-gray-700" />
+
+                  <DropdownMenuItem onClick={handleLogout} className="hover:bg-gray-800 cursor-pointer text-red-400">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <div className="flex items-center space-x-3">
+              <Link to="/auth">
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-full"
+                >
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile menu toggle */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsOpen(!isOpen)}
-              className="text-white hover:text-blue-400 focus:outline-none bg-gray-800/60 p-2 rounded-md"
-              aria-label="Toggle menu"
+              className="md:hidden text-white"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </motion.button>
-          </div>
-        </nav>
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          )}
+        </div>
+      </div>
 
-        {/* Mobile Navigation Menu */}
-        {isOpen && (
-          <motion.div 
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {isOpen && isMobile && (
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden absolute top-full left-0 right-0 p-4 bg-gray-900/95 backdrop-blur-lg shadow-lg border-t border-gray-800"
+            className="md:hidden bg-gray-900 border-t border-gray-800"
           >
-            <div className="flex flex-col space-y-3">
-              <motion.button 
-                onClick={() => handleSectionNavigation('services')} 
-                className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                whileTap={{ scale: 0.98 }}
-              >
-                Services
-              </motion.button>
-              <motion.button 
-                onClick={() => handleSectionNavigation('expertise')} 
-                className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                whileTap={{ scale: 0.98 }}
-              >
-                Expertise
-              </motion.button>
-              <motion.button 
-                onClick={() => handleSectionNavigation('testimonials')} 
-                className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                whileTap={{ scale: 0.98 }}
-              >
-                Testimonials
-              </motion.button>
-              <Link 
-                to="/about-us" 
-                className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-              >
-                About Us
-              </Link>
-              <Link 
-                to="/robot-marketplace" 
-                className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-              >
-                Marketplace
-              </Link>
-              {user ? (
+            <div className="container mx-auto px-4 py-4 space-y-2">
+              <MobileNavItem to="/" label="Home" icon={<Home className="w-5 h-5 mr-2" />} />
+              <MobileNavItem to="/robots" label="Robot Marketplace" icon={<ShoppingBag className="w-5 h-5 mr-2" />} />
+              <MobileNavItem to="/signals" label="AI Trading Signals" icon={<BarChart2 className="w-5 h-5 mr-2" />} />
+
+              {user && (
                 <>
-                  <Link 
-                    to="/customer-dashboard" 
-                    className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link 
-                    to="/ai-trading-signals" 
-                    className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                  >
-                    Trading Signals
-                  </Link>
-                  <Link 
-                    to="/messages" 
-                    className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                  >
-                    Messages
-                  </Link>
+                  <MobileNavItem to="/dashboard" label="Dashboard" icon={<Settings className="w-5 h-5 mr-2" />} />
                   {user.is_admin && (
-                    <Link 
-                      to="/admin-dashboard" 
-                      className="text-sm font-medium py-2 px-3 text-white/90 hover:text-blue-400 transition-colors rounded-md hover:bg-gray-800/80"
-                    >
-                      Admin Panel
-                    </Link>
+                    <MobileNavItem to="/admin" label="Admin Panel" icon={<DollarSign className="w-5 h-5 mr-2" />} />
                   )}
-                  <Button 
-                    onClick={handleLogout}
-                    variant="ghost" 
-                    className="justify-start p-2 h-auto text-red-400 hover:bg-gray-800/80 hover:text-red-300 mt-2 rounded-md"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </Button>
+                  <MobileNavItem to="/messages" label="Messages" icon={<MessageSquare className="w-5 h-5 mr-2" />} />
+                  <div className="pt-2 mt-2 border-t border-gray-800">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-gray-800 py-2"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-5 w-5" />
+                      Log out
+                    </Button>
+                  </div>
                 </>
-              ) : (
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full mt-2 shadow-md" asChild>
-                  <Link to="/auth">Get Started</Link>
-                </Button>
               )}
             </div>
           </motion.div>
         )}
-      </div>
-    </motion.header>
+      </AnimatePresence>
+    </header>
   );
 };
+
+// Desktop NavItem component
+const NavItem = ({ to, label, icon, isActive }: { to: string; label: string; icon: React.ReactNode, isActive: boolean }) => (
+  <Link 
+    to={to} 
+    className={`px-3 py-2 rounded-lg flex items-center text-sm font-medium transition-colors ${
+      isActive 
+        ? 'bg-gray-800 text-white' 
+        : 'text-gray-300 hover:text-white hover:bg-gray-800/60'
+    }`}
+  >
+    {icon}
+    {label}
+  </Link>
+);
+
+// Mobile NavItem component
+const MobileNavItem = ({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) => (
+  <Link 
+    to={to} 
+    className="flex items-center py-3 px-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg"
+  >
+    {icon}
+    <span className="font-medium">{label}</span>
+  </Link>
+);
 
 export default Navbar;

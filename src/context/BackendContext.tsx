@@ -106,7 +106,7 @@ interface BackendContextType {
   checkSubscription: (planId: string) => Promise<boolean>;
   subscribeToPlan: (planId: string, amount: number, currency: string, paymentMethod: string) => Promise<any>;
   cancelSubscription: (subscriptionId: string) => Promise<void>;
-  updateSubscriptionPrice: (planId: string, price: number) => Promise<void>;
+  updateSubscriptionPrice: (planId: string, price: number) => Promise<boolean>;
   initiateMpesaPayment: (phone: string, amount: number, itemId: string, paymentType?: 'purchase' | 'subscription') => Promise<any>;
   verifyPayment: (transactionId: string) => Promise<boolean>;
   verifyMpesaPayment: (transactionId: string) => Promise<boolean>; // Alias for verifyPayment
@@ -172,7 +172,6 @@ const BackendContext = createContext<BackendContextType>({
   checkSubscription: async () => false,
   subscribeToPlan: async () => {},
   cancelSubscription: async () => {},
-  updateSubscriptionPrice: async () => {},
   initiateMpesaPayment: async () => {},
   verifyPayment: async () => false,
   verifyMpesaPayment: async () => false,
@@ -207,7 +206,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
-  
+
   // Function to get subscription prices
   const getSubscriptionPrices = async () => {
     try {
@@ -221,7 +220,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       return [];
     }
   };
-  
+
   // This function has been moved elsewhere in the file
 
   const registerUser = async (name: string, email: string, password: string) => {
@@ -705,12 +704,12 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       console.log(`Updating price for plan ${planId} to ${price}`);
-      
-      const success = await updateSubscriptionPlanPrice(planId, price);
+
+      const success = await updateSubscriptionPlanPrice(planId, price); // Assuming updateSubscriptionPlanPrice exists
       if (!success) {
         throw new Error("Failed to update subscription price");
       }
-      
+
       // Refresh plans after update
       await loadSubscriptionPlans();
       return true;
@@ -986,7 +985,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     chatMessages,
     currentConversation,
     setCurrentConversationId,
-    
+
     // Subscription price management
     getSubscriptionPrices,
     updateSubscriptionPrice,

@@ -476,57 +476,119 @@ export const getUsers = async () => {
 };
 
 // AI Trading Signals APIs
-export const getSubscriptionPlans = async () => {
-  try {
-    console.log('Fetching subscription plans from:', API_ENDPOINTS.SUBSCRIPTION_PLANS);
-    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLANS, {
-      headers: getAuthHeaders(),
-    });
+export const getSubscriptionPlans = async (): Promise<any> => {
+    try {
+      const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLANS, {
+        headers: getAuthHeaders(),
+      });
 
-    if (!response.ok) {
-      console.error('Error response from subscription plans API:', response.status, response.statusText);
-      throw new Error(`Failed to fetch subscription plans: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await handleApiResponse(response);
-    console.log('Received subscription plans data:', data);
-    return data;
-  } catch (error) {
-    console.error('Error fetching subscription plans:', error);
-    // Return default plans as fallback
-    return [
-      {
-        id: 'basic-monthly',
-        name: 'Basic AI Trading Signals',
-        price: 29.99,
-        currency: 'USD',
-        interval: 'monthly',
-        features: [
-          'Access to AI trading signals',
-          'Basic market analysis',
-          'Daily signal updates',
-          'Email notifications'
-        ],
-        created_at: new Date().toISOString()
-      },
-      {
-        id: 'premium-monthly',
-        name: 'Premium AI Trading Signals',
-        price: 99.99,
-        currency: 'USD',
-        interval: 'monthly',
-        features: [
-          'All Basic features',
-          'Advanced market analysis',
-          'Real-time signal updates',
-          'Direct AI chat support',
-          'Custom alerts and notifications'
-        ],
-        created_at: new Date().toISOString()
+      if (!response.ok) {
+        console.error('Error response from subscription plans API:', response.status, response.statusText);
+        throw new Error(`Failed to fetch subscription plans: ${response.status} ${response.statusText}`);
       }
-    ];
-  }
-};
+
+      const data = await handleApiResponse(response);
+      console.log('Received subscription plans data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      // Return default plans as fallback
+      return [
+        {
+          id: 'basic-monthly',
+          name: 'Basic AI Trading Signals',
+          price: 29.99,
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'Access to AI trading signals',
+            'Basic market analysis',
+            'Daily signal updates',
+            'Email notifications'
+          ],
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 'premium-monthly',
+          name: 'Premium AI Trading Signals',
+          price: 99.99,
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'All Basic features',
+            'Advanced market analysis',
+            'Real-time signal updates',
+            'Direct AI chat support',
+            'Custom alerts and notifications'
+          ],
+          created_at: new Date().toISOString()
+        }
+      ];
+    }
+  };
+
+  const updateSubscriptionPrice = async (planId: string, newPrice: number): Promise<boolean> => {
+    try {
+      console.log(`Updating plan ${planId} with price ${newPrice}`);
+
+      if (!planId) {
+        console.error('Invalid plan ID provided');
+        throw new Error('Invalid plan ID provided');
+      }
+
+      if (isNaN(newPrice) || newPrice <= 0) {
+        console.error('Invalid price value:', newPrice);
+        throw new Error('Price must be a positive number');
+      }
+
+      // Format price to 2 decimal places for consistency
+      const formattedPrice = parseFloat(newPrice.toFixed(2));
+      console.log(`Sending formatted price: ${formattedPrice}`);
+
+      const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ price: formattedPrice }),
+      });
+
+      // Log full request details for debugging
+      console.log('Request details:', {
+        url: API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId),
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ price: formattedPrice }),
+      });
+
+      if (!response.ok) {
+        console.error('Error updating subscription price:', response.status, response.statusText);
+
+        try {
+          // Try to parse error response as JSON first
+          const errorJson = await response.json();
+          console.error('Error response JSON:', errorJson);
+          throw new Error(errorJson.detail || `Failed to update subscription price: ${response.status} ${response.statusText}`);
+        } catch (parseError) {
+          // Fall back to text if not JSON
+          const errorText = await response.text();
+          console.error('Error response text:', errorText);
+          throw new Error(`Failed to update subscription price: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      const data = await response.json();
+      console.log('Price update successful, response:', data);
+      return true;
+    } catch (error) {
+      console.error('Error updating subscription price:', error);
+      throw error;
+    }
+  };
 
 export const getSubscriptionPlanById = async (planId: string) => {
   const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
@@ -549,68 +611,6 @@ export const createSubscriptionPlan = async (plan: Omit<SubscriptionPlan, 'id' |
   return handleApiResponse(response);
 };
 
-export const updateSubscriptionPrice = async (planId: string, price: number) => {
-  console.log(`Updating plan ${planId} with price ${price}`);
-  
-  if (!planId) {
-    console.error('Invalid plan ID provided');
-    throw new Error('Invalid plan ID provided');
-  }
-  
-  if (isNaN(price) || price <= 0) {
-    console.error('Invalid price value:', price);
-    throw new Error('Price must be a positive number');
-  }
-  
-  try {
-    // Format price to 2 decimal places for consistency
-    const formattedPrice = parseFloat(price.toFixed(2));
-    console.log(`Sending formatted price: ${formattedPrice}`);
-    
-    const response = await fetch(API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId), {
-      method: 'PUT',
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ price: formattedPrice }),
-    });
-
-    // Log full request details for debugging
-    console.log('Request details:', {
-      url: API_ENDPOINTS.SUBSCRIPTION_PLAN_BY_ID(planId),
-      method: 'PUT',
-      headers: {
-        ...getAuthHeaders(),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ price: formattedPrice }),
-    });
-
-    if (!response.ok) {
-      console.error('Error updating subscription price:', response.status, response.statusText);
-      
-      try {
-        // Try to parse error response as JSON first
-        const errorJson = await response.json();
-        console.error('Error response JSON:', errorJson);
-        throw new Error(errorJson.detail || `Failed to update subscription price: ${response.status} ${response.statusText}`);
-      } catch (parseError) {
-        // Fall back to text if not JSON
-        const errorText = await response.text();
-        console.error('Error response text:', errorText);
-        throw new Error(`Failed to update subscription price: ${response.status} ${response.statusText}`);
-      }
-    }
-
-    const data = await response.json();
-    console.log('Price update successful, response:', data);
-    return true;
-  } catch (error) {
-    console.error('Error updating subscription price:', error);
-    throw error;
-  }
-};
 
 // Alias for consistency with context function naming
 export const updateSubscriptionPlanPrice = updateSubscriptionPrice;
