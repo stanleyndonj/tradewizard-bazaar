@@ -14,7 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
-  const { user, logout } = useBackend();
+  const { user, logoutUser } = useBackend(); // Correct function name from useBackend
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -37,7 +37,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       // Call the logoutUser function from the BackendContext
-      await logoutUser();
+      await logoutUser(); // Ensure correct function is called
       // Then clear all auth-related data from localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
