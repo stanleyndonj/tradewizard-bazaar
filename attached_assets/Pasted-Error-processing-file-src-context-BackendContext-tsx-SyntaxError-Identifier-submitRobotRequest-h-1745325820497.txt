@@ -1,0 +1,43 @@
+Error processing file src/context/BackendContext.tsx: SyntaxError: Identifier 'submitRobotRequest' has already been declared. (826:8)
+    at constructor (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:360:19)
+    at TypeScriptParserMixin.raise (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3338:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:1566:19)
+    at TypeScriptScopeHandler.declareName (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:1532:12)
+    at TypeScriptScopeHandler.declareName (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:7066:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:7494:16)
+    at TypeScriptParserMixin.checkIdentifier (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:7490:12)
+    at TypeScriptParserMixin.checkLVal (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:7431:12)
+    at TypeScriptParserMixin.parseVarId (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:13072:10)
+    at TypeScriptParserMixin.parseVarId (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:9605:11) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'VarRedeclaration',
+  loc: Position { line: 826, column: 8, index: 27407 },
+  pos: 27407,
+  syntaxPlugin: undefined
+}
+Error:   Failed to scan for dependencies from entries:
+  /home/stanley/tradewizard-bazaar/index.html
+
+  ✘ [ERROR] The symbol "submitRobotRequest" has already been declared
+
+    src/context/BackendContext.tsx:826:8:
+      826 │   const submitRobotRequest = async (requestData: any) => {
+          ╵         ~~~~~~~~~~~~~~~~~~
+
+  The symbol "submitRobotRequest" was originally declared here:
+
+    src/context/BackendContext.tsx:444:8:
+      444 │   const submitRobotRequest = async (params: RobotRequestParams) => {
+          ╵         ~~~~~~~~~~~~~~~~~~
+
+
+    at failureErrorWithLog (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:945:25
+    at runOnEndCallbacks (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:1315:45)
+    at buildResponseToResult (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:943:7)
+    at /home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:955:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:954:54)
+    at handleRequest (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:647:17)
+    at handleIncomingPacket (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:672:7)
+    at Socket.readFromStdout (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
