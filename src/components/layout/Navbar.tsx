@@ -36,14 +36,12 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      // First call the API logout endpoint
+      // Call the logoutUser function from the BackendContext
       await logoutUser();
       // Then clear all auth-related data from localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('auth_token');
-      // Reset the user in context
-      logout();
       // Force navigate to home and reload the page to clear any in-memory state
       navigate('/');
       window.location.reload();
