@@ -169,7 +169,6 @@ const BackendContext = createContext<BackendContextType>({
   getSubscriptionPlans: async () => [],
   getSubscriptionPrices: async () => [],
   updateSubscriptionPrice: async () => false,
-  getSubscriptionPrices: async () => [],
   checkSubscription: async () => false,
   subscribeToPlan: async () => {},
   cancelSubscription: async () => {},
