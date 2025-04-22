@@ -34,14 +34,22 @@ const Navbar = () => {
     setIsOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    // First clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // Then call the context logout function
-    logout();
-    // Redirect to home page instead of auth to prevent immediate re-login
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // First call the API logout endpoint
+      await logoutUser();
+      // Then clear all auth-related data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_token');
+      // Reset the user in context
+      logout();
+      // Force navigate to home and reload the page to clear any in-memory state
+      navigate('/');
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   const isHomePage = location.pathname === '/';
