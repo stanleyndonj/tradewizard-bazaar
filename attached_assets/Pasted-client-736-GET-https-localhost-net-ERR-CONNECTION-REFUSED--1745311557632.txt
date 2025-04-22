@@ -1,0 +1,141 @@
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+backend.ts:492 Received subscription plans data: []
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+backend.ts:492 Received subscription plans data: []
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:492 Received subscription plans data: []
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:492 Received subscription plans data: []
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+backend.ts:492 Received subscription plans data: []
+AITradingSignals.tsx:143 Attempting to fetch trading signals...
+backend.ts:736 Fetching trading signals from: http://0.0.0.0:8000/api/ai-trading-signals
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:34 AITradingSignals component unmounted
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+backend.ts:492 Received subscription plans data: []
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+client:736 
+            
+            
+           GET https://localhost/ net::ERR_CONNECTION_REFUSED
+ping @ client:736
+waitForSuccessfulPing @ client:755
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
+AITradingSignals.tsx:146 Received 10 trading signals
+backend.ts:481 Fetching subscription plans from: http://0.0.0.0:8000/api/subscription/plans
