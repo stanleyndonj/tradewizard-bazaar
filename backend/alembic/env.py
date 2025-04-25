@@ -24,8 +24,12 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url with the one from environment variables
-config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL"))
+# Import config settings to get the validated database URL
+from app.config import settings
+
+# Override sqlalchemy.url with the one from environment variables with fallback
+database_url = settings.get_database_url()
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

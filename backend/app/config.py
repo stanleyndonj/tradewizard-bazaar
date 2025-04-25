@@ -4,6 +4,37 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Environment variables - with development defaults for Replit
     DATABASE_URL: str = "sqlite:///./tradewizard.db"
+    
+    def get_database_url(self):
+        """
+        Returns the database URL with fallback to SQLite if Postgres connection fails
+        """
+        import os
+        from urllib.parse import urlparse
+        
+        if os.environ.get("DATABASE_URL", "").startswith("postgresql"):
+            try:
+                # Test connection
+                import psycopg2
+                parsed = urlparse(self.DATABASE_URL)
+                conn_params = {
+                    "dbname": parsed.path[1:],
+                    "user": parsed.username,
+                    "password": parsed.password,
+                    "host": parsed.hostname,
+                    "port": parsed.port or 5432,
+                    "sslmode": "require",
+                    "connect_timeout": 10
+                }
+                conn = psycopg2.connect(**conn_params)
+                conn.close()
+                return self.DATABASE_URL
+            except Exception as e:
+                print(f"Error connecting to PostgreSQL: {e}")
+                print("Falling back to SQLite database")
+                return "sqlite:///./tradewizard.db"
+        
+        return self.DATABASE_URL
     JWT_SECRET_KEY: str = "development_secret_key_change_in_production"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours by default
