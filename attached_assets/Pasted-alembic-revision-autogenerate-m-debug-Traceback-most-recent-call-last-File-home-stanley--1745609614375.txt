@@ -1,0 +1,44 @@
+alembic revision --autogenerate -m "debug"
+Traceback (most recent call last):
+  File "/home/stanley/tradewizard-bazaar/backend/venv/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/command.py", line 236, in revision
+    script_directory.run_env()
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/script/base.py", line 586, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/stanley/tradewizard-bazaar/backend/alembic/env.py", line 78, in <module>
+    run_migrations_online()
+  File "/home/stanley/tradewizard-bazaar/backend/alembic/env.py", line 60, in run_migrations_online
+    connectable = engine_from_config(
+                  ^^^^^^^^^^^^^^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 823, in engine_from_config
+    return create_engine(url, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 2, in create_engine
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py", line 281, in warned
+    return fn(*args, **kwargs)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 553, in create_engine
+    entrypoint = u._get_entrypoint()
+                 ^^^^^^^^^^^^^^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/sqlalchemy/engine/url.py", line 772, in _get_entrypoint
+    cls = registry.load(name)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/stanley/tradewizard-bazaar/backend/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 375, in load
+    raise exc.NoSuchModuleError(
+sqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:driver
