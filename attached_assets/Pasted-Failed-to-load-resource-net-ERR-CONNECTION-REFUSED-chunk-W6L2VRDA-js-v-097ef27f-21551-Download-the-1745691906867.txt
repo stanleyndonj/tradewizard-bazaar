@@ -1,0 +1,39 @@
+Failed to load resource: net::ERR_CONNECTION_REFUSED
+chunk-W6L2VRDA.js?v=097ef27f:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+apiConfig.ts:11 API_URL configured as: http://0.0.0.0:8000
+2SocketContext.tsx:27 Uncaught ReferenceError: useBackend is not defined
+    at SocketProvider (SocketContext.tsx:27:33)
+    at renderWithHooks (chunk-W6L2VRDA.js?v=097ef27f:11548:26)
+    at mountIndeterminateComponent (chunk-W6L2VRDA.js?v=097ef27f:14926:21)
+    at beginWork (chunk-W6L2VRDA.js?v=097ef27f:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-W6L2VRDA.js?v=097ef27f:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-W6L2VRDA.js?v=097ef27f:3699:24)
+    at invokeGuardedCallback (chunk-W6L2VRDA.js?v=097ef27f:3733:39)
+    at beginWork$1 (chunk-W6L2VRDA.js?v=097ef27f:19765:15)
+    at performUnitOfWork (chunk-W6L2VRDA.js?v=097ef27f:19198:20)
+    at workLoopSync (chunk-W6L2VRDA.js?v=097ef27f:19137:13)
+chunk-W6L2VRDA.js?v=097ef27f:14032 The above error occurred in the <SocketProvider> component:
+
+    at SocketProvider (http://localhost:8080/src/context/SocketContext.tsx:36:34)
+    at BackendProvider (http://localhost:8080/src/context/BackendContext.tsx?t=1745691825299:94:35)
+    at App
+    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=151d019c:4502:15)
+    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=151d019c:5248:5)
+    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-7ZKHW5FC.js?v=097ef27f:38:15)
+    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f1421109:62:5)
+    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=d8fd2f9e:2875:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-W6L2VRDA.js?v=097ef27f:14032
+chunk-W6L2VRDA.js?v=097ef27f:19413 Uncaught ReferenceError: useBackend is not defined
+    at SocketProvider (SocketContext.tsx:27:33)
+    at renderWithHooks (chunk-W6L2VRDA.js?v=097ef27f:11548:26)
+    at mountIndeterminateComponent (chunk-W6L2VRDA.js?v=097ef27f:14926:21)
+    at beginWork (chunk-W6L2VRDA.js?v=097ef27f:15914:22)
+    at beginWork$1 (chunk-W6L2VRDA.js?v=097ef27f:19753:22)
+    at performUnitOfWork (chunk-W6L2VRDA.js?v=097ef27f:19198:20)
+    at workLoopSync (chunk-W6L2VRDA.js?v=097ef27f:19137:13)
+    at renderRootSync (chunk-W6L2VRDA.js?v=097ef27f:19116:15)
+    at recoverFromConcurrentError (chunk-W6L2VRDA.js?v=097ef27f:18736:28)
+    at performConcurrentWorkOnRoot (chunk-W6L2VRDA.js?v=097ef27f:18684:30)
