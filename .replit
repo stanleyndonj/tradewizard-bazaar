@@ -17,7 +17,7 @@ localPort = 8080
 externalPort = 80
 
 [workflows]
-runButton = "Start Dev Environment"
+runButton = "Full Stack Dev"
 
 [[workflows.workflow]]
 name = "Backend Server"
@@ -58,3 +58,16 @@ args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Full Stack Dev"
+author = 41817458
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev -- --host 0.0.0.0"

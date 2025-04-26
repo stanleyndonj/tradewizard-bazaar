@@ -1,4 +1,3 @@
-jsx
 import React, {
   createContext,
   useState,
