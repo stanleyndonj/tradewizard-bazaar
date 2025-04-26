@@ -1,0 +1,330 @@
+ver responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+backend.ts:491 Received subscription plans data: Array(0)
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k96c25pe:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k96h51ba:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k976lye9:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k992b96g:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k9ccvhgt:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k9g88x3q:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:69 Socket.IO connection error: TransportError: xhr poll error
+    at XHR.onError (socket__io-client.js?v=edc641ff:495:33)
+    at _Request.<anonymous> (socket__io-client.js?v=edc641ff:778:12)
+    at Emitter.emit (socket__io-client.js?v=edc641ff:354:20)
+    at _Request._onError (socket__io-client.js?v=edc641ff:876:10)
+    at socket__io-client.js?v=edc641ff:854:18
+(anonymous) @ SocketContext.tsx:69
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onerror @ socket__io-client.js?v=edc641ff:2560
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:3137
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:1597
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+onError @ socket__io-client.js?v=edc641ff:495
+(anonymous) @ socket__io-client.js?v=edc641ff:778
+Emitter.emit @ socket__io-client.js?v=edc641ff:354
+_onError @ socket__io-client.js?v=edc641ff:876
+(anonymous) @ socket__io-client.js?v=edc641ff:854
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+localhost/:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_REFUSED
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k9lih3ml:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+SocketContext.tsx:99 Disconnecting Socket.IO
+chunk-W6L2VRDA.js?v=2f6a4bd0:16670 Uncaught TypeError: loadUsers is not a function
+    at ChatInterface.tsx:41:9
+    at commitHookEffectListMount (chunk-W6L2VRDA.js?v=2f6a4bd0:16915:34)
+    at commitPassiveMountOnFiber (chunk-W6L2VRDA.js?v=2f6a4bd0:18156:19)
+    at commitPassiveMountEffects_complete (chunk-W6L2VRDA.js?v=2f6a4bd0:18129:17)
+    at commitPassiveMountEffects_begin (chunk-W6L2VRDA.js?v=2f6a4bd0:18119:15)
+    at commitPassiveMountEffects (chunk-W6L2VRDA.js?v=2f6a4bd0:18109:11)
+    at flushPassiveEffectsImpl (chunk-W6L2VRDA.js?v=2f6a4bd0:19490:11)
+    at flushPassiveEffects (chunk-W6L2VRDA.js?v=2f6a4bd0:19447:22)
+    at performSyncWorkOnRoot (chunk-W6L2VRDA.js?v=2f6a4bd0:18868:11)
+    at flushSyncCallbacks (chunk-W6L2VRDA.js?v=2f6a4bd0:9119:30)
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+chunk-W6L2VRDA.js?v=2f6a4bd0:14032 The above error occurred in the <ChatInterface> component:
+
+    at ChatInterface (http://localhost:8080/src/components/admin/ChatInterface.tsx:34:185)
+    at div
+    at div
+    at main
+    at div
+    at Messages (http://localhost:8080/src/pages/Messages.tsx:33:22)
+    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=74292809:4089:5)
+    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=74292809:4559:5)
+    at SocketProvider (http://localhost:8080/src/context/SocketContext.tsx:37:34)
+    at BackendProvider (http://localhost:8080/src/context/BackendContext.tsx:94:35)
+    at App
+    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=74292809:4502:15)
+    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=74292809:5248:5)
+    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-W25XJCJA.js?v=2f6a4bd0:38:15)
+    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=6df94a6b:62:5)
+    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=4d744e30:2875:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-W6L2VRDA.js?v=2f6a4bd0:14032
+chunk-W6L2VRDA.js?v=2f6a4bd0:9129 Uncaught TypeError: loadUsers is not a function
+    at ChatInterface.tsx:41:9
+    at commitHookEffectListMount (chunk-W6L2VRDA.js?v=2f6a4bd0:16915:34)
+    at commitPassiveMountOnFiber (chunk-W6L2VRDA.js?v=2f6a4bd0:18156:19)
+    at commitPassiveMountEffects_complete (chunk-W6L2VRDA.js?v=2f6a4bd0:18129:17)
+    at commitPassiveMountEffects_begin (chunk-W6L2VRDA.js?v=2f6a4bd0:18119:15)
+    at commitPassiveMountEffects (chunk-W6L2VRDA.js?v=2f6a4bd0:18109:11)
+    at flushPassiveEffectsImpl (chunk-W6L2VRDA.js?v=2f6a4bd0:19490:11)
+    at flushPassiveEffects (chunk-W6L2VRDA.js?v=2f6a4bd0:19447:22)
+    at performSyncWorkOnRoot (chunk-W6L2VRDA.js?v=2f6a4bd0:18868:11)
+    at flushSyncCallbacks (chunk-W6L2VRDA.js?v=2f6a4bd0:9119:30)
+SocketContext.tsx:99 Disconnecting Socket.IO
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k9ljfkbg:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+2BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=k9lmkss7:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
