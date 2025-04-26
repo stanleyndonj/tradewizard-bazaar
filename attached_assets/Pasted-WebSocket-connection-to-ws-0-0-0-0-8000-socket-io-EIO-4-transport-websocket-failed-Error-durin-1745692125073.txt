@@ -1,0 +1,62 @@
+WebSocket connection to 'ws://0.0.0.0:8000/socket.io/?EIO=4&transport=websocket' failed: Error during WebSocket handshake: Unexpected response code: 403
+createSocket @ socket__io-client.js?v=2241395e:1059
+SocketContext.tsx:63 Socket.IO connection error: TransportError: websocket error
+    at WS.onError (socket__io-client.js?v=2241395e:495:33)
+    at ws.onerror (socket__io-client.js?v=2241395e:1010:35)
+(anonymous) @ SocketContext.tsx:63
+BackendContext.tsx:712 Error fetching unread count: Not Found
+getUnreadMessageCount @ BackendContext.tsx:712
+api/notifications:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+BackendContext.tsx:909 Error loading notifications: TypeError: data.filter is not a function
+    at loadNotifications (BackendContext.tsx:906:39)
+    at async Promise.all (index 3)
+    at async loadInitialData (BackendContext.tsx:979:11)
+loadNotifications @ BackendContext.tsx:909
+2NotificationDropdown.tsx:87 Uncaught TypeError: notifications.slice is not a function
+    at NotificationDropdown (NotificationDropdown.tsx:87:29)
+    at renderWithHooks (chunk-W6L2VRDA.js?v=8bbed5f1:11548:26)
+    at updateFunctionComponent (chunk-W6L2VRDA.js?v=8bbed5f1:14582:28)
+    at beginWork (chunk-W6L2VRDA.js?v=8bbed5f1:15924:22)
+    at HTMLUnknownElement.callCallback2 (chunk-W6L2VRDA.js?v=8bbed5f1:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-W6L2VRDA.js?v=8bbed5f1:3699:24)
+    at invokeGuardedCallback (chunk-W6L2VRDA.js?v=8bbed5f1:3733:39)
+    at beginWork$1 (chunk-W6L2VRDA.js?v=8bbed5f1:19765:15)
+    at performUnitOfWork (chunk-W6L2VRDA.js?v=8bbed5f1:19198:20)
+    at workLoopSync (chunk-W6L2VRDA.js?v=8bbed5f1:19137:13)
+chunk-W6L2VRDA.js?v=8bbed5f1:14032 The above error occurred in the <NotificationDropdown> component:
+
+    at NotificationDropdown (http://localhost:8080/src/components/ui/NotificationDropdown.tsx:32:127)
+    at div
+    at div
+    at header
+    at Navbar (http://localhost:8080/src/components/layout/Navbar.tsx:33:34)
+    at div
+    at AdminDashboard (http://localhost:8080/src/pages/AdminDashboard.tsx:37:67)
+    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=69103ad7:4089:5)
+    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=69103ad7:4559:5)
+    at SocketProvider (http://localhost:8080/src/context/SocketContext.tsx?t=1745692021486:37:34)
+    at BackendProvider (http://localhost:8080/src/context/BackendContext.tsx:94:35)
+    at App
+    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=69103ad7:4502:15)
+    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=69103ad7:5248:5)
+    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-W25XJCJA.js?v=8bbed5f1:38:15)
+    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=7f3f0390:62:5)
+    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=631966fe:2875:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-W6L2VRDA.js?v=8bbed5f1:14032
+chunk-W6L2VRDA.js?v=8bbed5f1:19413 Uncaught TypeError: notifications.slice is not a function
+    at NotificationDropdown (NotificationDropdown.tsx:87:29)
+    at renderWithHooks (chunk-W6L2VRDA.js?v=8bbed5f1:11548:26)
+    at updateFunctionComponent (chunk-W6L2VRDA.js?v=8bbed5f1:14582:28)
+    at beginWork (chunk-W6L2VRDA.js?v=8bbed5f1:15924:22)
+    at beginWork$1 (chunk-W6L2VRDA.js?v=8bbed5f1:19753:22)
+    at performUnitOfWork (chunk-W6L2VRDA.js?v=8bbed5f1:19198:20)
+    at workLoopSync (chunk-W6L2VRDA.js?v=8bbed5f1:19137:13)
+    at renderRootSync (chunk-W6L2VRDA.js?v=8bbed5f1:19116:15)
+    at recoverFromConcurrentError (chunk-W6L2VRDA.js?v=8bbed5f1:18736:28)
+    at performConcurrentWorkOnRoot (chunk-W6L2VRDA.js?v=8bbed5f1:18684:30)
