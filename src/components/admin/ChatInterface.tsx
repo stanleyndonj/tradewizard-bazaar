@@ -1,115 +1,77 @@
-
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MessageSquare, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useBackend } from '@/context/BackendContext';
 import { useSocket } from '@/context/SocketContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TradingLoader } from '@/components/ui/loader';
-import { MessageSquare, Search, Send, User, CheckCheck, Check } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { TradingLoader } from '@/components/ui/loader';
 
 const ChatInterface = () => {
   const { 
     user, 
-    users,
+    getUsers,
     conversations, 
     chatMessages, 
     currentConversation, 
     setCurrentConversationId,
     sendMessage,
-    loadConversations,
-    loadChatMessages,
-    loadUsers,
+    getConversations,
+    getMessages,
     markMessageAsRead
   } = useBackend();
-  
+
   const { socket } = useSocket();
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Load data when component mounts
   useEffect(() => {
     if (user) {
-      loadConversations();
-      
+      getConversations();
+
       // If admin, load all users
       if (user.is_admin) {
-        loadUsers();
+        getUsers().catch(error => console.error("Error loading users:", error));
       }
-      
+
       // Join socket room
       if (socket && user.is_admin) {
         socket.emit('join_admin_chat', { adminId: user.id });
       }
     }
-    
+
     return () => {
       // Leave socket room when component unmounts
       if (socket && user?.is_admin) {
         socket.emit('leave_admin_chat', { adminId: user.id });
       }
     };
-  }, [user, socket, loadConversations, loadUsers]);
-  
+  }, [user, socket, getConversations, getUsers]);
+
   // Load messages when conversation changes
   useEffect(() => {
     if (currentConversation) {
-      loadChatMessages(currentConversation.id);
+      getMessages(currentConversation.id);
     }
-  }, [currentConversation, loadChatMessages]);
-  
-  // Handle new socket messages
+  }, [currentConversation, getMessages]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
-    if (socket) {
-      const handleNewMessage = (message: any) => {
-        if (currentConversation && message.conversationId === currentConversation.id) {
-          loadChatMessages(currentConversation.id);
-        } else {
-          // If the message is for another conversation, refresh conversations to show unread indicator
-          loadConversations();
-        }
-      };
-      
-      socket.on('new_message', handleNewMessage);
-      
-      return () => {
-        socket.off('new_message', handleNewMessage);
-      };
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [socket, currentConversation, loadChatMessages, loadConversations]);
-  
-  // Scroll to bottom of messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  
-  // When messages change or conversation changes, scroll to bottom
-  useEffect(() => {
-    scrollToBottom();
-    
-    // Mark all messages in current conversation as read
-    if (currentConversation && chatMessages[currentConversation.id]) {
-      chatMessages[currentConversation.id].forEach(msg => {
-        if (!msg.read && ((user?.is_admin && msg.sender === 'user') || (!user?.is_admin && msg.sender === 'admin'))) {
-          markMessageAsRead(msg.id);
-        }
-      });
-    }
-  }, [currentConversation, chatMessages, user?.is_admin, markMessageAsRead]);
-  
-  // Handle sending a message
+  }, [chatMessages, currentConversation]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!messageText.trim() || !currentConversation) return;
-    
-    setLoading(true);
-    
+    if (!messageText.trim() || !currentConversation || loading) return;
+
     try {
+      setLoading(true);
       await sendMessage(currentConversation.id, messageText);
       setMessageText('');
     } catch (error) {
@@ -118,7 +80,7 @@ const ChatInterface = () => {
       setLoading(false);
     }
   };
-  
+
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conversation => {
     const searchLower = searchQuery.toLowerCase();
@@ -127,16 +89,16 @@ const ChatInterface = () => {
       conversation.user_email.toLowerCase().includes(searchLower)
     );
   });
-  
+
   // Count unread messages by conversation
   const getUnreadCount = (conversationId: string) => {
     if (!chatMessages[conversationId]) return 0;
-    
+
     return chatMessages[conversationId].filter(
       msg => !msg.read && ((user?.is_admin && msg.sender === 'user') || (!user?.is_admin && msg.sender === 'admin'))
     ).length;
   };
-  
+
   return (
     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
       {/* Left sidebar - conversations list */}
@@ -153,71 +115,65 @@ const ChatInterface = () => {
             />
           </div>
         </div>
-        
-        <ScrollArea className="flex-1">
+
+        <ScrollArea className="flex-grow">
           {filteredConversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-400">
-              No conversations found
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+              <MessageSquare className="h-10 w-10 mb-2" />
+              <p className="text-center">No conversations found</p>
             </div>
           ) : (
-            filteredConversations.map((conversation) => {
-              const isActive = currentConversation?.id === conversation.id;
-              const unreadCount = getUnreadCount(conversation.id);
-              
-              return (
-                <div
-                  key={conversation.id}
-                  className={cn(
-                    "p-3 cursor-pointer hover:bg-gray-800 flex items-center border-b border-gray-800",
-                    isActive && "bg-gray-800"
-                  )}
-                  onClick={() => setCurrentConversationId(conversation.id)}
-                >
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white">
-                    {conversation.user_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="ml-3 flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-white truncate">
-                        {conversation.user_name}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {format(new Date(conversation.last_message_time), 'h:mm a')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-gray-300 truncate">
-                        {conversation.last_message || "No messages yet"}
-                      </p>
+            <div className="p-2 space-y-1">
+              {filteredConversations.map((conversation) => {
+                const unreadCount = getUnreadCount(conversation.id);
+
+                return (
+                  <div
+                    key={conversation.id}
+                    className={cn(
+                      "p-3 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors",
+                      currentConversation?.id === conversation.id
+                        ? "bg-gray-800"
+                        : "bg-gray-900"
+                    )}
+                    onClick={() => setCurrentConversationId(conversation.id)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium text-gray-200">{conversation.user_name}</p>
+                        <p className="text-xs text-gray-400">{conversation.user_email}</p>
+                      </div>
                       {unreadCount > 0 && (
-                        <span className="ml-2 bg-blue-600 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                        <span className="bg-blue-600 text-white text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center">
                           {unreadCount}
                         </span>
                       )}
                     </div>
+                    {conversation.last_message && (
+                      <p className="text-sm text-gray-400 mt-1 truncate">
+                        {conversation.last_message}
+                      </p>
+                    )}
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </ScrollArea>
       </div>
-      
-      {/* Right side - chat messages */}
+
+      {/* Right side - messages */}
       <div className="flex-1 flex flex-col">
         {currentConversation ? (
           <>
             {/* Chat header */}
-            <div className="p-3 border-b border-gray-800 flex items-center">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white">
-                {currentConversation.user_name.charAt(0).toUpperCase()}
-              </div>
-              <div className="ml-3">
-                <h3 className="font-medium text-white">{currentConversation.user_name}</h3>
+            <div className="p-4 border-b border-gray-800 flex items-center">
+              <div>
+                <h3 className="font-medium">{currentConversation.user_name}</h3>
                 <p className="text-xs text-gray-400">{currentConversation.user_email}</p>
               </div>
             </div>
-            
+
             {/* Chat messages */}
             <ScrollArea className="flex-1 p-4">
               {!chatMessages[currentConversation.id] ? (
@@ -236,7 +192,7 @@ const ChatInterface = () => {
                     const isCurrentUser = 
                       (user?.is_admin && message.sender === 'admin') || 
                       (!user?.is_admin && message.sender === 'user');
-                    
+
                     return (
                       <div
                         key={message.id}
@@ -250,21 +206,15 @@ const ChatInterface = () => {
                             "max-w-[70%] rounded-lg p-3",
                             isCurrentUser
                               ? "bg-blue-600 text-white rounded-br-none"
-                              : "bg-gray-800 text-white rounded-bl-none"
+                              : "bg-gray-800 text-gray-100 rounded-bl-none"
                           )}
                         >
-                          <p className="break-words">{message.text}</p>
-                          <div className="flex justify-end items-center mt-1 space-x-1">
-                            <span className="text-xs opacity-70">
-                              {format(new Date(message.timestamp), 'h:mm a')}
-                            </span>
-                            {isCurrentUser && (
-                              message.read ? (
-                                <CheckCheck className="h-3 w-3 opacity-70" />
-                              ) : (
-                                <Check className="h-3 w-3 opacity-70" />
-                              )
-                            )}
+                          {message.text}
+                          <div className={cn(
+                            "text-xs mt-1",
+                            isCurrentUser ? "text-blue-200" : "text-gray-400"
+                          )}>
+                            {new Date(message.timestamp).toLocaleTimeString()}
                           </div>
                         </div>
                       </div>
@@ -274,14 +224,14 @@ const ChatInterface = () => {
                 </div>
               )}
             </ScrollArea>
-            
+
             {/* Message input */}
             <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-800">
-              <div className="flex items-center">
+              <div className="flex">
                 <Input
                   type="text"
-                  placeholder="Type a message..."
-                  className="flex-1 bg-gray-800 border-gray-700"
+                  placeholder="Type your message..."
+                  className="flex-grow bg-gray-800 border-gray-700"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   disabled={loading}

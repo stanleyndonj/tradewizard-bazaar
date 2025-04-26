@@ -116,12 +116,23 @@ export const handleApiResponse = async (response: Response) => {
 
 // Get the socket.io URL based on environment
 export const getSocketIOUrl = () => {
-  try {
-    // Extract base URL from API_URL to create a consistent socket URL
-    const url = new URL(API_URL);
-    return `${url.protocol}//${url.host}`;
-  } catch (e) {
-    console.error('Error parsing API_URL for socket:', e);
-    return API_URL; // Fallback to API_URL if parsing fails
+  const isLocalDev = process.env.NODE_ENV === 'development';
+
+  // In Replit environment, use the websocket URL that matches the backend server
+  if (window.location.hostname.endsWith('.repl.co')) {
+    // In Replit deployment, use the same hostname but with backend path
+    const host = window.location.hostname;
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${host}/api/socket.io`;
   }
+
+  if (isLocalDev) {
+    // For local development
+    return 'http://0.0.0.0:8000/socket.io';
+  }
+
+  // Fallback - use current host with backend port
+  const host = window.location.hostname;
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  return `${protocol}//${host}:8000/socket.io`;
 };

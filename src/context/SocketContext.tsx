@@ -42,12 +42,28 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const socketUrl = getSocketIOUrl();
       console.log('Connecting to Socket.IO at:', socketUrl);
 
+      // Check if backend server is running first to avoid repetitive connection attempts
+      try {
+        const response = await fetch(`${socketUrl.replace('socket.io', '')}/api/health-check`, { 
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+          console.warn('Backend server not responding, skipping socket connection');
+          return;
+        }
+      } catch (error) {
+        console.warn('Backend server not available, skipping socket connection');
+        return;
+      }
+
       // Create socket connection with auth token and better error handling
       socketInstance = io(socketUrl, {
         transports: ['polling', 'websocket'], // Start with polling first as it's more reliable
         reconnection: true,
-        reconnectionAttempts: 3,
-        reconnectionDelay: 2000,
+        reconnectionAttempts: 2,
+        reconnectionDelay: 3000,
         timeout: 10000,
         auth: { token },  // Use auth instead of extraHeaders for token
         extraHeaders: {

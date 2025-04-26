@@ -157,14 +157,14 @@ async def send_message(sid, data):
         conversation.last_message = text
         conversation.last_message_time = new_message.timestamp
         db.commit()
-        
+
         # Create notification for the recipient
         if sender_type == 'admin':
             # Notification for the user
             user_id = conversation.user_id
             sender = db.query(User).filter(User.id == sender_id).first()
             sender_name = sender.name if sender and sender.name else "Admin"
-            
+
             notification = Notification(
                 id=str(uuid.uuid4()),
                 user_id=user_id,
@@ -181,7 +181,7 @@ async def send_message(sid, data):
             admins = db.query(User).filter(User.is_admin == True).all()
             user = db.query(User).filter(User.id == sender_id).first()
             user_name = user.name if user and user.name else user.email if user else "User"
-            
+
             for admin in admins:
                 notification = Notification(
                     id=str(uuid.uuid4()),
