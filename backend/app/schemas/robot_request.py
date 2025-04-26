@@ -1,14 +1,14 @@
-
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+from enum import Enum
 
 class RobotRequestBase(BaseModel):
     robot_type: str
     trading_pairs: str
     timeframe: str
     risk_level: str  # Changed from int to str to match frontend
-    
+
     # New fields
     bot_name: Optional[str] = None
     market: Optional[str] = None
@@ -18,7 +18,7 @@ class RobotRequestBase(BaseModel):
     prediction: Optional[str] = None
     currency: Optional[str] = None
     trading_strategy: Optional[str] = None
-    
+
     # MT5 specific fields
     account_credentials: Optional[str] = None
     volume: Optional[str] = None  # Changed from float to str
@@ -58,3 +58,8 @@ class RobotRequestResponse(RobotRequestBase):
     class Config:
         from_attributes = True
 
+class RobotRequestStatusUpdate(str, Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
