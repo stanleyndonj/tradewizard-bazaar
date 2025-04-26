@@ -1,0 +1,135 @@
+Failed to load resource: net::ERR_CONNECTION_REFUSED
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kihlaeo8:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kiinpdyf:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:99 Disconnecting Socket.IO
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kiipn46d:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+SocketContext.tsx:99 Disconnecting Socket.IO
+chunk-W6L2VRDA.js?v=fef7cc9c:16670 Uncaught TypeError: loadUsers is not a function
+    at ChatInterface.tsx:41:9
+    at commitHookEffectListMount (chunk-W6L2VRDA.js?v=fef7cc9c:16915:34)
+    at commitPassiveMountOnFiber (chunk-W6L2VRDA.js?v=fef7cc9c:18156:19)
+    at commitPassiveMountEffects_complete (chunk-W6L2VRDA.js?v=fef7cc9c:18129:17)
+    at commitPassiveMountEffects_begin (chunk-W6L2VRDA.js?v=fef7cc9c:18119:15)
+    at commitPassiveMountEffects (chunk-W6L2VRDA.js?v=fef7cc9c:18109:11)
+    at flushPassiveEffectsImpl (chunk-W6L2VRDA.js?v=fef7cc9c:19490:11)
+    at flushPassiveEffects (chunk-W6L2VRDA.js?v=fef7cc9c:19447:22)
+    at performSyncWorkOnRoot (chunk-W6L2VRDA.js?v=fef7cc9c:18868:11)
+    at flushSyncCallbacks (chunk-W6L2VRDA.js?v=fef7cc9c:9119:30)
+SocketContext.tsx:43 Connecting to Socket.IO at: http://0.0.0.0:8000
+chunk-W6L2VRDA.js?v=fef7cc9c:14032 The above error occurred in the <ChatInterface> component:
+
+    at ChatInterface (http://localhost:8080/src/components/admin/ChatInterface.tsx:34:185)
+    at div
+    at div
+    at main
+    at div
+    at Messages (http://localhost:8080/src/pages/Messages.tsx:33:22)
+    at RenderedRoute (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=f7ae91e1:4089:5)
+    at Routes (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=f7ae91e1:4559:5)
+    at SocketProvider (http://localhost:8080/src/context/SocketContext.tsx:37:34)
+    at BackendProvider (http://localhost:8080/src/context/BackendContext.tsx:94:35)
+    at App
+    at Router (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=f7ae91e1:4502:15)
+    at BrowserRouter (http://localhost:8080/node_modules/.vite/deps/react-router-dom.js?v=f7ae91e1:5248:5)
+    at Provider (http://localhost:8080/node_modules/.vite/deps/chunk-W25XJCJA.js?v=fef7cc9c:38:15)
+    at TooltipProvider (http://localhost:8080/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=a155449a:62:5)
+    at QueryClientProvider (http://localhost:8080/node_modules/.vite/deps/@tanstack_react-query.js?v=787e814b:2875:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+logCapturedError @ chunk-W6L2VRDA.js?v=fef7cc9c:14032
+chunk-W6L2VRDA.js?v=fef7cc9c:9129 Uncaught TypeError: loadUsers is not a function
+    at ChatInterface.tsx:41:9
+    at commitHookEffectListMount (chunk-W6L2VRDA.js?v=fef7cc9c:16915:34)
+    at commitPassiveMountOnFiber (chunk-W6L2VRDA.js?v=fef7cc9c:18156:19)
+    at commitPassiveMountEffects_complete (chunk-W6L2VRDA.js?v=fef7cc9c:18129:17)
+    at commitPassiveMountEffects_begin (chunk-W6L2VRDA.js?v=fef7cc9c:18119:15)
+    at commitPassiveMountEffects (chunk-W6L2VRDA.js?v=fef7cc9c:18109:11)
+    at flushPassiveEffectsImpl (chunk-W6L2VRDA.js?v=fef7cc9c:19490:11)
+    at flushPassiveEffects (chunk-W6L2VRDA.js?v=fef7cc9c:19447:22)
+    at performSyncWorkOnRoot (chunk-W6L2VRDA.js?v=fef7cc9c:18868:11)
+    at flushSyncCallbacks (chunk-W6L2VRDA.js?v=fef7cc9c:9119:30)
+SocketContext.tsx:99 Disconnecting Socket.IO
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kij0rvdq:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kiiosfv3:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kiiq1rix:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kij12nil:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kij0h8qd:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kijfkahi:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=kijhwi5j:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+3BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+0.0.0.0:8000/api/chat/conversations:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+6BackendContext.tsx:623 Error fetching conversations: Not Found
