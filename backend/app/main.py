@@ -27,7 +27,7 @@ app = FastAPI(
 )
 
 # Mount Socket.io to FastAPI app
-socket_app = socketio.ASGIApp(sio, app)
+app = socketio.ASGIApp(sio, app)
 
 # Define allowed origins
 origins = [

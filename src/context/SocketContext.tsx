@@ -37,83 +37,73 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     let socketInstance: Socket | null = null;
 
-    try {
-      // Get the correct Socket.IO URL
-      const socketUrl = getSocketIOUrl();
-      console.log('Connecting to Socket.IO at:', socketUrl);
-
-      // Check if backend server is running first to avoid repetitive connection attempts
+    const setupSocket = () => {
       try {
-        const response = await fetch(`${socketUrl.replace('socket.io', '')}/api/health-check`, { 
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` }
+        // Get the correct Socket.IO URL
+        const socketUrl = getSocketIOUrl();
+        console.log('Connecting to Socket.IO at:', socketUrl);
+
+        // Create socket connection with auth token and better error handling
+        socketInstance = io(socketUrl, {
+          transports: ['polling', 'websocket'], // Start with polling first as it's more reliable
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 20000,
+          auth: { token },  // Use auth instead of extraHeaders for token
+          extraHeaders: {
+            Authorization: `Bearer ${token}`
+          }
         });
-        
-        if (!response.ok) {
-          console.warn('Backend server not responding, skipping socket connection');
-          return;
-        }
+
+        socketInstance.on('connect', () => {
+          console.log('Socket.IO connected successfully');
+          setConnected(true);
+        });
+
+        socketInstance.on('disconnect', () => {
+          console.log('Socket.IO disconnected');
+          setConnected(false);
+        });
+
+        socketInstance.on('connect_error', (error) => {
+          console.error('Socket.IO connection error:', error);
+          setConnected(false);
+        });
+
+        // Listen for new messages
+        socketInstance.on('new_message', (message) => {
+          console.log('New message received via socket:', message);
+          setLastMessage(message);
+
+          // Refresh notifications as we might have a new message notification
+          loadNotifications();
+        });
+
+        // Listen for new notifications
+        socketInstance.on('new_notification', (notification) => {
+          console.log('New notification received via socket:', notification);
+          setLastNotification(notification);
+
+          // Refresh notifications
+          loadNotifications();
+        });
+
+        setSocket(socketInstance);
       } catch (error) {
-        console.warn('Backend server not available, skipping socket connection');
-        return;
+        console.error('Error setting up socket connection:', error);
       }
+    };
 
-      // Create socket connection with auth token and better error handling
-      socketInstance = io(socketUrl, {
-        transports: ['polling', 'websocket'], // Start with polling first as it's more reliable
-        reconnection: true,
-        reconnectionAttempts: 2,
-        reconnectionDelay: 3000,
-        timeout: 10000,
-        auth: { token },  // Use auth instead of extraHeaders for token
-        extraHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      socketInstance.on('connect', () => {
-        console.log('Socket.IO connected successfully');
-        setConnected(true);
-      });
-
-      socketInstance.on('disconnect', () => {
-        console.log('Socket.IO disconnected');
-        setConnected(false);
-      });
-
-      socketInstance.on('connect_error', (error) => {
-        console.error('Socket.IO connection error:', error);
-        setConnected(false);
-      });
-
-      // Listen for new messages
-      socketInstance.on('new_message', (message) => {
-        console.log('New message received via socket:', message);
-        setLastMessage(message);
-
-        // Refresh notifications as we might have a new message notification
-        loadNotifications();
-      });
-
-      // Listen for new notifications
-      socketInstance.on('new_notification', (notification) => {
-        console.log('New notification received via socket:', notification);
-        setLastNotification(notification);
-
-        // Refresh notifications
-        loadNotifications();
-      });
-
-      setSocket(socketInstance);
-    } catch (error) {
-      console.error('Error setting up socket connection:', error);
-    }
+    // Set up socket connection
+    setupSocket();
 
     // Cleanup function
     return () => {
       if (socketInstance) {
         console.log('Disconnecting Socket.IO');
         socketInstance.disconnect();
+        setSocket(null);
       }
     };
   }, [loadNotifications]);

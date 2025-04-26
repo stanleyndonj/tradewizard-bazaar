@@ -10,8 +10,7 @@ import { TradingLoader } from '@/components/ui/loader';
 
 const ChatInterface = () => {
   const { 
-    user, 
-    getUsers,
+    user,
     conversations, 
     chatMessages, 
     currentConversation, 
@@ -19,29 +18,23 @@ const ChatInterface = () => {
     sendMessage,
     getConversations,
     getMessages,
-    markMessageAsRead
+    loadConversations 
   } = useBackend();
 
   const { socket } = useSocket();
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load data when component mounts
   useEffect(() => {
-    if (user) {
-      getConversations();
+    if (user?.is_admin) {
+      loadConversations();
+    }
 
-      // If admin, load all users
-      if (user.is_admin) {
-        getUsers().catch(error => console.error("Error loading users:", error));
-      }
-
-      // Join socket room
-      if (socket && user.is_admin) {
-        socket.emit('join_admin_chat', { adminId: user.id });
-      }
+    // Join socket room if admin
+    if (socket && user?.is_admin) {
+      socket.emit('join_admin_chat', { adminId: user.id });
     }
 
     return () => {
@@ -50,7 +43,7 @@ const ChatInterface = () => {
         socket.emit('leave_admin_chat', { adminId: user.id });
       }
     };
-  }, [user, socket, getConversations, getUsers]);
+  }, [user, socket, loadConversations]);
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -72,7 +65,7 @@ const ChatInterface = () => {
 
     try {
       setLoading(true);
-      await sendMessage(currentConversation.id, messageText);
+      await sendMessage(currentConversation.id, messageText, 'admin');
       setMessageText('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -81,82 +74,55 @@ const ChatInterface = () => {
     }
   };
 
-  // Filter conversations based on search query
-  const filteredConversations = conversations.filter(conversation => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      conversation.user_name.toLowerCase().includes(searchLower) ||
-      conversation.user_email.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Count unread messages by conversation
-  const getUnreadCount = (conversationId: string) => {
-    if (!chatMessages[conversationId]) return 0;
-
-    return chatMessages[conversationId].filter(
-      msg => !msg.read && ((user?.is_admin && msg.sender === 'user') || (!user?.is_admin && msg.sender === 'admin'))
-    ).length;
-  };
-
   return (
     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
-      {/* Left sidebar - conversations list */}
-      <div className="w-1/4 border-r border-gray-800 flex flex-col">
+      {/* Left side - conversations list */}
+      <div className="w-1/3 border-r border-gray-800 flex flex-col">
         <div className="p-3 border-b border-gray-800">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
             <Input
               type="text"
               placeholder="Search conversations..."
               className="pl-10 bg-gray-800 border-gray-700"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
         <ScrollArea className="flex-grow">
-          {filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
-              <MessageSquare className="h-10 w-10 mb-2" />
-              <p className="text-center">No conversations found</p>
+          {conversations.length === 0 ? (
+            <div className="p-4 text-center text-gray-400">
+              <p>No conversations yet</p>
             </div>
           ) : (
-            <div className="p-2 space-y-1">
-              {filteredConversations.map((conversation) => {
-                const unreadCount = getUnreadCount(conversation.id);
-
-                return (
-                  <div
-                    key={conversation.id}
-                    className={cn(
-                      "p-3 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors",
-                      currentConversation?.id === conversation.id
-                        ? "bg-gray-800"
-                        : "bg-gray-900"
-                    )}
-                    onClick={() => setCurrentConversationId(conversation.id)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium text-gray-200">{conversation.user_name}</p>
-                        <p className="text-xs text-gray-400">{conversation.user_email}</p>
-                      </div>
-                      {unreadCount > 0 && (
-                        <span className="bg-blue-600 text-white text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    {conversation.last_message && (
-                      <p className="text-sm text-gray-400 mt-1 truncate">
-                        {conversation.last_message}
+            <div className="space-y-1 p-2">
+              {conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={cn(
+                    "p-3 rounded-md cursor-pointer",
+                    currentConversation?.id === conversation.id
+                      ? "bg-gray-800"
+                      : "hover:bg-gray-800"
+                  )}
+                  onClick={() => setCurrentConversationId(conversation.id)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{conversation.user_name}</p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {conversation.last_message || "No messages yet"}
                       </p>
+                    </div>
+                    {conversation.unread_count > 0 && (
+                      <div className="bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {conversation.unread_count}
+                      </div>
                     )}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </ScrollArea>
@@ -189,9 +155,7 @@ const ChatInterface = () => {
               ) : (
                 <div className="space-y-3">
                   {chatMessages[currentConversation.id].map((message) => {
-                    const isCurrentUser = 
-                      (user?.is_admin && message.sender === 'admin') || 
-                      (!user?.is_admin && message.sender === 'user');
+                    const isCurrentUser = message.sender === 'admin';
 
                     return (
                       <div
