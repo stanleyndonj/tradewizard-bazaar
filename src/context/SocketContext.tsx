@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { getSocketIOUrl } from '../lib/apiConfig';
+import { useBackend } from './BackendContext'; // Added import
 
 interface SocketContextType {
   socket: Socket | null;
@@ -37,7 +37,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Get the correct Socket.IO URL
     const socketUrl = getSocketIOUrl();
     console.log('Connecting to Socket.IO at:', socketUrl);
-    
+
     // Create socket connection with auth token
     const socketInstance = io(socketUrl, {
       transports: ['websocket', 'polling'],
@@ -63,21 +63,21 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('Socket.IO connection error:', error);
       setConnected(false);
     });
-    
+
     // Listen for new messages
     socketInstance.on('new_message', (message) => {
       console.log('New message received via socket:', message);
       setLastMessage(message);
-      
+
       // Refresh notifications as we might have a new message notification
       loadNotifications();
     });
-    
+
     // Listen for new notifications
     socketInstance.on('new_notification', (notification) => {
       console.log('New notification received via socket:', notification);
       setLastNotification(notification);
-      
+
       // Refresh notifications
       loadNotifications();
     });
