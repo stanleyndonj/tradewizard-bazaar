@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 
 # Database URL from config
-DATABASE_URL = settings.get_database_url()
+DATABASE_URL = settings.DATABASE_URL
 
 # Database connection
 engine = create_engine(DATABASE_URL)
