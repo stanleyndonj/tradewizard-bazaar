@@ -6,11 +6,15 @@ import { getSocketIOUrl } from '../lib/apiConfig';
 interface SocketContextType {
   socket: Socket | null;
   connected: boolean;
+  lastMessage: any | null;
+  lastNotification: any | null;
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
-  connected: false
+  connected: false,
+  lastMessage: null,
+  lastNotification: null
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -18,6 +22,9 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [lastMessage, setLastMessage] = useState<any | null>(null);
+  const [lastNotification, setLastNotification] = useState<any | null>(null);
+  const { loadNotifications } = useBackend();
 
   useEffect(() => {
     // Only try to connect if we have an auth token
@@ -56,6 +63,24 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error('Socket.IO connection error:', error);
       setConnected(false);
     });
+    
+    // Listen for new messages
+    socketInstance.on('new_message', (message) => {
+      console.log('New message received via socket:', message);
+      setLastMessage(message);
+      
+      // Refresh notifications as we might have a new message notification
+      loadNotifications();
+    });
+    
+    // Listen for new notifications
+    socketInstance.on('new_notification', (notification) => {
+      console.log('New notification received via socket:', notification);
+      setLastNotification(notification);
+      
+      // Refresh notifications
+      loadNotifications();
+    });
 
     setSocket(socketInstance);
 
@@ -63,10 +88,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('Disconnecting Socket.IO');
       socketInstance.disconnect();
     };
-  }, []);
+  }, [loadNotifications]);
 
   return (
-    <SocketContext.Provider value={{ socket, connected }}>
+    <SocketContext.Provider value={{ socket, connected, lastMessage, lastNotification }}>
       {children}
     </SocketContext.Provider>
   );

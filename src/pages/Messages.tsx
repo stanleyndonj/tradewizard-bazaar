@@ -6,6 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { useBackend } from '@/context/BackendContext';
 import { toast } from '@/hooks/use-toast';
 import ChatInterface from '@/components/admin/ChatInterface';
+import CustomerChat from '@/components/customer/CustomerChat';
 import { TradingLoader } from '@/components/ui/loader';
 
 const Messages = () => {
@@ -54,8 +55,8 @@ const Messages = () => {
       <main className="flex-grow pt-24 pb-10">
         <div className="container mx-auto max-w-7xl px-4">
           <h1 className="text-3xl font-bold mb-6">Messages</h1>
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <ChatInterface />
+          <div className="bg-gray-900 rounded-lg shadow-md overflow-hidden">
+            {user?.is_admin ? <ChatInterface /> : <CustomerChat />}
           </div>
         </div>
       </main>

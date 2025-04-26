@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 import os
 import socketio
 from starlette.middleware.sessions import SessionMiddleware
-from .routers import auth, user, robot, robot_request, purchase, mpesa, ai_trading_signals, chat, subscription, card_payment
+from .routers import auth, user, robot, robot_request, purchase, mpesa, ai_trading_signals, chat, subscription, card_payment, notification
 
 # Initialize Socket.io
 sio = socketio.AsyncServer(
@@ -77,6 +77,7 @@ app.include_router(ai_trading_signals.router) # ai_trading_signals already has p
 app.include_router(chat.router, prefix="/api")
 app.include_router(subscription.router) # subscription router already has prefix in its router
 app.include_router(card_payment.router, prefix="/api")
+app.include_router(notification.router)
 
 # Socket.io event handlers
 @sio.event
@@ -123,21 +124,26 @@ async def send_message(sid, data):
     print(f"Message received: {data}")
     conversation_id = data.get('conversationId')
     sender_id = data.get('senderId')
+    sender_type = data.get('sender', 'user')
+    text = data.get('text', '')
 
     # Store message in database
     from .models.chat import ChatMessage, Conversation
+    from .models.notification import Notification
+    from .models.user import User
     from .database import get_db
     from sqlalchemy.orm import Session
     from fastapi import Depends
+    import uuid
 
     db = next(get_db())
 
     # Create a new message
     new_message = ChatMessage(
         conversation_id=conversation_id,
-        sender=data.get('sender', 'user'),
+        sender=sender_type,
         sender_id=sender_id,
-        text=data.get('text', ''),
+        text=text,
         read=False
     )
 
@@ -148,9 +154,46 @@ async def send_message(sid, data):
     # Update conversation's last message
     conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if conversation:
-        conversation.last_message = data.get('text', '')
+        conversation.last_message = text
         conversation.last_message_time = new_message.timestamp
         db.commit()
+        
+        # Create notification for the recipient
+        if sender_type == 'admin':
+            # Notification for the user
+            user_id = conversation.user_id
+            sender = db.query(User).filter(User.id == sender_id).first()
+            sender_name = sender.name if sender and sender.name else "Admin"
+            
+            notification = Notification(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                type='message',
+                title=f"New message from {sender_name}",
+                content=text[:50] + ("..." if len(text) > 50 else ""),
+                related_id=conversation_id,
+                is_read=False
+            )
+            db.add(notification)
+            db.commit()
+        else:
+            # Notification for all admins
+            admins = db.query(User).filter(User.is_admin == True).all()
+            user = db.query(User).filter(User.id == sender_id).first()
+            user_name = user.name if user and user.name else user.email if user else "User"
+            
+            for admin in admins:
+                notification = Notification(
+                    id=str(uuid.uuid4()),
+                    user_id=admin.id,
+                    type='message',
+                    title=f"New message from {user_name}",
+                    content=text[:50] + ("..." if len(text) > 50 else ""),
+                    related_id=conversation_id,
+                    is_read=False
+                )
+                db.add(notification)
+            db.commit()
 
     # Broadcast message to user room
     if conversation_id and 'userRoom' in data:

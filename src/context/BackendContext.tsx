@@ -1,3 +1,4 @@
+jsx
 import React, {
   createContext,
   useState,
@@ -117,6 +118,24 @@ interface BackendContextType {
   chatMessages: Record<string, ChatMessage[]>;
   currentConversation: string | null;
   setCurrentConversationId: (id: string | null) => void;
+  //Notification Properties
+  notifications: NotificationType[];
+  unreadNotificationCount: number;
+  loadNotifications: () => Promise<NotificationType[]>;
+  markNotificationAsRead: (notificationId: string) => Promise<any>;
+  markAllNotificationsAsRead: () => Promise<any>;
+}
+
+// Add notification type
+interface NotificationType {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  user_id: string;
+  is_read: boolean;
+  related_id?: string;
+  created_at: string;
 }
 
 const BackendContext = createContext<BackendContextType>({
@@ -181,6 +200,11 @@ const BackendContext = createContext<BackendContextType>({
   chatMessages: {},
   currentConversation: null,
   setCurrentConversationId: () => {},
+  notifications: [],
+  unreadNotificationCount: 0,
+  loadNotifications: async () => [],
+  markNotificationAsRead: async () => ({}),
+  markAllNotificationsAsRead: async () => ({})
 });
 
 export function BackendProvider({ children }: { children: React.ReactNode }) {
@@ -206,6 +230,11 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [hasActiveSubscription, setHasActiveSubscription] = useState<boolean>(false);
+
+  // Add notification state
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState<number>(0);
+
 
   // Function to get subscription prices
   const getSubscriptionPrices = async () => {
@@ -304,6 +333,8 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       setUnreadMessageCount(0);
       setActiveSubscriptions([]);
       setHasActiveSubscription(false);
+      setNotifications([]);
+      setUnreadNotificationCount(0);
       navigate('/auth');
     } catch (err: any) {
       setError(err.message || 'Logout failed');
@@ -866,6 +897,48 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  //Notification functions
+  const loadNotifications = async () => {
+    try {
+      // Replace with your actual API call
+      const response = await fetch('/api/notifications'); 
+      const data = await response.json();
+      setNotifications(data);
+      setUnreadNotificationCount(data.filter(n => !n.is_read).length);
+      return data;
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      return [];
+    }
+  };
+
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      // Replace with your actual API call
+      await fetch(`/api/notifications/${notificationId}/read`, { method: 'PATCH' });
+      setNotifications(prev => prev.map(n => n.id === notificationId ? {...n, is_read: true} : n));
+      setUnreadNotificationCount(prev => Math.max(0, prev -1));
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      return { success: false, error };
+    }
+  };
+
+  const markAllNotificationsAsRead = async () => {
+    try {
+      // Replace with your actual API call
+      await fetch('/api/notifications/read-all', { method: 'PATCH' });
+      setNotifications(prev => prev.map(n => ({...n, is_read: true})));
+      setUnreadNotificationCount(0);
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      return { success: false, error };
+    }
+  };
+
+
   useEffect(() => {
     let mounted = true;
 
@@ -893,7 +966,8 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
         const userDataPromises = [
           getRobotRequests(user.id).catch(err => console.error("Error loading robot requests:", err)),
           getUserPurchases(user.id).catch(err => console.error("Error loading purchases:", err)),
-          loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err))
+          loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err)),
+          loadNotifications().catch(err => console.error("Error loading notifications:", err))
         ];
 
         const generalDataPromises = [
@@ -999,6 +1073,13 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     chatMessages,
     currentConversation,
     setCurrentConversationId,
+
+    //Notification properties
+    notifications,
+    unreadNotificationCount,
+    loadNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
 
     // Subscription price management
     getSubscriptionPrices,

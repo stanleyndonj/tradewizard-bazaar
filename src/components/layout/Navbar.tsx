@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Bell, ChevronDown, User, Settings, LogOut, BarChart2, Home, DollarSign, MessageSquare, ShoppingBag } from 'lucide-react';
 import { useBackend } from '@/context/BackendContext';
 import { Button } from '@/components/ui/button';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,12 +105,7 @@ const Navbar = () => {
           {user ? (
             <>
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                  2
-                </span>
-              </Button>
+              <NotificationDropdown />
 
               {/* User menu */}
               <DropdownMenu>
