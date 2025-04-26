@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,28 +25,33 @@ const NotificationDropdown = () => {
   } = useBackend();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   useEffect(() => {
     if (isOpen) {
       loadNotifications();
     }
   }, [isOpen, loadNotifications]);
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification) => {
     // Mark as read
-    markNotificationAsRead(notification.id);
-    
+    if (notification) { //Added null check
+        markNotificationAsRead(notification.id);
+    }
+
     // Navigate based on notification type
-    if (notification.type === 'message' && notification.related_id) {
+    if (notification && notification.type === 'message' && notification.related_id) {
       navigate('/messages');
-    } else if (notification.type === 'robot_request' && notification.related_id) {
+    } else if (notification && notification.type === 'robot_request' && notification.related_id) {
       navigate('/dashboard');
-    } else if (notification.type === 'new_robot' && notification.related_id) {
+    } else if (notification && notification.type === 'new_robot' && notification.related_id) {
       navigate('/robots');
     }
-    
+
     setIsOpen(false);
   };
+
+  // Ensure notifications is an array before mapping
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -76,15 +80,15 @@ const NotificationDropdown = () => {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-700" />
-        
+
         <div className="max-h-[300px] overflow-y-auto">
           <DropdownMenuGroup>
-            {notifications.length === 0 ? (
+            {safeNotifications.length === 0 ? (
               <div className="py-4 px-3 text-center text-gray-400 text-sm">
                 No notifications
               </div>
             ) : (
-              notifications.slice(0, 10).map((notification) => (
+              safeNotifications.slice(0, 10).map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id}
                   className={cn(
@@ -98,7 +102,7 @@ const NotificationDropdown = () => {
                       {notification.title}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      {notification.created_at && formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                     </span>
                   </div>
                   <p className="text-xs text-gray-300 mt-1">{notification.content}</p>
@@ -110,8 +114,8 @@ const NotificationDropdown = () => {
             )}
           </DropdownMenuGroup>
         </div>
-        
-        {notifications.length > 10 && (
+
+        {safeNotifications.length > 10 && (
           <>
             <DropdownMenuSeparator className="bg-gray-700" />
             <DropdownMenuItem

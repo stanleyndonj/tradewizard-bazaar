@@ -34,20 +34,23 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
-    // Get the correct Socket.IO URL
-    const socketUrl = getSocketIOUrl();
-    console.log('Connecting to Socket.IO at:', socketUrl);
+    try {
+      // Get the correct Socket.IO URL
+      const socketUrl = getSocketIOUrl();
+      console.log('Connecting to Socket.IO at:', socketUrl);
 
-    // Create socket connection with auth token
-    const socketInstance = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      extraHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+      // Create socket connection with auth token and better error handling
+      const socketInstance = io(socketUrl, {
+        transports: ['polling', 'websocket'], // Start with polling first as it's more reliable
+        reconnection: true,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 2000,
+        timeout: 10000,
+        auth: { token },  // Use auth instead of extraHeaders for token
+        extraHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
     socketInstance.on('connect', () => {
       console.log('Socket.IO connected successfully');

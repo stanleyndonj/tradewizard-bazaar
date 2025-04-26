@@ -116,11 +116,12 @@ export const handleApiResponse = async (response: Response) => {
 
 // Get the socket.io URL based on environment
 export const getSocketIOUrl = () => {
-  if (window.location.hostname.includes('replit.dev') || window.location.hostname.includes('repl.co')) {
-    return window.location.protocol + '//' + window.location.hostname.replace('-0000-', '-8000-');
+  try {
+    // Extract base URL from API_URL to create a consistent socket URL
+    const url = new URL(API_URL);
+    return `${url.protocol}//${url.host}`;
+  } catch (e) {
+    console.error('Error parsing API_URL for socket:', e);
+    return API_URL; // Fallback to API_URL if parsing fails
   }
-  // Make sure we're using same origin for WebSocket in development
-  return window.location.protocol === 'https:' ? 'https://0.0.0.0:8000' : 'http://0.0.0.0:8000';
 };
-
-// Note: getAuthHeaders function is already defined above - removed duplicate declaration
