@@ -1,3 +1,4 @@
+// src/components/users/UserChatInterface.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MessageSquare, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,40 +9,41 @@ import { useSocket } from '@/context/SocketContext';
 import { cn } from '@/lib/utils';
 import { TradingLoader } from '@/components/ui/loader';
 
-const ChatInterface = () => {
-  const { 
+const UserChatInterface = () => {
+  const {
     user,
-    conversations, 
-    chatMessages, 
-    currentConversation, 
+    conversations,
+    chatMessages,
+    currentConversation,
     setCurrentConversationId,
     sendMessage,
     getConversations,
     getMessages,
-    loadConversations 
+    loadConversations,
+    users,
+    createConversation,
   } = useBackend();
 
   const { socket } = useSocket();
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
 
-  // Load data when component mounts
+  // Load conversations when component mounts
   useEffect(() => {
-    if (user?.is_admin) {
+    if (user) {
       loadConversations();
     }
 
-    // Join socket room if admin
-    if (socket && user?.is_admin) {
-      socket.emit('join_admin_chat', { adminId: user.id });
+    // Join socket room when user is defined
+    if (socket && user?.id) {
+      socket.emit('join_chat', { userId: user.id });
     }
 
     return () => {
-      // Leave socket room when component unmounts
-      if (socket && user?.is_admin) {
-        socket.emit('leave_admin_chat', { adminId: user.id });
+      if (socket && user?.id) {
+        socket.emit('leave_chat', { userId: user.id });
       }
     };
   }, [user, socket, loadConversations]);
@@ -66,7 +68,7 @@ const ChatInterface = () => {
 
     try {
       setLoading(true);
-      await sendMessage(currentConversation.id, messageText, 'admin', user.id);
+      await sendMessage(currentConversation.id, messageText, 'user', user.id);
       setMessageText('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -74,15 +76,28 @@ const ChatInterface = () => {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    if (currentConversation) {
-      const selected = conversations.find(
-        (conversation) => conversation.id === currentConversation.id
-      );
-      setSelectedUser(selected);
-    }
-  }, [conversations, currentConversation]);
 
+  const startConversationWithAdmin = async (admin: any) => {
+    const conversationExists = conversations.some(
+      (conversation) => conversation.user_id === user.id
+    );
+
+    if (conversationExists) {
+      // Set the existing conversation as current
+      const existingConversation = conversations.find(
+        (conversation) => conversation.user_id === user.id
+      );
+      if(existingConversation) {
+          setCurrentConversationId(existingConversation.id);
+      }
+    } else {
+      // Create a new conversation
+      await createConversation(user.id, user.name, user.email);
+      // After creating, refresh conversations to include the new one
+      await loadConversations();
+    }
+    setSelectedAdmin(admin)
+  };
 
   return (
     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
@@ -110,19 +125,21 @@ const ChatInterface = () => {
                 <div
                   key={conversation.id}
                   className={cn(
-                    "p-3 rounded-md cursor-pointer",
+                    'p-3 rounded-md cursor-pointer',
                     currentConversation?.id === conversation.id
-                      ? "bg-gray-800"
-                      : "hover:bg-gray-800"
+                      ? 'bg-gray-800'
+                      : 'hover:bg-gray-800'
                   )}
                   onClick={() => setCurrentConversationId(conversation.id)}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{conversation.user_name}</p>
+                      <p className="font-medium truncate">
+                        {conversation.user_name}
+                      </p>
                       <p className="text-sm text-gray-400 truncate">
-                        {conversation.last_message || "No messages yet"}
+                        {conversation.last_message || 'No messages yet'}
                       </p>
                     </div>
                     {conversation.unread_count > 0 && (
@@ -146,10 +163,10 @@ const ChatInterface = () => {
             <div className="p-4 border-b border-gray-800 flex items-center">
               <div>
                 <h3 className="font-medium">
-                  {selectedUser ? selectedUser.user_name : 'Chat'}
+                  {selectedAdmin ? selectedAdmin.name : 'Chat'}
                 </h3>
                 <p className="text-xs text-gray-400">
-                  {selectedUser ? selectedUser.user_email : ''}
+                  {selectedAdmin ? selectedAdmin.email : ''}
                 </p>
               </div>
             </div>
@@ -169,29 +186,33 @@ const ChatInterface = () => {
               ) : (
                 <div className="space-y-3">
                   {chatMessages[currentConversation.id].map((message) => {
-                    const isCurrentUser = message.sender === 'admin';
+                    const isCurrentUser = message.sender === 'user';
 
                     return (
                       <div
                         key={message.id}
                         className={cn(
-                          "flex",
-                          isCurrentUser ? "justify-end" : "justify-start"
+                          'flex',
+                          isCurrentUser ? 'justify-end' : 'justify-start'
                         )}
                       >
                         <div
                           className={cn(
-                            "max-w-[70%] rounded-lg p-3",
+                            'max-w-[70%] rounded-lg p-3',
                             isCurrentUser
-                              ? "bg-blue-600 text-white rounded-br-none"
-                              : "bg-gray-800 text-gray-100 rounded-bl-none"
+                              ? 'bg-blue-600 text-white rounded-br-none'
+                              : 'bg-gray-800 text-gray-100 rounded-bl-none'
                           )}
                         >
                           {message.text}
-                          <div className={cn(
-                            "text-xs mt-1",
-                            isCurrentUser ? "text-blue-200" : "text-gray-400"
-                          )}>
+                          <div
+                            className={cn(
+                              'text-xs mt-1',
+                              isCurrentUser
+                                ? 'text-blue-200'
+                                : 'text-gray-400'
+                            )}
+                          >
                             {new Date(message.timestamp).toLocaleTimeString()}
                           </div>
                         </div>
@@ -220,29 +241,43 @@ const ChatInterface = () => {
                   className="ml-2 bg-blue-600 hover:bg-blue-700"
                   disabled={!messageText.trim() || loading}
                 >
-                  {loading ? (
-                    <TradingLoader small />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
+                  {loading ? <TradingLoader small /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
             </form>
           </>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
-            <MessageSquare className="h-16 w-16 mb-4" />
-            <h3 className="text-xl font-medium mb-2">Your Messages</h3>
-            <p className="text-center max-w-xs">
-              {user?.is_admin 
-                ? "Select a conversation from the list to start chatting with users"
-                : "Select an admin to start a conversation"}
-            </p>
-          </div>
-        )}
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4">
+              <MessageSquare className="h-16 w-16 mb-4" />
+              <h3 className="text-xl font-medium mb-2">Your Messages</h3>
+              {user?.is_admin ? (
+                <p className="text-center max-w-xs">
+                  Select a conversation from the list to start chatting with users
+                </p>
+              ) : (
+                <>
+                  <p className="text-center max-w-xs mb-4">
+                    Select an admin to start a conversation.
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {users.filter(admin => admin.is_admin).map((admin) => (
+                      <Button
+                        key={admin.id}
+                        onClick={() => startConversationWithAdmin(admin)}
+                        variant="outline"
+                        className="border border-blue-500 text-blue-500"
+                      >
+                        {admin.name}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
       </div>
     </div>
   );
 };
 
-export default ChatInterface;
+export default UserChatInterface;

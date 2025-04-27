@@ -196,7 +196,7 @@ const BackendContext = createContext<BackendContextType>({
   processCardPayment: async () => {},
   verifyCardPayment: async () => {},
   createSubscription: async () => {},
-  chatMessages: {},
+  chatMessages: {}, // Default to an empty object
   currentConversation: null,
   setCurrentConversationId: () => {},
   notifications: [],
@@ -650,11 +650,12 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const sendChatMessage = async (conversationId: string, text: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await apiSendChatMessage(conversationId, text);
+    // Alias for sendChatMessage
+    const sendMessage = async (conversationId: string, text: string, sender: string, senderId: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+        await apiSendChatMessage(conversationId, text, sender, senderId);
       // Refresh messages after sending
       await getMessages(conversationId);
     } catch (err: any) {
@@ -663,9 +664,6 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-
-  // Alias for sendChatMessage
-  const sendMessage = sendChatMessage;
 
   const markMessageRead = async (messageId: string) => {
     setIsLoading(true);
@@ -1068,7 +1066,6 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     getConversations,
     loadConversations,
     getMessages,
-    sendChatMessage,
     sendMessage,
     markMessageRead,
     markMessageAsRead,
