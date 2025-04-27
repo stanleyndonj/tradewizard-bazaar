@@ -975,7 +975,6 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-
   useEffect(() => {
     let mounted = true;
 
@@ -991,41 +990,44 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
 
       try {
-        await getRobots();
-        await getUsers();
-        await getConversations();
-        await getUnreadMessageCount();
-      } catch (err) {
-        console.error("Error loading robots:", err);
+        const generalDataPromises = [
+          getConversations().catch(err => console.error("Error loading conversations:", err)),
+          getUsers().catch(err => console.error("Error loading users:", err)),
+          getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
+          loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
+        ];
+
+        await Promise.all([
+          getRobots().catch(err => console.error("Error loading robots:", err)),
+          ...generalDataPromises
+        ]);
+        
+      } catch (err:any) {
+        console.error("Error loading initial general data:", err.message);
       }
 
       if (!mounted || !user) return;
 
-      // Only load these if user exists and component is still mounted
-      if (user?.id) {
+      try{
         const userDataPromises = [
           getRobotRequests(user.id).catch(err => console.error("Error loading robot requests:", err)),
           getUserPurchases(user.id).catch(err => console.error("Error loading purchases:", err)),
           loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err)),
           loadNotifications().catch(err => console.error("Error loading notifications:", err))
         ];
-
-        if (mounted) {
-          await Promise.all([...userDataPromises, ...generalDataPromises]);
-        }
+        await Promise.all(userDataPromises);
+      } catch(err:any) {
+        console.error("Error loading user related data:", err.message);
       }
-    };
-   await loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
-    loadInitialData();
-
-    // No recurring interval or timers that might cause refreshes
-
-    return () => {
-      mounted = false;
-    };
+      };
+      
+      loadInitialData();
+      return () => {
+        mounted = false;
+        }
+    
   }, [user?.id]); // Only run when user ID changes
 
-  // Add logout function to the context
   const logout = () => {
     // Clear user data from state
     setUser(null);
