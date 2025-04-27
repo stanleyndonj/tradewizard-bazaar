@@ -118,12 +118,14 @@ export const handleApiResponse = async (response: Response) => {
 export const getSocketIOUrl = () => {
   // In Replit environment, use the websocket URL that matches the backend server
   if (window.location.hostname.endsWith('.repl.co')) {
-    // In Replit deployment, use the same hostname but with backend path
-    const host = window.location.hostname;
-    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    return `${protocol}//${host}/socket.io`;
+      // In Replit deployment, use the same hostname but with the correct backend path
+      const host = window.location.hostname;
+      // Remove the last part of the hostname before '.repl.co' to correctly format the repl url
+      const formattedHost = host.substring(0, host.lastIndexOf('-')) + host.substring(host.lastIndexOf('.'));
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; // Use 'wss:' for secure, 'ws:' for non-secure
+      return `${protocol}//${formattedHost}/ws`; // Correct the path to /ws
   }
 
   // For development
-  return 'http://0.0.0.0:8000/socket.io';
+  return 'http://0.0.0.0:8000/ws';
 };

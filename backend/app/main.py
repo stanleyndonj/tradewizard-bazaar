@@ -182,6 +182,19 @@ async def send_message(sid, data):
 
     if conversation_id and 'userRoom' in data:
         user_room = f"user_{data['userRoom']}"
+        try:
+            await sio.emit('new_message', {
+                'id': str(new_message.id),
+                'conversationId': conversation_id,
+                'sender': data.get('sender'),
+                'senderId': sender_id,
+                'text': data.get('text'),
+                'timestamp': new_message.timestamp.isoformat(),
+                'read': False
+            }, room=user_room)
+        except Exception as e:
+            print(f"Error sending message to room {user_room}: {e}")
+    try:
         await sio.emit('new_message', {
             'id': str(new_message.id),
             'conversationId': conversation_id,
@@ -190,17 +203,9 @@ async def send_message(sid, data):
             'text': data.get('text'),
             'timestamp': new_message.timestamp.isoformat(),
             'read': False
-        }, room=user_room)
-
-    await sio.emit('new_message', {
-        'id': str(new_message.id),
-        'conversationId': conversation_id,
-        'sender': data.get('sender'),
-        'senderId': sender_id,
-        'text': data.get('text'),
-        'timestamp': new_message.timestamp.isoformat(),
-        'read': False
-    }, room="admin_room")
+        }, room="admin_room")
+    except Exception as e:
+            print(f"Error sending message to admin_room: {e}")
 
     return {"status": "success", "message": "Message sent successfully"}
 
