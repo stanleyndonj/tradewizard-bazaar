@@ -685,7 +685,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
     setIsLoading(true);
     setError(null);
-    try {
+     try {
       await apiCreateNewConversation(userId, userName, userEmail);
       // Refresh conversations after creating a new one
       await getConversations();
@@ -697,7 +697,20 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Alias for createNewConversation
-  const createConversation = createNewConversation;
+  const createConversation = async (adminId: string, adminName: string, adminEmail: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (!user) throw new Error('User not authenticated');
+      await apiCreateNewConversation(user.id, user.name, user.email, adminId);
+      // Refresh conversations after creating a new one
+      await getConversations();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create new conversation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getUnreadMessageCount = async () => {
     // Don't set loading state for this lightweight operation
@@ -979,6 +992,9 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
       try {
         await getRobots();
+        await getUsers();
+        await getConversations();
+        await getUnreadMessageCount();
       } catch (err) {
         console.error("Error loading robots:", err);
       }
@@ -994,18 +1010,12 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
           loadNotifications().catch(err => console.error("Error loading notifications:", err))
         ];
 
-        const generalDataPromises = [
-          getConversations().catch(err => console.error("Error loading conversations:", err)),
-          getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
-          loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
-        ];
-
         if (mounted) {
           await Promise.all([...userDataPromises, ...generalDataPromises]);
         }
       }
     };
-
+   await loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
     loadInitialData();
 
     // No recurring interval or timers that might cause refreshes

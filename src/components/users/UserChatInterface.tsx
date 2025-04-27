@@ -78,23 +78,35 @@ const UserChatInterface = () => {
   };
 
   const startConversationWithAdmin = async (admin: any) => {
-    const conversationExists = conversations.some(
-      (conversation) => conversation.user_id === user.id
+    // Check if a conversation with the selected admin already exists
+    const conversationExists = conversations.find(
+      (conversation) => conversation.admin_id === admin.id
     );
 
     if (conversationExists) {
       // Set the existing conversation as current
-      const existingConversation = conversations.find(
-        (conversation) => conversation.user_id === user.id
-      );
-      if(existingConversation) {
-          setCurrentConversationId(existingConversation.id);
-      }
+      setCurrentConversationId(conversationExists.id);
+      setSelectedAdmin(admin)
     } else {
       // Create a new conversation
-      await createConversation(user.id, user.name, user.email);
+      await createConversation(admin.id, admin.name, admin.email);
       // After creating, refresh conversations to include the new one
       await loadConversations();
+      const newConversation = conversations.find(
+        (conversation) => conversation.admin_id === admin.id
+      );
+      if(newConversation) {
+          setCurrentConversationId(newConversation.id);
+      }
+      setSelectedAdmin(admin)
+    }
+  };
+  useEffect(() => {
+    if (currentConversation) {
+      const selected = conversations.find(
+        (conversation) => conversation.id === currentConversation.id
+      );
+      setSelectedAdmin(selected);
     }
     setSelectedAdmin(admin)
   };
