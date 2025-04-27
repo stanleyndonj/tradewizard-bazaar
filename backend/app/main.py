@@ -37,9 +37,13 @@ origins = [
     "http://0.0.0.0:3000",
     "http://localhost:3000",
     "http://localhost",
+    "http://localhost:8080",
     "https://localhost",
     "http://0.0.0.0",
     "https://0.0.0.0",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1",
+    "https://127.0.0.1"
 ]
 
 # Add Middlewares

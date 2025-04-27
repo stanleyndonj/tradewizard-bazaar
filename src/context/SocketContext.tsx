@@ -46,8 +46,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Create socket connection with auth token and better error handling
         socketInstance = io(socketUrl, {
           transports: ['polling', 'websocket'], // Start with polling first as it's more reliable
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 20000,
           auth: { token },
-         
+
         });
 
         socketInstance.on('connect', () => {
