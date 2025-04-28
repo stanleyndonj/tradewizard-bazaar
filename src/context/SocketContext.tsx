@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { getSocketIOUrl } from '../lib/apiConfig';
@@ -41,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         // Get the correct Socket.IO URL
         const socketUrl = getSocketIOUrl();
-        console.log('Connecting to Socket.IO at:', socketUrl + '/socket.io');
+        console.log('Connecting to Socket.IO at:', socketUrl);
 
         // Create socket connection with auth token and better error handling
         socketInstance = io(socketUrl, {
