@@ -78,11 +78,21 @@ const UserChatInterface = () => {
   };
 
   const startConversationWithAdmin = async (admin: any) => {
+    console.log("startConversationWithAdmin called", admin)
+
+    console.log("startConversationWithAdmin called", admin)
+
     // Check if a conversation with the selected admin already exists
     const conversationExists = conversations.find(
       (conversation) => conversation.admin_id === admin.id
     );
+    console.log(
+      "conversationExists:",
+      conversationExists ? "Yes" : "No",
+      conversationExists
+    );
 
+    
     if (conversationExists) {
       // Set the existing conversation as current
       setCurrentConversationId(conversationExists.id);
@@ -95,6 +105,10 @@ const UserChatInterface = () => {
       const newConversation = conversations.find(
         (conversation) => conversation.admin_id === admin.id
       );
+      console.log(
+        "newConversation created:",
+        newConversation ? "Yes" : "No",newConversation
+      );
       if(newConversation) {
           setCurrentConversationId(newConversation.id);
       }
@@ -102,13 +116,18 @@ const UserChatInterface = () => {
     }
   };
   useEffect(() => {
+    console.log("conversations: ",conversations)
+    console.log("currentConversation:", currentConversation)
     if (currentConversation) {
       const selected = conversations.find(
         (conversation) => conversation.id === currentConversation.id
+        
       );
-      setSelectedAdmin(selected);
+      if(selected && selected.admin_id) {
+        const foundAdmin = users.find((user) => user.id === selected.admin_id)
+        setSelectedAdmin(foundAdmin)
+      }
     }
-    setSelectedAdmin(admin)
   };
 
   return (

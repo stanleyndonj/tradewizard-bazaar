@@ -686,6 +686,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
      try {
+      console.log("createNewConversation called",userId, userName, userEmail)
       await apiCreateNewConversation(userId, userName, userEmail);
       // Refresh conversations after creating a new one
       await getConversations();
