@@ -4,4 +4,5 @@ import logging
 import os
 
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddle
+app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
