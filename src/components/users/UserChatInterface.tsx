@@ -78,13 +78,8 @@ const UserChatInterface = () => {
   };
 
   const startConversationWithAdmin = async (admin: any) => {
-    console.log("startConversationWithAdmin called", admin)
-
-    console.log("startConversationWithAdmin called", admin)
-
-    // Check if a conversation with the selected admin already exists
-    const conversationExists = conversations.find(
-      (conversation) => conversation.admin_id === admin.id
+    const conversationExists = conversations.some(
+      (conversation) => conversation.user_id === user.id
     );
     console.log(
       "conversationExists:",
@@ -95,38 +90,17 @@ const UserChatInterface = () => {
     
     if (conversationExists) {
       // Set the existing conversation as current
-      setCurrentConversationId(conversationExists.id);
-      setSelectedAdmin(admin)
+      const existingConversation = conversations.find(
+        (conversation) => conversation.user_id === user.id
+      );
+      if(existingConversation) {
+          setCurrentConversationId(existingConversation.id);
+      }
     } else {
       // Create a new conversation
-      await createConversation(admin.id, admin.name, admin.email);
+      await createConversation(user.id, user.name, user.email);
       // After creating, refresh conversations to include the new one
       await loadConversations();
-      const newConversation = conversations.find(
-        (conversation) => conversation.admin_id === admin.id
-      );
-      console.log(
-        "newConversation created:",
-        newConversation ? "Yes" : "No",newConversation
-      );
-      if(newConversation) {
-          setCurrentConversationId(newConversation.id);
-      }
-      setSelectedAdmin(admin)
-    }
-  };
-  useEffect(() => {
-    console.log("conversations: ",conversations)
-    console.log("currentConversation:", currentConversation)
-    if (currentConversation) {
-      const selected = conversations.find(
-        (conversation) => conversation.id === currentConversation.id
-        
-      );
-      if(selected && selected.admin_id) {
-        const foundAdmin = users.find((user) => user.id === selected.admin_id)
-        setSelectedAdmin(foundAdmin)
-      }
     }
   };
 

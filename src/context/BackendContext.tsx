@@ -685,8 +685,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
     setIsLoading(true);
     setError(null);
-     try {
-      console.log("createNewConversation called",userId, userName, userEmail)
+    try {
       await apiCreateNewConversation(userId, userName, userEmail);
       // Refresh conversations after creating a new one
       await getConversations();
@@ -698,20 +697,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Alias for createNewConversation
-  const createConversation = async (adminId: string, adminName: string, adminEmail: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      if (!user) throw new Error('User not authenticated');
-      await apiCreateNewConversation(user.id, user.name, user.email, adminId);
-      // Refresh conversations after creating a new one
-      await getConversations();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create new conversation');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const createConversation = createNewConversation;
 
   const getUnreadMessageCount = async () => {
     // Don't set loading state for this lightweight operation
@@ -991,20 +977,9 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
 
       try {
-        const generalDataPromises = [
-          getConversations().catch(err => console.error("Error loading conversations:", err)),
-          getUsers().catch(err => console.error("Error loading users:", err)),
-          getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
-          loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
-        ];
-
-        await Promise.all([
-          getRobots().catch(err => console.error("Error loading robots:", err)),
-          ...generalDataPromises
-        ]);
-        
-      } catch (err:any) {
-        console.error("Error loading initial general data:", err.message);
+        await getRobots();
+      } catch (err) {
+        console.error("Error loading robots:", err);
       }
 
       if (!mounted || !user) return;
@@ -1016,17 +991,26 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
           loadUserSubscriptions().catch(err => console.error("Error loading user subscriptions:", err)),
           loadNotifications().catch(err => console.error("Error loading notifications:", err))
         ];
-        await Promise.all(userDataPromises);
-      } catch(err:any) {
-        console.error("Error loading user related data:", err.message);
-      }
-      };
-      
-      loadInitialData();
-      return () => {
-        mounted = false;
+
+        const generalDataPromises = [
+          getConversations().catch(err => console.error("Error loading conversations:", err)),
+          getUnreadMessageCount().catch(err => console.error("Error loading unread count:", err)),
+          loadSubscriptionPlans().catch(err => console.error("Error loading subscription plans:", err))
+        ];
+
+        if (mounted) {
+          await Promise.all([...userDataPromises, ...generalDataPromises]);
         }
-    
+      }
+    };
+
+    loadInitialData();
+
+    // No recurring interval or timers that might cause refreshes
+
+    return () => {
+      mounted = false;
+    };
   }, [user?.id]); // Only run when user ID changes
 
   const logout = () => {
