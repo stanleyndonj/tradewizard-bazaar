@@ -685,7 +685,7 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
   const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
     setIsLoading(true);
     setError(null);
-    try {
+     try {
       await apiCreateNewConversation(userId, userName, userEmail);
       // Refresh conversations after creating a new one
       await getConversations();
