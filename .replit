@@ -1,77 +1,8 @@
-<<<<<<< HEAD
-modules = ["nodejs-20", "python-3.12", "web", "nodejs-23", "postgresql-17"]
-=======
-modules = ["nodejs-20", "python-3.12", "web", "nodejs-23", "nodejs-22", "postgresql-17"]
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
+modules = ["python-3.12", "nodejs-20", "cpp-clang14", "c-clang14"]
 run = "npm run dev"
 
 [nix]
 channel = "stable-24_05"
-packages = ["openssl", "postgresql"]
 
 [deployment]
 run = ["sh", "-c", "npm run dev"]
-
-[[ports]]
-localPort = 8000
-externalPort = 8000
-
-[[ports]]
-localPort = 8080
-externalPort = 80
-
-[workflows]
-runButton = "Backend Server"
-
-[[workflows.workflow]]
-name = "Backend Server"
-author = 38814187
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow]]
-name = "Backend"
-author = 38814187
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow]]
-name = "Frontend"
-author = 38814187
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Start Dev Environment"
-author = 38814187
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Full Stack Dev"
-author = 41817458
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev -- --host 0.0.0.0"
