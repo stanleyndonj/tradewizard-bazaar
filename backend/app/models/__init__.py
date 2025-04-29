@@ -4,4 +4,5 @@ from .robot import Robot
 from .robot_request import RobotRequest
 from .purchase import Purchase
 from .subscription import Subscription, SubscriptionPlan
-from .chat import Conversation, ChatMessage
+from .chat import Conversation, Message
+from .notification import Notification
