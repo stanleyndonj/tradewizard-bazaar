@@ -53,4 +53,4 @@ class ChatMessage(Base):
     
     # Relationship
     conversation = relationship("Conversation", back_populates="messages")
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
+
