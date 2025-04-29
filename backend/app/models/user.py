@@ -1,6 +1,6 @@
-
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime
+from sqlalchemy.orm import relationship
+import datetime
 import uuid
 from ..database import Base
 
@@ -17,3 +17,10 @@ class User(Base):
     robots_delivered = Column(Boolean, default=False)  # Track if robots have been delivered
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    robot_requests = relationship("RobotRequest", back_populates="user")
+    purchases = relationship("Purchase", back_populates="user")
+    conversations = relationship("Conversation", back_populates="user")
+    messages = relationship("Message", back_populates="sender")
+    notifications = relationship("Notification", back_populates="user")

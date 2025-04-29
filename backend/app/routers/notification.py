@@ -2,97 +2,110 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-import uuid
-
 from ..database import get_db
-from ..models.user import User
-from ..models.notification import Notification
-from ..utils.auth import get_user_from_token
-from ..schemas.notification import NotificationResponse, NotificationCreate
+from ..models import notification
+from ..schemas import notification as notification_schema
+from ..utils.auth import get_current_user
 
-router = APIRouter(prefix="/api/notifications", tags=["notifications"])
+router = APIRouter(
+    prefix="/api/notifications",
+    tags=["notifications"],
+    responses={404: {"description": "Not found"}},
+)
 
-@router.get("", response_model=List[NotificationResponse])
-async def get_user_notifications(
+@router.post("/", response_model=notification_schema.NotificationResponse)
+def create_notification(
+    notification_data: notification_schema.NotificationCreate,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
+    current_user = Depends(get_current_user)
 ):
-    user = db.query(User).filter(User.id == current_user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Only allow admins to create notifications for other users
+    if notification_data.user_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to create notifications for other users"
+        )
     
-    notifications = db.query(Notification).filter(
-        Notification.user_id == current_user_id
-    ).order_by(Notification.created_at.desc()).all()
+    # Create notification
+    db_notification = notification.Notification(
+        user_id=notification_data.user_id,
+        title=notification_data.title,
+        content=notification_data.content,
+        is_read=notification_data.is_read,
+        notification_type=notification_data.notification_type
+    )
+    
+    db.add(db_notification)
+    db.commit()
+    db.refresh(db_notification)
+    return db_notification
+
+@router.get("/", response_model=List[notification_schema.NotificationResponse])
+def get_notifications(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # Get notifications for the current user
+    notifications = db.query(notification.Notification).filter(
+        notification.Notification.user_id == current_user.id
+    ).order_by(notification.Notification.created_at.desc()).all()
     
     return notifications
 
-@router.post("", response_model=NotificationResponse)
-async def create_notification(
-    notification_data: NotificationCreate,
+@router.get("/unread/count")
+def get_unread_notification_count(
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
+    current_user = Depends(get_current_user)
 ):
-    user = db.query(User).filter(User.id == current_user_id).first()
-    if not user or not user.is_admin:
-        raise HTTPException(status_code=403, detail="Only admins can create notifications")
+    # Count unread notifications
+    unread_count = db.query(notification.Notification).filter(
+        notification.Notification.user_id == current_user.id,
+        notification.Notification.is_read == False
+    ).count()
     
-    notification = Notification(
-        id=str(uuid.uuid4()),
-        user_id=notification_data.user_id,
-        type=notification_data.type,
-        title=notification_data.title,
-        content=notification_data.content,
-        related_id=notification_data.related_id,
-        is_read=False
-    )
-    
-    db.add(notification)
-    db.commit()
-    db.refresh(notification)
-    
-    return notification
+    return {"unread_count": unread_count}
 
-@router.patch("/{notification_id}/read")
-async def mark_notification_as_read(
+@router.put("/{notification_id}/read")
+def mark_notification_as_read(
     notification_id: str,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
+    current_user = Depends(get_current_user)
 ):
-    notification = db.query(Notification).filter(Notification.id == notification_id).first()
-    if not notification:
-        raise HTTPException(status_code=404, detail="Notification not found")
+    # Find the notification
+    db_notification = db.query(notification.Notification).filter(
+        notification.Notification.id == notification_id
+    ).first()
     
-    if notification.user_id != current_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this notification")
+    if not db_notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found"
+        )
     
-    notification.is_read = True
+    # Verify the user has access to this notification
+    if db_notification.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to mark this notification as read"
+        )
+    
+    # Update notification
+    db_notification.is_read = True
     db.commit()
     
-    return {"status": "success"}
+    return {"detail": "Notification marked as read"}
 
-@router.patch("/read-all")
-async def mark_all_notifications_as_read(
+@router.put("/read/all")
+def mark_all_notifications_read(
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
+    current_user = Depends(get_current_user)
 ):
-    db.query(Notification).filter(
-        Notification.user_id == current_user_id,
-        Notification.is_read == False
+    # Update all notifications for this user
+    db.query(notification.Notification).filter(
+        notification.Notification.user_id == current_user.id,
+        notification.Notification.is_read == False
     ).update({"is_read": True})
     
     db.commit()
     
-    return {"status": "success"}
-
-@router.get("/unread-count")
-async def get_unread_count(
-    db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
-):
-    count = db.query(Notification).filter(
-        Notification.user_id == current_user_id,
-        Notification.is_read == False
-    ).count()
-    
-    return {"unread_count": count}
+    return {"detail": "All notifications marked as read"}

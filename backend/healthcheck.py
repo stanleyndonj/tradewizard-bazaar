@@ -35,3 +35,4 @@ if __name__ == "__main__":
         print("2. Check logs for any Python errors")
         print("3. Verify database connection")
         sys.exit(1)
+    sys.exit(0)
