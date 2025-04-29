@@ -737,18 +737,13 @@ export const markMessageRead = async (messageId: string) => {
   return handleApiResponse(response);
 };
 
-export const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
-  const response = await fetch(API_ENDPOINTS.CHAT_CONVERSATIONS, {
+export const createNewConversation = async (userId: string, userName: string, userEmail: string, adminId: string = "admin1", adminName: string = "Admin", adminEmail: string = "admin@example.com") => {
+  const response = await fetch(`${API_ENDPOINTS.CHAT_CONVERSATIONS}?user_id=${userId}&user_name=${userName}&user_email=${userEmail}&admin_id=${adminId}&admin_name=${adminName}&admin_email=${adminEmail}`, {
     method: 'POST',
     headers: {
       ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      user_name: userName,
-      user_email: userEmail
-    }),
+      'Content-Type': 'application/json'
+    }
   });
 
   return handleApiResponse(response);

@@ -686,11 +686,18 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
      try {
-      await apiCreateNewConversation(userId, userName, userEmail);
+      // Use default admin info if not available
+      const adminId = user?.is_admin ? user.id : "admin1";
+      const adminName = user?.is_admin ? user.name : "Admin";
+      const adminEmail = user?.is_admin ? user.email : "admin@example.com";
+      
+      await apiCreateNewConversation(userId, userName, userEmail, adminId, adminName, adminEmail);
       // Refresh conversations after creating a new one
       await getConversations();
     } catch (err: any) {
+      console.error('Error creating conversation:', err);
       setError(err.message || 'Failed to create new conversation');
+      throw err;
     } finally {
       setIsLoading(false);
     }

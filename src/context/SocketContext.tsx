@@ -50,8 +50,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           reconnectionAttempts: 5,
           reconnectionDelay: 1000,
           timeout: 20000,
+<<<<<<< HEAD
           auth: { token },
 
+=======
+          auth: { token },  // Use auth instead of extraHeaders for token
+          extraHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+>>>>>>> 81304081b7ff876300be50827e29718378aa233f
         });
 
         socketInstance.on('connect', () => {

@@ -49,10 +49,10 @@ const API_ENDPOINTS = {
   AI_MARKET_ANALYSIS: `${API_URL}/api/ai-trading-signals/analyze`,
 
   // Chat endpoints
-  CHAT_CONVERSATIONS: `${API_URL}/api/chat/conversations`,
-  CHAT_MESSAGES: (conversationId: string) => `${API_URL}/api/chat/conversations/${conversationId}/messages`,
-  CHAT_MARK_READ: (messageId: string) => `${API_URL}/api/chat/messages/${messageId}/read`,
-  CHAT_UNREAD_COUNT: `${API_URL}/api/chat/unread-count`,
+  CHAT_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
+  CHAT_MESSAGES: (conversationId: string) => `${API_BASE_URL}/api/chat/messages/${conversationId}`,
+  MARK_MESSAGE_READ: (messageId: string) => `${API_BASE_URL}/api/chat/messages/${messageId}/read`,
+  UNREAD_MESSAGE_COUNT: `${API_BASE_URL}/api/chat/unread-count`,
 
   // Subscription endpoints - Fixed to match backend structure
   SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,

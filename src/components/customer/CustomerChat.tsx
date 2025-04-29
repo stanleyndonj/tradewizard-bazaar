@@ -196,7 +196,22 @@ const CustomerChat = () => {
 
             {conversations.length === 0 && (
               <Button
-                onClick={createConversation}
+                onClick={() => {
+                  if (user) {
+                    setLoading(true);
+                    createNewConversation(
+                      user.id, 
+                      user.name || user.email, 
+                      user.email
+                    ).then(() => {
+                      getConversations();
+                      setLoading(false);
+                    }).catch(error => {
+                      console.error("Error creating conversation:", error);
+                      setLoading(false);
+                    });
+                  }
+                }}
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={loading}
               >

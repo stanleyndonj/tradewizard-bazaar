@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 modules = ["nodejs-20", "python-3.12", "web", "nodejs-23", "postgresql-17"]
+=======
+modules = ["nodejs-20", "python-3.12", "web", "nodejs-23", "nodejs-22", "postgresql-17"]
+>>>>>>> 81304081b7ff876300be50827e29718378aa233f
 run = "npm run dev"
 
 [nix]
