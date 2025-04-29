@@ -1,0 +1,376 @@
+Error processing file src/context/BackendContext.tsx: SyntaxError: Missing catch or finally clause. (994:6)
+    at constructor (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:360:19)
+    at TypeScriptParserMixin.raise (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3338:19)
+    at TypeScriptParserMixin.parseTryStatement (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12888:12)
+    at TypeScriptParserMixin.parseStatementContent (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12469:21)
+    at TypeScriptParserMixin.parseStatementContent (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:9365:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12432:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12412:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12980:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12973:10)
+    at TypeScriptParserMixin.parseBlock (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12961:10) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'NoCatchOrFinally',
+  loc: Position { line: 994, column: 6, index: 32602 },
+  pos: 32602,
+  syntaxPlugin: undefined
+}
+Error processing file src/context/SocketContext.tsx: SyntaxError: Unexpected token (53:0)
+    at constructor (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:360:19)
+    at TypeScriptParserMixin.raise (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3338:19)
+    at TypeScriptParserMixin.unexpected (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3358:16)
+    at TypeScriptParserMixin.parsePropertyName (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:11734:18)
+    at TypeScriptParserMixin.parsePropertyDefinition (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:11602:10)
+    at TypeScriptParserMixin.parseObjectLike (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:11543:21)
+    at TypeScriptParserMixin.parseExprAtom (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:11051:23)
+    at TypeScriptParserMixin.parseExprAtom (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6950:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:10785:23)
+    at TypeScriptParserMixin.parseUpdate (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:10770:21) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 53, column: 0, index: 1784 },
+  pos: 1784,
+  syntaxPlugin: undefined
+}
+8:44:23 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error
+8:44:23 PM [vite] Pre-transform error:   × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/context/SocketContext.tsx:53:1]
+ 50 │           reconnectionAttempts: 5,
+ 51 │           reconnectionDelay: 1000,
+ 52 │           timeout: 20000,
+ 53 │ <<<<<<< HEAD
+    · ───────
+ 54 │           auth: { token },
+ 55 │ 
+ 56 │ =======
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/context/SocketContext.tsx:56:1]
+ 53 │ <<<<<<< HEAD
+ 54 │           auth: { token },
+ 55 │ 
+ 56 │ =======
+    · ───────
+ 57 │           auth: { token },  // Use auth instead of extraHeaders for token
+ 58 │           extraHeaders: {
+ 59 │             Authorization: `Bearer ${token}`
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/context/SocketContext.tsx:61:1]
+ 58 │           extraHeaders: {
+ 59 │             Authorization: `Bearer ${token}`
+ 60 │           }
+ 61 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+    · ───────
+ 62 │         });
+ 63 │ 
+ 64 │         socketInstance.on('connect', () => {
+    ╰────
+
+
+Caused by:
+    Syntax Error
+Error:   Failed to scan for dependencies from entries:
+  /home/stanley/tradewizard-bazaar/index.html
+
+  ✘ [ERROR] Unexpected "<<"
+
+    src/components/admin/ChatInterface.tsx:28:0:
+      28 │ <<<<<<< HEAD
+         ╵ ~~
+
+
+✘ [ERROR] Expected "finally" but found "}"
+
+    src/context/BackendContext.tsx:1012:4:
+      1012 │     };
+           │     ^
+           ╵     finally
+
+
+✘ [ERROR] Expected identifier but found "<<"
+
+    src/context/SocketContext.tsx:53:0:
+      53 │ <<<<<<< HEAD
+         ╵ ~~
+
+
+    at failureErrorWithLog (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+    at /home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:945:25
+    at runOnEndCallbacks (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:1315:45)
+    at buildResponseToResult (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:943:7)
+    at /home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:955:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:954:54)
+    at handleRequest (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:647:17)
+    at handleIncomingPacket (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:672:7)
+    at Socket.readFromStdout (/home/stanley/tradewizard-bazaar/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+Error processing file src/context/BackendContext.tsx: SyntaxError: Missing catch or finally clause. (994:6)
+    at constructor (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:360:19)
+    at TypeScriptParserMixin.raise (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3338:19)
+    at TypeScriptParserMixin.parseTryStatement (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12888:12)
+    at TypeScriptParserMixin.parseStatementContent (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12469:21)
+    at TypeScriptParserMixin.parseStatementContent (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:9365:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12432:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12412:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12980:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12973:10)
+    at TypeScriptParserMixin.parseBlock (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:12961:10) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'NoCatchOrFinally',
+  loc: Position { line: 994, column: 6, index: 32602 },
+  pos: 32602,
+  syntaxPlugin: undefined
+}
+Error processing file src/components/admin/ChatInterface.tsx: SyntaxError: Unexpected token (28:1)
+    at constructor (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:360:19)
+    at TypeScriptParserMixin.raise (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3338:19)
+    at TypeScriptParserMixin.unexpected (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:3358:16)
+    at TypeScriptParserMixin.jsxParseIdentifier (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6755:12)
+    at TypeScriptParserMixin.jsxParseNamespacedName (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6762:23)
+    at TypeScriptParserMixin.jsxParseElementName (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6771:21)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6847:22)
+    at TypeScriptParserMixin.jsxParseElementAt (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6872:33)
+    at TypeScriptParserMixin.jsxParseElement (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6935:17)
+    at TypeScriptParserMixin.parseExprAtom (/home/stanley/tradewizard-bazaar/node_modules/@babel/parser/lib/index.js:6945:19) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 28, column: 1, index: 912 },
+  pos: 912,
+  syntaxPlugin: undefined
+}
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x2)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x3)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x4)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x5)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x6)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x7)
+8:44:26 PM [vite] Pre-transform error:   × Expected a semicolon
+      ╭─[/home/stanley/tradewizard-bazaar/src/context/BackendContext.tsx:1012:1]
+ 1009 │           await Promise.all([...userDataPromises, ...generalDataPromises]);
+ 1010 │         }
+ 1011 │       }
+ 1012 │     };
+      ·     ▲
+ 1013 │ 
+ 1014 │     loadInitialData();
+      ╰────
+
+
+Caused by:
+    Syntax Error (x8)
+8:44:27 PM [vite] Pre-transform error:   × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:28:1]
+ 25 │   const [messageText, setMessageText] = useState('');
+ 26 │   const [loading, setLoading] = useState(false);
+ 27 │   const messagesEndRef = useRef<HTMLDivElement>(null);
+ 28 │ <<<<<<< HEAD
+    · ───────
+ 29 │   const [selectedUser, setSelectedUser] = useState<any>(null);
+ 30 │ =======
+ 31 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:30:1]
+ 27 │   const messagesEndRef = useRef<HTMLDivElement>(null);
+ 28 │ <<<<<<< HEAD
+ 29 │   const [selectedUser, setSelectedUser] = useState<any>(null);
+ 30 │ =======
+    · ───────
+ 31 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+ 32 │ 
+ 33 │   // Load data when component mounts
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:31:1]
+ 28 │ <<<<<<< HEAD
+ 29 │   const [selectedUser, setSelectedUser] = useState<any>(null);
+ 30 │ =======
+ 31 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+    · ───────
+ 32 │ 
+ 33 │   // Load data when component mounts
+ 34 │   useEffect(() => {
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:72:1]
+ 69 │ 
+ 70 │     try {
+ 71 │       setLoading(true);
+ 72 │ <<<<<<< HEAD
+    · ───────
+ 73 │       await sendMessage(currentConversation.id, messageText, 'admin', user.id);
+ 74 │ =======
+ 75 │       await sendMessage(currentConversation.id, messageText, 'admin');
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:74:1]
+ 71 │       setLoading(true);
+ 72 │ <<<<<<< HEAD
+ 73 │       await sendMessage(currentConversation.id, messageText, 'admin', user.id);
+ 74 │ =======
+    · ───────
+ 75 │       await sendMessage(currentConversation.id, messageText, 'admin');
+ 76 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+ 77 │       setMessageText('');
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:76:1]
+ 73 │       await sendMessage(currentConversation.id, messageText, 'admin', user.id);
+ 74 │ =======
+ 75 │       await sendMessage(currentConversation.id, messageText, 'admin');
+ 76 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+    · ───────
+ 77 │       setMessageText('');
+ 78 │     } catch (error) {
+ 79 │       console.error('Error sending message:', error);
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:84:1]
+ 81 │       setLoading(false);
+ 82 │     }
+ 83 │   };
+ 84 │ <<<<<<< HEAD
+    · ───────
+ 85 │   useEffect(() => {
+ 86 │     if (currentConversation) {
+ 87 │       const selected = conversations.find(
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:94:1]
+ 91 │     }
+ 92 │   }, [conversations, currentConversation]);
+ 93 │ 
+ 94 │ =======
+    · ───────
+ 95 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+ 96 │ 
+ 97 │   return (
+    ╰────
+  × Merge conflict marker encountered.
+    ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:95:1]
+ 92 │   }, [conversations, currentConversation]);
+ 93 │ 
+ 94 │ =======
+ 95 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+    · ───────
+ 96 │ 
+ 97 │   return (
+ 98 │     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
+    ╰────
+  × Unexpected token `div`. Expected jsx identifier
+     ╭─[/home/stanley/tradewizard-bazaar/src/components/admin/ChatInterface.tsx:98:1]
+  95 │ >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+  96 │ 
+  97 │   return (
+  98 │     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
+     ·      ───
+  99 │       {/* Left side - conversations list */}
+ 100 │       <div className="w-1/3 border-r border-gray-800 flex flex-col">
+ 101 │         <div className="p-3 border-b border-gray-800">
+     ╰────
