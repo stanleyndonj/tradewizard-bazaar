@@ -68,9 +68,11 @@ const Auth = () => {
       
       // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
       if (user.is_admin) {
-        navigate('/admin-dashboard');
+        console.log("Admin user, redirecting to admin dashboard");
+        navigate('/admin-dashboard', { replace: true });
       } else {
-        navigate('/dashboard');
+        console.log("Regular user, redirecting to dashboard");
+        navigate('/dashboard', { replace: true });
       }
     }
   }, [user, navigate]);

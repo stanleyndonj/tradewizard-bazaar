@@ -295,12 +295,20 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
       if (data && data.access_token) {
         // Fetch the current user immediately after login
-        await loadCurrentUser();
-
-        // Redirect user after successful login
-        const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
-        localStorage.removeItem('redirectAfterAuth');
-        navigate(redirectPath);
+        const currentUser = await loadCurrentUser();
+        
+        // Use the result of loadCurrentUser to determine if we successfully loaded the user
+        if (currentUser) {
+          // Redirect user after successful login
+          const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
+          localStorage.removeItem('redirectAfterAuth');
+          console.log("Redirecting to:", redirectPath);
+          
+          // Force the navigation to happen after state updates are complete
+          setTimeout(() => {
+            navigate(redirectPath);
+          }, 100);
+        }
         return data;
       } else {
         throw new Error(data?.message || 'Login failed: access token not received');
@@ -349,10 +357,13 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       const currentUser = await apiGetCurrentUser();
       if (currentUser) {
         setUser(currentUser);
+        return currentUser; // Return the user data
       }
+      return null;
     } catch (err: any) {
       setError(err.message || 'Failed to load current user');
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
