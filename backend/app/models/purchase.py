@@ -1,6 +1,7 @@
 
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
 from ..database import Base
@@ -20,3 +21,6 @@ class Purchase(Base):
     # Additional fields for payment tracking
     mpesa_checkout_request_id = Column(String(50), nullable=True)
     card_payment_id = Column(String(50), nullable=True)
+    
+    # Relationship back to user
+    user = relationship("User", back_populates="purchases")
