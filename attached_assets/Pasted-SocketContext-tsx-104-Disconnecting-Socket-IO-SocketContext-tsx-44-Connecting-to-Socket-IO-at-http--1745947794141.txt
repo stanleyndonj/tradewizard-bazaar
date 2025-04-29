@@ -1,0 +1,425 @@
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+await in getConversations
+checkBackendStatus @ Messages.tsx:53
+await in checkBackendStatus
+(anonymous) @ Messages.tsx:37
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+commitRootImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19416
+commitRoot @ chunk-W6L2VRDA.js?v=8d8d320c:19277
+performSyncWorkOnRoot @ chunk-W6L2VRDA.js?v=8d8d320c:18895
+flushSyncCallbacks @ chunk-W6L2VRDA.js?v=8d8d320c:9119
+flushSync @ chunk-W6L2VRDA.js?v=8d8d320c:18959
+flushSync$1 @ chunk-W6L2VRDA.js?v=8d8d320c:21538
+dispatchDiscreteCustomEvent @ chunk-XEOIWAEQ.js?v=8d8d320c:53
+handleSelect @ @radix-ui_react-dropdown-menu.js?v=ad18d170:429
+handleEvent @ chunk-5Q5YC75F.js?v=8d8d320c:6
+callCallback2 @ chunk-W6L2VRDA.js?v=8d8d320c:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=8d8d320c:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=8d8d320c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=8d8d320c:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=8d8d320c:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=8d8d320c:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=8d8d320c:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=8d8d320c:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=8d8d320c:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=8d8d320c:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=8d8d320c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=8d8d320c:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=8d8d320c:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=8d8d320c:5449
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7utz7q6 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+await in getConversations
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7uv3u2u 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7uvuhio 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7uwzifl 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+3BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+await in getConversations
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+await in getConversations
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7uzg25y 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+BackendContext.tsx:623 Error fetching conversations: Not Found
+getConversations @ BackendContext.tsx:623
+await in getConversations
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:47 
+            
+            
+           GET http://0.0.0.0:8000/socket.io/?EIO=4&transport=polling&t=s7v15avm 404 (Not Found)
+_create @ socket__io-client.js?v=27d3040a:858
+_Request @ socket__io-client.js?v=27d3040a:798
+request @ socket__io-client.js?v=27d3040a:953
+doPoll @ socket__io-client.js?v=27d3040a:775
+_poll @ socket__io-client.js?v=27d3040a:646
+doOpen @ socket__io-client.js?v=27d3040a:607
+open @ socket__io-client.js?v=27d3040a:503
+_open @ socket__io-client.js?v=27d3040a:1328
+_SocketWithoutUpgrade @ socket__io-client.js?v=27d3040a:1289
+SocketWithUpgrade @ socket__io-client.js?v=27d3040a:1633
+Socket @ socket__io-client.js?v=27d3040a:1759
+open @ socket__io-client.js?v=27d3040a:3125
+Manager @ socket__io-client.js?v=27d3040a:3057
+lookup2 @ socket__io-client.js?v=27d3040a:3390
+setupSocket @ SocketContext.tsx:47
+(anonymous) @ SocketContext.tsx:99
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+backend.ts:681 
+            
+            
+           GET http://0.0.0.0:8000/api/chat/conversations 404 (Not Found)
+getConversations @ backend.ts:681
+getConversations @ BackendContext.tsx:619
+(anonymous) @ CustomerChat.tsx:33
+commitHookEffectListMount @ chunk-W6L2VRDA.js?v=8d8d320c:16915
+commitPassiveMountOnFiber @ chunk-W6L2VRDA.js?v=8d8d320c:18156
+commitPassiveMountEffects_complete @ chunk-W6L2VRDA.js?v=8d8d320c:18129
+commitPassiveMountEffects_begin @ chunk-W6L2VRDA.js?v=8d8d320c:18119
+commitPassiveMountEffects @ chunk-W6L2VRDA.js?v=8d8d320c:18109
+flushPassiveEffectsImpl @ chunk-W6L2VRDA.js?v=8d8d320c:19490
+flushPassiveEffects @ chunk-W6L2VRDA.js?v=8d8d320c:19447
+(anonymous) @ chunk-W6L2VRDA.js?v=8d8d320c:19328
+workLoop @ chunk-W6L2VRDA.js?v=8d8d320c:197
+flushWork @ chunk-W6L2VRDA.js?v=8d8d320c:176
+performWorkUntilDeadline @ chunk-W6L2VRDA.js?v=8d8d320c:384
+SocketContext.tsx:104 Disconnecting Socket.IO
+SocketContext.tsx:44 Connecting to Socket.IO at: http://0.0.0.0:8000/socket.io
