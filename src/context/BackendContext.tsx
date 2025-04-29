@@ -1008,6 +1008,8 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           await Promise.all([...userDataPromises, ...generalDataPromises]);
         }
+      } finally {
+        // Cleanup code can go here if needed
       }
     };
 

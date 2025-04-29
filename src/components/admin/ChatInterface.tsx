@@ -25,10 +25,7 @@ const ChatInterface = () => {
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-<<<<<<< HEAD
   const [selectedUser, setSelectedUser] = useState<any>(null);
-=======
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
 
   // Load data when component mounts
   useEffect(() => {
@@ -69,11 +66,7 @@ const ChatInterface = () => {
 
     try {
       setLoading(true);
-<<<<<<< HEAD
       await sendMessage(currentConversation.id, messageText, 'admin', user.id);
-=======
-      await sendMessage(currentConversation.id, messageText, 'admin');
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
       setMessageText('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -81,18 +74,18 @@ const ChatInterface = () => {
       setLoading(false);
     }
   };
-<<<<<<< HEAD
   useEffect(() => {
     if (currentConversation) {
       const selected = conversations.find(
-        (conversation) => conversation.id === currentConversation.id
+        (conv) => conv.id === currentConversation.id
       );
-      setSelectedUser(selected);
+      setSelectedUser({
+        id: selected?.userId,
+        name: selected?.userName,
+        email: selected?.userEmail
+      });
     }
   }, [conversations, currentConversation]);
-
-=======
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
 
   return (
     <div className="flex h-[calc(80vh)] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
@@ -155,17 +148,12 @@ const ChatInterface = () => {
             {/* Chat header */}
             <div className="p-4 border-b border-gray-800 flex items-center">
               <div>
-<<<<<<< HEAD
                 <h3 className="font-medium">
-                  {selectedUser ? selectedUser.user_name : 'Chat'}
+                  {selectedUser ? selectedUser.name : 'Chat'}
                 </h3>
                 <p className="text-xs text-gray-400">
-                  {selectedUser ? selectedUser.user_email : ''}
+                  {selectedUser ? selectedUser.email : ''}
                 </p>
-=======
-                <h3 className="font-medium">{currentConversation.user_name}</h3>
-                <p className="text-xs text-gray-400">{currentConversation.user_email}</p>
->>>>>>> 81304081b7ff876300be50827e29718378aa233f
               </div>
             </div>
 
