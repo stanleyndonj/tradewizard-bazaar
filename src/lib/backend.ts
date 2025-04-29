@@ -677,55 +677,82 @@ export const cancelSubscription = async (subscriptionId: string) => {
 };
 
 // Chat APIs
-export const getConversations = async () => {
-  const response = await fetch(API_ENDPOINTS.CHAT_CONVERSATIONS, {
-    headers: getAuthHeaders(),
-  });
+export const getConversations = async (): Promise<Conversation[]> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.CHAT_CONVERSATIONS}`, {
+      headers: getAuthHeaders(),
+    });
 
-  const conversations = await handleApiResponse(response);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch conversations: ${response.status}`);
+    }
 
-  // Format the conversations to match the expected interface
-  return conversations.map((conversation: any) => ({
-    id: conversation.id,
-    userId: conversation.user_id,
-    userName: conversation.user_name,
-    userEmail: conversation.user_email,
-    lastMessage: conversation.last_message || '',
-    lastMessageTime: conversation.last_message_time,
-    unreadCount: 0 // This will be calculated in the frontend context
-  }));
+    const conversations = await response.json();
+    // Format the conversations to match the expected interface
+    return conversations.map((conversation: any) => ({
+      id: conversation.id,
+      userId: conversation.user_id,
+      userName: conversation.user_name,
+      userEmail: conversation.user_email,
+      lastMessage: conversation.last_message || '',
+      lastMessageTime: conversation.last_message_time,
+      unreadCount: 0 // This will be calculated in the frontend context
+    }));
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
 };
 
-export const getMessages = async (conversationId: string) => {
-  const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
-    headers: getAuthHeaders(),
-  });
+export const getMessages = async (conversationId: string): Promise<ChatMessage[]> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.CHAT_MESSAGES(conversationId)}`, {
+      headers: getAuthHeaders(),
+    });
 
-  const messages = await handleApiResponse(response);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch messages: ${response.status}`);
+    }
 
-  // Format the messages to match the expected interface
-  return messages.map((message: any) => ({
-    id: message.id,
-    conversationId: message.conversation_id,
-    sender: message.sender,
-    senderId: message.sender_id,
-    text: message.text,
-    timestamp: message.timestamp,
-    read: message.read
-  }));
+    const messages = await response.json();
+    // Format the messages to match the expected interface
+    return messages.map((message: any) => ({
+      id: message.id,
+      conversationId: message.conversation_id,
+      sender: message.sender,
+      senderId: message.sender_id,
+      text: message.text,
+      timestamp: message.timestamp,
+      read: message.read
+    }));
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    throw error;
+  }
 };
 
-export const sendChatMessage = async (conversationId: string, text: string) => {
-  const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
-    method: 'POST',
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text }),
-  });
+export const sendChatMessage = async (conversationId: string, text: string, sender: string, senderId: string): Promise<void> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.CHAT_MESSAGES(conversationId)}`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        text,
+        sender,
+        sender_id: senderId
+      }),
+    });
 
-  return handleApiResponse(response);
+    if (!response.ok) {
+      throw new Error(`Failed to send message: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
 };
 
 export const markMessageRead = async (messageId: string) => {
@@ -737,16 +764,30 @@ export const markMessageRead = async (messageId: string) => {
   return handleApiResponse(response);
 };
 
-export const createNewConversation = async (userId: string, userName: string, userEmail: string, adminId: string = "admin1", adminName: string = "Admin", adminEmail: string = "admin@example.com") => {
-  const response = await fetch(`${API_ENDPOINTS.CHAT_CONVERSATIONS}?user_id=${userId}&user_name=${userName}&user_email=${userEmail}&admin_id=${adminId}&admin_name=${adminName}&admin_email=${adminEmail}`, {
-    method: 'POST',
-    headers: {
-      ...getAuthHeaders(),
-      'Content-Type': 'application/json'
-    }
-  });
+export const createNewConversation = async (
+  userId: string, 
+  userName: string, 
+  userEmail: string,
+  adminId?: string,
+  adminName?: string,
+  adminEmail?: string
+): Promise<void> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.CHAT_CONVERSATIONS}?user_id=${userId}&user_name=${userName}&user_email=${userEmail}&admin_id=${adminId || 'admin1'}&admin_name=${adminName || 'Admin'}&admin_email=${adminEmail || 'admin@example.com'}`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
+    });
 
-  return handleApiResponse(response);
+    if (!response.ok) {
+      throw new Error(`Failed to create conversation: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
 };
 
 export const getUnreadMessageCount = async () => {
