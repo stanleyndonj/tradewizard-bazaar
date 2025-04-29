@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
 from ..database import Base
@@ -21,6 +22,9 @@ class Subscription(Base):
     is_active = Column(Boolean, nullable=False, default=False)
     mpesa_checkout_request_id = Column(String(50), nullable=True)
     card_payment_id = Column(String(50), nullable=True)
+    
+    # Relationship
+    user = relationship("User", back_populates="subscriptions")
     
 class SubscriptionPlan(Base):
     __tablename__ = "subscription_plans"

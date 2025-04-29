@@ -9,7 +9,7 @@ from ..models.purchase import Purchase
 from ..models.user import User
 from ..models.robot import Robot
 from ..schemas.purchase import PurchaseCreate, PurchaseResponse
-from ..utils.auth import get_user_from_token
+from ..utils.auth import get_current_user as get_user_from_token
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
 

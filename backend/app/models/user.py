@@ -24,3 +24,4 @@ class User(Base):
     conversations = relationship("Conversation", back_populates="user")
     messages = relationship("Message", back_populates="sender")
     notifications = relationship("Notification", back_populates="user")
+    subscriptions = relationship("Subscription", back_populates="user")
