@@ -1,4 +1,4 @@
-import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from './apiConfig';
+import API_ENDPOINTS, { handleApiResponse } from './apiConfig';
 
 // Types for user management
 export interface User {
@@ -879,3 +879,18 @@ export const analyzeMarket = async (symbol: string, timeframe?: string) => {
 
   return handleApiResponse(response);
 };
+
+// Function to get authentication headers for requests
+export function getAuthHeaders() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    console.warn('No auth token found in localStorage');
+  } else {
+    console.log('Using auth token from localStorage');
+  }
+
+  return {
+    Authorization: token ? `Bearer ${token}` : '',
+    'Content-Type': 'application/json'
+  };
+}

@@ -295,7 +295,15 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
 
       if (data && data.access_token) {
         try {
-          console.log("Login successful, fetching user data...");
+          console.log("Login successful, storing token...");
+          
+          // Store the token properly in localStorage
+          localStorage.setItem('auth_token', data.access_token);
+          
+          // Wait a moment for token to be saved
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          console.log("Token stored, fetching user data...");
           // Fetch the current user immediately after login
           const currentUser = await loadCurrentUser();
           

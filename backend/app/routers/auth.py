@@ -123,8 +123,6 @@ def logout():
 
 @router.get("/users/me", response_model=UserResponse)
 async def get_current_user(request: Request, db: Session = Depends(get_db)):
-    from ..utils.auth import get_user_from_token
-    
     # Get the authorization header
     authorization = request.headers.get("Authorization")
     if not authorization:
@@ -134,19 +132,37 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user_id = await get_user_from_token(authorization)
-    if not user_id:
+    # Extract the token from the Authorization header
+    if authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+    else:
+        token = authorization
+    
+    try:
+        # Decode the JWT token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Get the user from the database
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        return user
+    except JWTError as e:
+        print(f"JWT Error in /users/me: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    return user
