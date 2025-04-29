@@ -51,3 +51,45 @@ class ChatMessageResponse(ChatMessageBase):
     class Config:
         from_attributes = True
 >>>>>>> 81304081b7ff876300be50827e29718378aa233f
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import datetime
+
+class MessageBase(BaseModel):
+    content: str
+    is_read: bool = False
+
+
+class MessageCreate(MessageBase):
+    sender_id: str
+    conversation_id: str
+
+
+class Message(MessageBase):
+    id: str
+    sender_id: str
+    conversation_id: str
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+
+class ConversationBase(BaseModel):
+    title: Optional[str] = None
+
+
+class ConversationCreate(ConversationBase):
+    user_id: str
+    admin_id: Optional[str] = None
+
+
+class Conversation(ConversationBase):
+    id: str
+    user_id: str
+    admin_id: Optional[str] = None
+    created_at: datetime
+    messages: List[Message] = []
+    
+    class Config:
+        orm_mode = True
