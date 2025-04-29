@@ -294,22 +294,35 @@ export function BackendProvider({ children }: { children: React.ReactNode }) {
       const data = await apiLoginUser(email, password);
 
       if (data && data.access_token) {
-        // Fetch the current user immediately after login
-        const currentUser = await loadCurrentUser();
-        
-        // Use the result of loadCurrentUser to determine if we successfully loaded the user
-        if (currentUser) {
-          // Redirect user after successful login
-          const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
-          localStorage.removeItem('redirectAfterAuth');
-          console.log("Redirecting to:", redirectPath);
+        try {
+          console.log("Login successful, fetching user data...");
+          // Fetch the current user immediately after login
+          const currentUser = await loadCurrentUser();
           
-          // Force the navigation to happen after state updates are complete
-          setTimeout(() => {
-            navigate(redirectPath);
-          }, 100);
+          if (currentUser) {
+            console.log("User data loaded:", currentUser);
+            // Redirect user after successful login
+            const redirectPath = localStorage.getItem('redirectAfterAuth') || '/dashboard';
+            localStorage.removeItem('redirectAfterAuth');
+            console.log("Redirecting to:", redirectPath);
+            
+            // Ensure user state is set before navigation
+            setUser(currentUser);
+            
+            // Force the navigation to happen after state updates are complete with a longer delay
+            setTimeout(() => {
+              console.log("Executing delayed navigation to:", redirectPath);
+              navigate(redirectPath, { replace: true });
+            }, 500);
+          } else {
+            console.error("Failed to load user data after login");
+            throw new Error("Failed to load user data after login");
+          }
+          return data;
+        } catch (error) {
+          console.error("Error during post-login process:", error);
+          throw error;
         }
-        return data;
       } else {
         throw new Error(data?.message || 'Login failed: access token not received');
       }

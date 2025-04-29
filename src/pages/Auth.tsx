@@ -64,30 +64,42 @@ const Auth = () => {
 
     // Redirect if already logged in
     if (user) {
-      console.log("User authentication detected, redirecting...", user);
+      console.log("Auth page: User authentication detected, redirecting...", user);
       
       // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
       if (user.is_admin) {
-        console.log("Admin user, redirecting to admin dashboard");
-        navigate('/admin-dashboard', { replace: true });
+        console.log("Auth page: Admin user, redirecting to admin dashboard");
+        // Force immediate navigation with replace to avoid history issues
+        window.location.href = '/admin-dashboard';
       } else {
-        console.log("Regular user, redirecting to dashboard");
-        navigate('/dashboard', { replace: true });
+        console.log("Auth page: Regular user, redirecting to dashboard");
+        // Force immediate navigation with replace to avoid history issues
+        window.location.href = '/dashboard';
       }
     }
-  }, [user, navigate]);
+  }, [user]); // Removed navigate from dependencies since we're using window.location
 
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log("Attempting login with email:", values.email);
       await login(values.email, values.password);
+      
       // The redirect will happen in the useEffect when user state is updated
       toast({
         title: "Login Successful",
         description: "Welcome back! Redirecting to your dashboard...",
         variant: "default",
       });
+      
+      // Force redirect after a delay if useEffect doesn't trigger
+      setTimeout(() => {
+        if (window.location.pathname === '/auth') {
+          console.log("Forcing redirect after login timeout");
+          window.location.href = '/dashboard';
+        }
+      }, 2000);
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
