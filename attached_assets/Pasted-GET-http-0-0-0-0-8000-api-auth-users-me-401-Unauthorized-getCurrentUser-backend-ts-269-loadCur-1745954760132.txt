@@ -1,0 +1,72 @@
+GET http://0.0.0.0:8000/api/auth/users/me 401 (Unauthorized)
+getCurrentUser @ backend.ts:269
+loadCurrentUser @ BackendContext.tsx:370
+loginUser @ BackendContext.tsx:300
+await in loginUser
+onLoginSubmit @ Auth.tsx:87
+(anonymous) @ chunk-YGCRICWC.js?v=a0a54f61:1465
+await in (anonymous)
+callCallback2 @ chunk-W6L2VRDA.js?v=a0a54f61:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=a0a54f61:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=a0a54f61:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=a0a54f61:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=a0a54f61:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=a0a54f61:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=a0a54f61:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=a0a54f61:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=a0a54f61:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=a0a54f61:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=a0a54f61:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=a0a54f61:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=a0a54f61:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5449
+BackendContext.tsx:318 Failed to load user data after login
+loginUser @ BackendContext.tsx:318
+await in loginUser
+onLoginSubmit @ Auth.tsx:87
+(anonymous) @ chunk-YGCRICWC.js?v=a0a54f61:1465
+await in (anonymous)
+callCallback2 @ chunk-W6L2VRDA.js?v=a0a54f61:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=a0a54f61:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=a0a54f61:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=a0a54f61:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=a0a54f61:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=a0a54f61:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=a0a54f61:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=a0a54f61:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=a0a54f61:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=a0a54f61:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=a0a54f61:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=a0a54f61:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=a0a54f61:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5449
+BackendContext.tsx:323 Error during post-login process: Error: Failed to load user data after login
+    at loginUser (BackendContext.tsx:319:19)
+    at async onLoginSubmit (Auth.tsx:87:7)
+    at async chunk-YGCRICWC.js?v=a0a54f61:1465:9
+loginUser @ BackendContext.tsx:323
+await in loginUser
+onLoginSubmit @ Auth.tsx:87
+(anonymous) @ chunk-YGCRICWC.js?v=a0a54f61:1465
+await in (anonymous)
+callCallback2 @ chunk-W6L2VRDA.js?v=a0a54f61:3674
+invokeGuardedCallbackDev @ chunk-W6L2VRDA.js?v=a0a54f61:3699
+invokeGuardedCallback @ chunk-W6L2VRDA.js?v=a0a54f61:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-W6L2VRDA.js?v=a0a54f61:3736
+executeDispatch @ chunk-W6L2VRDA.js?v=a0a54f61:7014
+processDispatchQueueItemsInOrder @ chunk-W6L2VRDA.js?v=a0a54f61:7034
+processDispatchQueue @ chunk-W6L2VRDA.js?v=a0a54f61:7043
+dispatchEventsForPlugins @ chunk-W6L2VRDA.js?v=a0a54f61:7051
+(anonymous) @ chunk-W6L2VRDA.js?v=a0a54f61:7174
+batchedUpdates$1 @ chunk-W6L2VRDA.js?v=a0a54f61:18913
+batchedUpdates @ chunk-W6L2VRDA.js?v=a0a54f61:3579
+dispatchEventForPluginEventSystem @ chunk-W6L2VRDA.js?v=a0a54f61:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-W6L2VRDA.js?v=a0a54f61:5478
+dispatchEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5472
+dispatchDiscreteEvent @ chunk-W6L2VRDA.js?v=a0a54f61:5449
+BackendContext.tsx:330 Login error: Error: Failed to load user data after login
+    at loginUser (BackendContext.tsx:319:19)
+    at async onLoginSubmit (Auth.tsx:87:7)
+    at async chunk-YGCRICWC.js?v=a0a54f61:1465:9
