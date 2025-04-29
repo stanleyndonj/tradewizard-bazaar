@@ -1,158 +1,152 @@
 
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from .. import models, schemas
-from ..database import get_db
+from sqlalchemy import desc
+from typing import List, Optional
 import uuid
-from ..main import sio
+from datetime import datetime
 
+from ..database import get_db
+from ..models.chat import Conversation, Message
+from ..schemas import Conversation as ConversationSchema, ConversationCreate, Message as MessageSchema, MessageCreate
+from ..utils.auth import get_current_user
 
 router = APIRouter(
     prefix="/api/chat",
     tags=["chat"],
 )
 
-
-@router.get("/conversations", response_model=List[schemas.Conversation])
-def get_conversations(db: Session = Depends(get_db)):
-    conversations = db.query(models.Conversation).all()
+@router.get("/conversations", response_model=List[ConversationSchema])
+async def get_conversations(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    if current_user.is_admin:
+        # Admins can see all conversations
+        conversations = db.query(Conversation).all()
+    else:
+        # Regular users can only see their conversations
+        conversations = db.query(Conversation).filter(Conversation.user_id == current_user.id).all()
+    
     return conversations
 
-
-@router.post("/conversations", response_model=schemas.Conversation)
-def create_conversation(
-    user_id: str, 
-    user_name: str, 
-    user_email: str, 
-    admin_id: Optional[str] = None, 
-    admin_name: Optional[str] = None, 
-    admin_email: Optional[str] = None, 
-    db: Session = Depends(get_db)
+@router.post("/conversations", status_code=status.HTTP_201_CREATED, response_model=ConversationSchema)
+async def create_conversation(
+    user_id: Optional[str] = Query(None),
+    user_name: Optional[str] = Query(None),
+    user_email: Optional[str] = Query(None),
+    admin_id: Optional[str] = Query(None),
+    admin_name: Optional[str] = Query(None),
+    admin_email: Optional[str] = Query(None),
+    title: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    conversation_id = str(uuid.uuid4())
-    new_conversation = models.Conversation(
-        id=conversation_id, 
-        user_id=user_id, 
-        user_name=user_name, 
-        user_email=user_email, 
-        admin_id=admin_id, 
-        admin_name=admin_name, 
-        admin_email=admin_email
+    # If user_id is not provided, use the current user's ID
+    if not user_id:
+        user_id = current_user.id
+    
+    # Create a new conversation
+    conversation = Conversation(
+        id=str(uuid.uuid4()),
+        user_id=user_id,
+        admin_id=admin_id if admin_id else (current_user.id if current_user.is_admin else None),
+        title=title or f"Conversation {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     )
-    db.add(new_conversation)
+    
+    db.add(conversation)
     db.commit()
-    db.refresh(new_conversation)
+    db.refresh(conversation)
     
-    # Notify connected clients about the new conversation
-    async def notify_new_conversation():
-        await sio.emit('new_conversation', {"conversation_id": conversation_id})
-    
-    # Run the async function
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(notify_new_conversation())
-        else:
-            loop.run_until_complete(notify_new_conversation())
-    except Exception as e:
-        print(f"Error emitting socket event: {e}")
-    
-    return new_conversation
+    return conversation
 
-
-@router.get("/messages/{conversation_id}", response_model=List[schemas.Message])
-def get_messages(conversation_id: str, db: Session = Depends(get_db)):
-    messages = db.query(models.Message).filter(models.Message.conversation_id == conversation_id).all()
-    return messages
-
-
-@router.post("/messages/{conversation_id}", response_model=schemas.Message)
-def send_message(
-    conversation_id: str, 
-    text: str, 
-    sender: str, 
-    sender_id: str, 
-    db: Session = Depends(get_db)
+@router.get("/conversations/{conversation_id}/messages", response_model=List[MessageSchema])
+async def get_messages(
+    conversation_id: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    # Check if conversation exists
-    conversation = db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
+    # Fetch the conversation to check access permissions
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    message_id = str(uuid.uuid4())
-    new_message = models.Message(
-        id=message_id,
-        content=text,
-        sender=sender,
-        sender_id=sender_id,
+    # Check if the user has access to this conversation
+    if not current_user.is_admin and conversation.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this conversation")
+    
+    # Fetch messages for the conversation
+    messages = db.query(Message).filter(Message.conversation_id == conversation_id).order_by(Message.created_at).all()
+    
+    return messages
+
+@router.post("/conversations/{conversation_id}/messages", status_code=status.HTTP_201_CREATED, response_model=MessageSchema)
+async def create_message(
+    conversation_id: str,
+    message: MessageCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # Fetch the conversation to check access permissions
+    conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Check if the user has access to this conversation
+    if not current_user.is_admin and conversation.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this conversation")
+    
+    # Create a new message
+    new_message = Message(
+        id=str(uuid.uuid4()),
         conversation_id=conversation_id,
-        is_read=False
+        sender_id=current_user.id,
+        content=message.content,
+        is_read=message.is_read
     )
+    
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
     
-    # Notify connected clients about the new message
-    async def notify_new_message():
-        await sio.emit('new_message', {
-            "id": message_id,
-            "content": text,
-            "sender": sender,
-            "sender_id": sender_id,
-            "conversation_id": conversation_id,
-            "is_read": False,
-            "created_at": new_message.created_at.isoformat()
-        })
-    
-    # Run the async function
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            loop.create_task(notify_new_message())
-        else:
-            loop.run_until_complete(notify_new_message())
-    except Exception as e:
-        print(f"Error emitting socket event: {e}")
-    
     return new_message
 
-
-@router.patch("/messages/{message_id}/read", response_model=dict)
-def mark_message_read(message_id: str, db: Session = Depends(get_db)):
-    message = db.query(models.Message).filter(models.Message.id == message_id).first()
+@router.patch("/messages/{message_id}/read", status_code=status.HTTP_200_OK)
+async def mark_message_as_read(
+    message_id: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Check if the user has access to this message
+    conversation = db.query(Conversation).filter(Conversation.id == message.conversation_id).first()
+    if not current_user.is_admin and conversation.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this message")
     
     message.is_read = True
     db.commit()
     
-    return {"success": True}
+    return {"detail": "Message marked as read"}
 
-
-@router.get("/unread-count", response_model=int)
-def get_unread_message_count(
-    user_id: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+@router.get("/unread-count", response_model=dict)
+async def get_unread_message_count(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    query = db.query(models.Message).filter(models.Message.is_read == False)
+    if current_user.is_admin:
+        # For admins, count all unread messages
+        count = db.query(Message).filter(Message.is_read == False).count()
+    else:
+        # For regular users, count unread messages in their conversations
+        conversations = db.query(Conversation).filter(Conversation.user_id == current_user.id).all()
+        conversation_ids = [conversation.id for conversation in conversations]
+        count = db.query(Message).filter(
+            Message.conversation_id.in_(conversation_ids),
+            Message.is_read == False,
+            Message.sender_id != current_user.id  # Don't count user's own messages
+        ).count()
     
-    if user_id:
-        # Get conversations where the user is either the user or the admin
-        user_conversations = db.query(models.Conversation).filter(
-            (models.Conversation.user_id == user_id) | 
-            (models.Conversation.admin_id == user_id)
-        ).all()
-        
-        if not user_conversations:
-            return 0
-            
-        conversation_ids = [conv.id for conv in user_conversations]
-        query = query.filter(models.Message.conversation_id.in_(conversation_ids))
-        
-        # Only count messages that weren't sent by this user
-        query = query.filter(models.Message.sender_id != user_id)
-    
-    return query.count()
+    return {"count": count}

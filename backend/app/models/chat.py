@@ -1,36 +1,31 @@
 
-from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Text
+from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from uuid import uuid4
+
 from ..database import Base
-import datetime
 
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    id = Column(String, primary_key=True, index=True)
-    title = Column(String, nullable=True)
-    user_id = Column(String, index=True)
-    user_name = Column(String)
-    user_email = Column(String)
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(String, nullable=False)
     admin_id = Column(String, nullable=True)
-    admin_name = Column(String, nullable=True)
-    admin_email = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    title = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationship to messages
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
 
 
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(String, primary_key=True, index=True)
-    content = Column(Text)
-    sender = Column(String)  # Name of the sender
-    sender_id = Column(String, index=True)  # ID of the sender
+    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
+    conversation_id = Column(String, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    sender_id = Column(String, nullable=False)
+    content = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
-    conversation_id = Column(String, ForeignKey("conversations.id"))
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Relationship to conversation
     conversation = relationship("Conversation", back_populates="messages")
