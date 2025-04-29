@@ -55,6 +55,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
+# Alias for compatibility with existing code
+get_user_from_token = get_current_user
+
 async def get_admin_user(authorization: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
     Get the admin user from the Authorization header token.

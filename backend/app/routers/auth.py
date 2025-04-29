@@ -9,7 +9,7 @@ import uuid
 from ..database import get_db
 from ..schemas.user import UserCreate, UserLogin, UserResponse
 from ..models.user import User
-from ..utils.auth import create_access_token, get_password_hash, verify_password, get_user_from_token
+from ..utils.auth import create_access_token, get_password_hash, verify_password, get_current_user as get_user_from_token
 from ..config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
