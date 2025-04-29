@@ -1,6 +1,7 @@
 
 from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 import uuid
 from ..database import Base
 
@@ -43,4 +44,7 @@ class RobotRequest(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationship
+    user = relationship("User", back_populates="robot_requests")
 
