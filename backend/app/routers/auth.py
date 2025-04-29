@@ -4,12 +4,13 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import Any, Dict
+from jose import jwt, JWTError
 import uuid
 
 from ..database import get_db
 from ..schemas.user import UserCreate, UserLogin, UserResponse
 from ..models.user import User
-from ..utils.auth import create_access_token, get_password_hash, verify_password, get_current_user as get_user_from_token
+from ..utils.auth import create_access_token, get_password_hash, verify_password, get_current_user as get_user_from_token, SECRET_KEY, ALGORITHM
 from ..config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -137,6 +138,9 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         token = authorization.replace("Bearer ", "")
     else:
         token = authorization
+    
+    from jose import jwt, JWTError
+    from ..utils.auth import SECRET_KEY, ALGORITHM
     
     try:
         # Decode the JWT token
