@@ -198,7 +198,7 @@ async def check_subscription(
 
     active_sub = db.query(Subscription).filter(
         Subscription.user_id == str(user_id),
-        Subscription.plan_id == plan_id,
+        Subscription.plan_id == str(plan_id),
         Subscription.is_active == True,
         Subscription.end_date > datetime.utcnow()
     ).first()

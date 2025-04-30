@@ -82,7 +82,7 @@ async def get_user(user_id: str, db: Session = Depends(get_db), current_user_id:
             detail="Not authenticated"
         )
 
-    user = db.query(User).filter(User.id == current_user_id).first()
+    user = db.query(User).filter(User.id == str(current_user_id)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,7 +96,7 @@ async def get_user(user_id: str, db: Session = Depends(get_db), current_user_id:
             detail="User not found"
         )
 
-    if current_user_id != user_id and not user.is_admin:
+    if str(current_user_id) != user_id and not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this user"
@@ -118,7 +118,7 @@ async def update_user(
             detail="Not authenticated"
         )
 
-    user = db.query(User).filter(User.id == current_user_id).first()
+    user = db.query(User).filter(User.id == str(current_user_id)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -132,7 +132,7 @@ async def update_user(
             detail="User not found"
         )
 
-    if current_user_id != user_id and not user.is_admin:
+    if str(current_user_id) != user_id and not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this user"
@@ -200,15 +200,15 @@ async def get_user_purchases(
             detail="Not authenticated"
         )
 
-    # Check if the user is requesting their own purchases or is an admin
-    current_user = db.query(User).filter(User.id == current_user_id).first()
+    # Get current user by string ID
+    current_user = db.query(User).filter(User.id == str(current_user_id)).first()
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
 
-    if current_user_id != user_id and not current_user.is_admin:
+    if str(current_user_id) != user_id and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view these purchases"
@@ -233,15 +233,15 @@ async def get_user_robot_requests(
             detail="Not authenticated"
         )
 
-    # Check if the user is requesting their own requests or is an admin
-    current_user = db.query(User).filter(User.id == current_user_id).first()
+    # Get current user by string ID
+    current_user = db.query(User).filter(User.id == str(current_user_id)).first()
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
 
-    if current_user_id != user_id and not current_user.is_admin:
+    if str(current_user_id) != user_id and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view these requests"
