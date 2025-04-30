@@ -15,38 +15,38 @@ export const API_BASE_URL = API_URL;
 
 const API_ENDPOINTS = {
   // Auth endpoints
-  REGISTER: `${API_URL}/api/auth/register`,
-  LOGIN: `${API_URL}/api/auth/login`,
-  LOGOUT: `${API_URL}/api/auth/logout`,
-  CURRENT_USER: `${API_URL}/api/auth/users/me`,
+  REGISTER: `${API_BASE_URL}/api/auth/register`,
+  LOGIN: `${API_BASE_URL}/api/auth/login`,
+  LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+  CURRENT_USER: `${API_BASE_URL}/api/auth/users/me`,
 
   // User endpoints
-  USERS: `${API_URL}/api/users`,
-  USER_BY_ID: (id: string) => `${API_URL}/api/users/${id}`,
-  USER_ROBOT_REQUESTS: (userId: string) => `${API_URL}/api/users/${userId}/robot-requests`,
-  USER_PURCHASES: (userId: string) => `${API_URL}/api/users/${userId}/purchases`,
+  USERS: `${API_BASE_URL}/api/users`,
+  USER_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
+  USER_ROBOT_REQUESTS: (userId: string) => `${API_BASE_URL}/api/users/${userId}/robot-requests`,
+  USER_PURCHASES: (userId: string) => `${API_BASE_URL}/api/users/${userId}/purchases`,
 
   // Robot endpoints
-  ROBOTS: `${API_URL}/api/robots`,
-  ROBOT_BY_ID: (id: string) => `${API_URL}/api/robots/${id}`,
+  ROBOTS: `${API_BASE_URL}/api/robots`,
+  ROBOT_BY_ID: (id: string) => `${API_BASE_URL}/api/robots/${id}`,
 
   // Robot request endpoints
-  ROBOT_REQUESTS: `${API_URL}/api/robot-requests`,
-  ROBOT_REQUEST_BY_ID: (id: string) => `${API_URL}/api/robot-requests/${id}`,
+  ROBOT_REQUESTS: `${API_BASE_URL}/api/robot-requests`,
+  ROBOT_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/api/robot-requests/${id}`,
 
   // Purchase endpoints
-  PURCHASES: `${API_URL}/api/purchases`,
-  PURCHASE_BY_ID: (id: string) => `${API_URL}/api/purchases/${id}`,
+  PURCHASES: `${API_BASE_URL}/api/purchases`,
+  PURCHASE_BY_ID: (id: string) => `${API_BASE_URL}/api/purchases/${id}`,
 
   // Payment endpoints
-  MPESA_INITIATE: `${API_URL}/api/payments/mpesa/initiate`,
-  MPESA_VERIFY: `${API_URL}/api/payments/mpesa/verify/{transaction_id}`,
-  CARD_PAYMENT_PROCESS: `${API_URL}/api/payments/card/process`,
-  CARD_PAYMENT_VERIFY: `${API_URL}/api/payments/card/verify/{payment_id}`,
+  MPESA_INITIATE: `${API_BASE_URL}/api/payments/mpesa/initiate`,
+  MPESA_VERIFY: `${API_BASE_URL}/api/payments/mpesa/verify/{transaction_id}`,
+  CARD_PAYMENT_PROCESS: `${API_BASE_URL}/api/payments/card/process`,
+  CARD_PAYMENT_VERIFY: `${API_BASE_URL}/api/payments/card/verify/{payment_id}`,
 
   // AI Trading endpoints - Fixed to match backend structure
-  AI_TRADING_SIGNALS: `${API_URL}/api/ai-trading-signals`,
-  AI_MARKET_ANALYSIS: `${API_URL}/api/ai-trading-signals/analyze`,
+  AI_TRADING_SIGNALS: `${API_BASE_URL}/api/ai-trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/ai-trading-signals/analyze`,
 
   // Chat endpoints
   CHAT_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
@@ -55,13 +55,13 @@ const API_ENDPOINTS = {
   UNREAD_MESSAGE_COUNT: `${API_BASE_URL}/api/chat/unread-count`,
 
   // Subscription endpoints - Fixed to match backend structure
-  SUBSCRIPTION_PLANS: `${API_URL}/api/subscription/plans`,
-  SUBSCRIBE: `${API_URL}/api/subscription/subscribe`,
-  UPDATE_SUBSCRIPTION_PRICE: `${API_URL}/api/subscription/plans`,
-  USER_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/subscriptions`,
-  USER_ACTIVE_SUBSCRIPTIONS: `${API_URL}/api/subscription/user/active`,
-  CHECK_SUBSCRIPTION: (planId: string) => `${API_URL}/api/subscription/check/${planId}`,
-  CANCEL_SUBSCRIPTION: (subscriptionId: string) => `${API_URL}/api/subscription/cancel/${subscriptionId}`,
+  SUBSCRIPTION_PLANS: `${API_BASE_URL}/api/subscription/plans`,
+  SUBSCRIBE: `${API_BASE_URL}/api/subscription/subscribe`,
+  UPDATE_SUBSCRIPTION_PRICE: `${API_BASE_URL}/api/subscription/plans`,
+  USER_SUBSCRIPTIONS: `${API_BASE_URL}/api/subscription/user/subscriptions`,
+  USER_ACTIVE_SUBSCRIPTIONS: `${API_BASE_URL}/api/subscription/user/active`,
+  CHECK_SUBSCRIPTION: (planId: string) => `${API_BASE_URL}/api/subscription/check/${planId}`,
+  CANCEL_SUBSCRIPTION: (subscriptionId: string) => `${API_BASE_URL}/api/subscription/cancel/${subscriptionId}`,
 };
 
 export default API_ENDPOINTS;
