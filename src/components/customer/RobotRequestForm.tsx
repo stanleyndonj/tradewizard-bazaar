@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 export default function RobotRequestForm() {
   const { toast } = useToast();
   const { submitRobotRequest } = useBackend();
   const [isLoading, setIsLoading] = useState(false);
   const [robotType, setRobotType] = useState('mt5');
+  const navigate = useNavigate(); // Initialize useNavigate
 
   // MT5 Robot form state
   const [mt5Form, setMt5Form] = useState({
@@ -87,13 +88,14 @@ export default function RobotRequestForm() {
 
       // Submit request
       const response = await submitRobotRequest(formData);
-      
+
       if (response && response.id) {
         toast({
           title: "Request Submitted",
           description: "Your robot request has been submitted successfully! We'll get back to you soon.",
+          duration: 5000, // Added duration
         });
-        
+
         // Reset form
         if (robotType === 'mt5') {
           setMt5Form({
@@ -122,6 +124,7 @@ export default function RobotRequestForm() {
             additional_requirements: ''
           });
         }
+        navigate('/dashboard'); // Redirect to dashboard
       } else {
         throw new Error("Failed to submit request");
       }
@@ -145,7 +148,7 @@ export default function RobotRequestForm() {
           Tell us how you want your automated trading robot to perform
         </CardDescription>
       </CardHeader>
-      
+
       <Tabs defaultValue="mt5" onValueChange={setRobotType} value={robotType}>
         <div className="px-6">
           <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -153,7 +156,7 @@ export default function RobotRequestForm() {
             <TabsTrigger value="binary">Binary Options Robot</TabsTrigger>
           </TabsList>
         </div>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit}>
             <TabsContent value="mt5" className="space-y-4">
@@ -170,7 +173,7 @@ export default function RobotRequestForm() {
                     className="bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="account_credentials">Account Details (Broker, Account Type)</Label>
                   <Input 
@@ -182,7 +185,7 @@ export default function RobotRequestForm() {
                     className="bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="volume">Trade Volume</Label>
@@ -195,7 +198,7 @@ export default function RobotRequestForm() {
                       className="bg-gray-700 border-gray-600"
                     />
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="order_type">Order Type</Label>
                     <Select 
@@ -214,7 +217,7 @@ export default function RobotRequestForm() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="stop_loss">Stop Loss (points/pips)</Label>
@@ -227,7 +230,7 @@ export default function RobotRequestForm() {
                       className="bg-gray-700 border-gray-600"
                     />
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="take_profit">Take Profit (points/pips)</Label>
                     <Input 
@@ -240,7 +243,7 @@ export default function RobotRequestForm() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="entry_rules">Entry Rules</Label>
                   <Textarea 
@@ -252,7 +255,7 @@ export default function RobotRequestForm() {
                     className="min-h-24 bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="exit_rules">Exit Rules</Label>
                   <Textarea 
@@ -264,7 +267,7 @@ export default function RobotRequestForm() {
                     className="min-h-24 bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="risk_management">Risk Management Rules</Label>
                   <Textarea 
@@ -276,7 +279,7 @@ export default function RobotRequestForm() {
                     className="min-h-24 bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="additional_parameters">Additional Parameters</Label>
                   <Textarea 
@@ -290,7 +293,7 @@ export default function RobotRequestForm() {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="binary" className="space-y-4">
               <div className="grid gap-4">
                 <div className="grid gap-2">
@@ -305,7 +308,7 @@ export default function RobotRequestForm() {
                     className="bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="platform">Platform</Label>
@@ -325,7 +328,7 @@ export default function RobotRequestForm() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="timeframe">Timeframe</Label>
                     <Select 
@@ -346,7 +349,7 @@ export default function RobotRequestForm() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="risk_per_trade">Risk Per Trade (%)</Label>
                   <Input 
@@ -358,7 +361,7 @@ export default function RobotRequestForm() {
                     className="bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="instrument_type">Instrument Type</Label>
@@ -378,7 +381,7 @@ export default function RobotRequestForm() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="grid gap-2">
                     <Label htmlFor="specific_instruments">Specific Instruments</Label>
                     <Input 
@@ -391,7 +394,7 @@ export default function RobotRequestForm() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="indicators">Indicators to Use</Label>
                   <Textarea 
@@ -403,7 +406,7 @@ export default function RobotRequestForm() {
                     className="min-h-24 bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="exit_strategy">Exit Strategy</Label>
                   <Textarea 
@@ -415,7 +418,7 @@ export default function RobotRequestForm() {
                     className="min-h-24 bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="trading_hours">Trading Hours</Label>
                   <Input 
@@ -427,7 +430,7 @@ export default function RobotRequestForm() {
                     className="bg-gray-700 border-gray-600"
                   />
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Label htmlFor="additional_requirements">Additional Requirements</Label>
                   <Textarea 
@@ -441,7 +444,7 @@ export default function RobotRequestForm() {
                 </div>
               </div>
             </TabsContent>
-            
+
             <CardFooter className="mt-6 px-0">
               <Button 
                 type="submit"
