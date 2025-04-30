@@ -27,7 +27,14 @@ async def create_robot_request(
         )
 
     # Verify that the user exists
-    user = db.query(User).filter(User.id == current_user_id).first()
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+
+    # Verify that the user exists - compare with string ID
+    user = db.query(User).filter(User.id == str(current_user_id)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
