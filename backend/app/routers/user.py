@@ -10,7 +10,9 @@ from ..models.purchase import Purchase
 from ..schemas.user import UserCreate, UserResponse, UserUpdate
 from ..schemas.robot_request import RobotRequestResponse
 from ..schemas.purchase import PurchaseResponse
-from ..utils.auth import get_user_from_token, create_access_token
+from ..utils.auth import get_user_from_token
+from ..models.robot_request import RobotRequest
+from ..schemas.robot_request import RobotRequestResponse, create_access_token
 from ..utils.hash_password import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -45,6 +47,34 @@ async def get_current_user(current_user_id: str = Depends(get_user_from_token), 
     
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
+
+@router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
+async def get_user_robot_requests(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_user_from_token)
+):
+    """Get all robot requests for a specific user"""
+    # Check if the current user is requesting their own data or is an admin
+    current_user = db.query(User).filter(User.id == current_user_id).first()
+    
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    # Only allow users to see their own requests or admins to see any requests
+    if current_user_id != user_id and not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view these requests"
+        )
+    
+    # Get all requests for the specified user
+    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
+    return requests
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"

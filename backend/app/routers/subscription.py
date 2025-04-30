@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from ..database import get_db
 from ..models.user import User
 from ..models.subscription import Subscription, SubscriptionPlan
+from ..models.robot import Robot # Assuming a Robot model exists
 from ..utils.auth import get_user_from_token, get_admin_user
 from ..schemas.subscription import (
     SubscriptionPlanCreate, 
@@ -16,12 +17,14 @@ from ..schemas.subscription import (
     SubscriptionResponse,
     SubscriptionUpdate
 )
+from ..schemas.robot import RobotRequest, RobotResponse # Assuming Robot schemas exist
 
 # Fixed router prefix to match the API endpoints needed by frontend
-router = APIRouter(prefix="/api", tags=["subscription"])
+router = APIRouter(prefix="/subscription", tags=["subscription"]) # Removed the "/api" prefix
+
 
 # Subscription Plans Endpoints (Admin only)
-@router.post("/subscription/plans", response_model=SubscriptionPlanResponse)
+@router.post("/plans", response_model=SubscriptionPlanResponse)
 async def create_subscription_plan(
     plan: SubscriptionPlanCreate,
     db: Session = Depends(get_db),
@@ -42,13 +45,13 @@ async def create_subscription_plan(
     db.refresh(new_plan)
     return new_plan
 
-@router.get("/subscription/plans", response_model=List[SubscriptionPlanResponse])
+@router.get("/plans", response_model=List[SubscriptionPlanResponse])
 async def get_subscription_plans(db: Session = Depends(get_db)):
     """Get all subscription plans (public)"""
     plans = db.query(SubscriptionPlan).all()
     return plans
 
-@router.get("/subscription/plans/{plan_id}", response_model=SubscriptionPlanResponse)
+@router.get("/plans/{plan_id}", response_model=SubscriptionPlanResponse)
 async def get_subscription_plan(plan_id: str, db: Session = Depends(get_db)):
     """Get a specific subscription plan by ID (public)"""
     plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
@@ -59,7 +62,7 @@ async def get_subscription_plan(plan_id: str, db: Session = Depends(get_db)):
         )
     return plan
 
-@router.put("/subscription/plans/{plan_id}", response_model=SubscriptionPlanResponse)
+@router.put("/plans/{plan_id}", response_model=SubscriptionPlanResponse)
 async def update_subscription_plan(
     plan_id: str,
     plan_update: SubscriptionPlanUpdate,
@@ -73,17 +76,17 @@ async def update_subscription_plan(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Subscription plan not found"
         )
-    
+
     # Update fields if provided
     update_data = plan_update.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(plan, key, value)
-    
+
     db.commit()
     db.refresh(plan)
     return plan
 
-@router.delete("/subscription/plans/{plan_id}")
+@router.delete("/plans/{plan_id}")
 async def delete_subscription_plan(
     plan_id: str,
     db: Session = Depends(get_db),
@@ -96,13 +99,13 @@ async def delete_subscription_plan(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Subscription plan not found"
         )
-    
+
     db.delete(plan)
     db.commit()
     return {"message": "Subscription plan deleted successfully"}
 
 # User subscriptions endpoints
-@router.post("/subscription/subscribe", response_model=SubscriptionResponse)
+@router.post("/subscribe", response_model=SubscriptionResponse)
 async def create_subscription(
     subscription: SubscriptionCreate,
     db: Session = Depends(get_db),
@@ -116,7 +119,7 @@ async def create_subscription(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Subscription plan not found"
         )
-    
+
     # Calculate end date based on plan interval
     start_date = datetime.utcnow()
     end_date = None
@@ -124,14 +127,14 @@ async def create_subscription(
         end_date = start_date + timedelta(days=30)
     elif plan.interval == "yearly":
         end_date = start_date + timedelta(days=365)
-    
+
     # Check if user already has an active subscription for this plan
     existing_sub = db.query(Subscription).filter(
         Subscription.user_id == user_id,
         Subscription.plan_id == subscription.plan_id,
         Subscription.is_active == True
     ).first()
-    
+
     if existing_sub:
         # Extend the existing subscription
         existing_sub.end_date = end_date if existing_sub.end_date else (datetime.utcnow() + timedelta(days=30))
@@ -139,7 +142,7 @@ async def create_subscription(
         db.commit()
         db.refresh(existing_sub)
         return existing_sub
-    
+
     # Create new subscription
     new_subscription = Subscription(
         id=str(uuid.uuid4()),
@@ -153,13 +156,13 @@ async def create_subscription(
         end_date=end_date,
         is_active=False  # Will be set to True after payment
     )
-    
+
     db.add(new_subscription)
     db.commit()
     db.refresh(new_subscription)
     return new_subscription
 
-@router.get("/subscription/user/subscriptions", response_model=List[SubscriptionResponse])
+@router.get("/user/subscriptions", response_model=List[SubscriptionResponse])
 async def get_user_subscriptions(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_user_from_token)
@@ -168,7 +171,7 @@ async def get_user_subscriptions(
     subscriptions = db.query(Subscription).filter(Subscription.user_id == user_id).all()
     return subscriptions
 
-@router.get("/subscription/user/active", response_model=List[SubscriptionResponse])
+@router.get("/user/active", response_model=List[SubscriptionResponse])
 async def get_active_subscriptions(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_user_from_token)
@@ -181,7 +184,7 @@ async def get_active_subscriptions(
     ).all()
     return active_subs
 
-@router.get("/subscription/check/{plan_id}")
+@router.get("/check/{plan_id}")
 async def check_subscription(
     plan_id: str,
     db: Session = Depends(get_db),
@@ -190,17 +193,17 @@ async def check_subscription(
     """Check if the authenticated user has an active subscription for a specific plan"""
     if not user_id:
         return {"has_subscription": False}
-    
+
     active_sub = db.query(Subscription).filter(
         Subscription.user_id == user_id,
         Subscription.plan_id == plan_id,
         Subscription.is_active == True,
         Subscription.end_date > datetime.utcnow()
     ).first()
-    
+
     return {"has_subscription": active_sub is not None}
 
-@router.put("/subscription/cancel/{subscription_id}")
+@router.put("/cancel/{subscription_id}")
 async def cancel_subscription(
     subscription_id: str,
     db: Session = Depends(get_db),
@@ -211,17 +214,29 @@ async def cancel_subscription(
         Subscription.id == subscription_id,
         Subscription.user_id == user_id
     ).first()
-    
+
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Subscription not found or not owned by user"
         )
-    
+
     subscription.is_active = False
     subscription.status = "cancelled"
     subscription.updated_at = datetime.utcnow()
-    
+
     db.commit()
-    
+
     return {"message": "Subscription cancelled successfully"}
+
+
+# Robot Request Endpoints
+@router.post("/robots", response_model=RobotResponse) # Example endpoint
+async def create_robot_request(robot_request: RobotRequest, db: Session = Depends(get_db), user_id: str = Depends(get_user_from_token)):
+    # Add logic to create a robot request associated with the user.  This requires additional model and schema definitions.
+    pass # Placeholder - needs implementation
+
+@router.get("/robots", response_model=List[RobotResponse]) # Example endpoint
+async def get_user_robots(db: Session = Depends(get_db), user_id: str = Depends(get_user_from_token)):
+    # Add logic to retrieve robots for the user.  This needs to consider the relationship between users and robots in the database.
+    pass # Placeholder - needs implementation

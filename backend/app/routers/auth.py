@@ -13,7 +13,7 @@ from ..models.user import User
 from ..utils.auth import create_access_token, get_password_hash, verify_password, get_current_user as get_user_from_token, SECRET_KEY, ALGORITHM
 from ..config import settings
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 @router.post("/register", response_model=Dict[str, Any])
