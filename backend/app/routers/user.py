@@ -12,7 +12,8 @@ from ..schemas.robot_request import RobotRequestResponse
 from ..schemas.purchase import PurchaseResponse
 from ..utils.auth import get_user_from_token
 from ..models.robot_request import RobotRequest
-from ..schemas.robot_request import RobotRequestResponse, create_access_token
+from ..schemas.robot_request import RobotRequestResponse
+from ..utils.auth import create_access_token
 from ..utils.hash_password import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
