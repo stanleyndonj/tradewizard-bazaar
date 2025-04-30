@@ -62,22 +62,31 @@ const Auth = () => {
     // Set page title
     document.title = 'Sign In | TradeWizard';
 
-    // Redirect if already logged in
-    if (user) {
+    // Create a flag in sessionStorage to prevent redirect loops
+    const redirectAttempted = sessionStorage.getItem('redirectAttempted');
+
+    // Redirect if already logged in and no redirect has been attempted yet
+    if (user && !redirectAttempted) {
       console.log("Auth page: User authentication detected, redirecting...", user);
+      
+      // Set the flag to prevent multiple redirects
+      sessionStorage.setItem('redirectAttempted', 'true');
       
       // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
       if (user.is_admin) {
         console.log("Auth page: Admin user, redirecting to admin dashboard");
-        // Force immediate navigation with replace to avoid history issues
-        window.location.href = '/admin-dashboard';
+        navigate('/admin-dashboard', { replace: true });
       } else {
         console.log("Auth page: Regular user, redirecting to dashboard");
-        // Force immediate navigation with replace to avoid history issues
-        window.location.href = '/dashboard';
+        navigate('/dashboard', { replace: true });
       }
     }
-  }, [user]); // Removed navigate from dependencies since we're using window.location
+    
+    // Cleanup function to remove the flag when component unmounts or user logs out
+    return () => {
+      sessionStorage.removeItem('redirectAttempted');
+    };
+  }, [user, navigate]);
 
   // Handle login form submission
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
@@ -93,13 +102,8 @@ const Auth = () => {
         variant: "default",
       });
       
-      // Force redirect after a delay if useEffect doesn't trigger
-      setTimeout(() => {
-        if (window.location.pathname === '/auth') {
-          console.log("Forcing redirect after login timeout");
-          window.location.href = '/dashboard';
-        }
-      }, 2000);
+      // We no longer need this timeout as the useEffect handles the redirect
+      // and we've fixed the loop issue there
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
