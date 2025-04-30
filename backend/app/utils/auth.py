@@ -46,7 +46,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # Clean the token if it includes 'Bearer '
         if token and token.startswith("Bearer "):
             token = token.replace("Bearer ", "")
-            
+
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
