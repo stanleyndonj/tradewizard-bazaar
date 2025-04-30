@@ -179,8 +179,14 @@ async def get_active_subscriptions(
     user_id: str = Depends(get_user_from_token)
 ):
     """Get active subscriptions for the authenticated user"""
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+        
     active_subs = db.query(Subscription).filter(
-        Subscription.user_id == user_id,
+        Subscription.user_id == str(user_id),
         Subscription.is_active == True,
         Subscription.end_date > datetime.utcnow()
     ).all()
