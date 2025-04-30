@@ -43,7 +43,7 @@ async def get_user_robot_requests(
 
     # Check if current user is the owner or an admin
     if str(current_user_id) != user_id:
-        current_user = db.query(User).filter(User.id == current_user_id).first()
+        current_user = db.query(User).filter(User.id == str(current_user_id)).first()
         if not current_user or not current_user.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
