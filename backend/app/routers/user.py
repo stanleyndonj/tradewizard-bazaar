@@ -27,7 +27,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Create the user
     hashed_password = hash_password(user.password)
     new_user = User(email=user.email, name=user.name, password=hashed_password)
@@ -44,37 +44,9 @@ async def get_current_user(current_user_id: str = Depends(get_user_from_token), 
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
-
-@router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
-async def get_user_robot_requests(
-    user_id: str,
-    db: Session = Depends(get_db),
-    current_user_id: str = Depends(get_user_from_token)
-):
-    """Get all robot requests for a specific user"""
-    # Check if the current user is requesting their own data or is an admin
-    current_user = db.query(User).filter(User.id == current_user_id).first()
-    
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
-    # Only allow users to see their own requests or admins to see any requests
-    if current_user_id != user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view these requests"
-        )
-    
-    # Get all requests for the specified user
-    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
-    return requests
-
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
@@ -89,14 +61,14 @@ async def get_all_users(db: Session = Depends(get_db), current_user_id: str = De
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user or not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized"
         )
-    
+
     users = db.query(User).all()
     return users
 
@@ -108,27 +80,27 @@ async def get_user(user_id: str, db: Session = Depends(get_db), current_user_id:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     target_user = db.query(User).filter(User.id == user_id).first()
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     if current_user_id != user_id and not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this user"
         )
-    
+
     return target_user
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -195,58 +167,25 @@ async def delete_user(user_id: str, db: Session = Depends(get_db), current_user_
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     user = db.query(User).filter(User.id == current_user_id).first()
     if not user or not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized"
         )
-    
+
     target_user = db.query(User).filter(User.id == user_id).first()
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     db.delete(target_user)
     db.commit()
     return {"message": "User deleted successfully"}
 
-# Fix the path to match what the frontend is expecting
-@router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
-async def get_user_robot_requests(
-    user_id: str,
-    db: Session = Depends(get_db),
-    current_user_id: Optional[str] = Depends(get_user_from_token)
-):
-    """Get all robot requests for a specific user"""
-    if not current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    
-    # Check if the user is requesting their own requests or is an admin
-    current_user = db.query(User).filter(User.id == current_user_id).first()
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    if current_user_id != user_id and not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view these requests"
-        )
-    
-    # Get the requests
-    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
-    return requests
-
-# Fix the path to match what the frontend is expecting
 @router.get("/{user_id}/purchases", response_model=List[PurchaseResponse])
 async def get_user_purchases(
     user_id: str,
@@ -259,7 +198,7 @@ async def get_user_purchases(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
-    
+
     # Check if the user is requesting their own purchases or is an admin
     current_user = db.query(User).filter(User.id == current_user_id).first()
     if not current_user:
@@ -267,13 +206,44 @@ async def get_user_purchases(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     if current_user_id != user_id and not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view these purchases"
         )
-    
+
     # Get the purchases
     purchases = db.query(Purchase).filter(Purchase.user_id == user_id).all()
     return purchases
+    
+    @router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
+    async def get_user_robot_requests(
+        user_id: str,
+        db: Session = Depends(get_db),
+        current_user_id: Optional[str] = Depends(get_user_from_token)
+    ):
+        """Get all robot requests for a specific user"""
+        if not current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+
+        # Check if the user is requesting their own requests or is an admin
+        current_user = db.query(User).filter(User.id == current_user_id).first()
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        if current_user_id != user_id and not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view these requests"
+            )
+
+        # Get the requests
+        requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
+        return requests
