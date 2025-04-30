@@ -38,18 +38,18 @@ async def connect(sid, environ):
 async def disconnect(sid):
     print(f"Client disconnected: {sid}")
 
-# Include routers with /api prefix
-app.include_router(auth.router, prefix="/api")
-app.include_router(user.router, prefix="/api")
-app.include_router(robot.router, prefix="/api")
-app.include_router(robot_request.router, prefix="/api")
-app.include_router(purchase.router, prefix="/api")
-app.include_router(ai_trading_signals.router, prefix="/api")
-app.include_router(subscription.router, prefix="/api")
-app.include_router(mpesa.router, prefix="/api")
-app.include_router(card_payment.router, prefix="/api")
-app.include_router(chat.router, prefix="/api")
-app.include_router(notification.router, prefix="/api")
+# Include routers
+app.include_router(auth.router)
+app.include_router(user.router)
+app.include_router(robot.router)
+app.include_router(robot_request.router)
+app.include_router(purchase.router)
+app.include_router(ai_trading_signals.router)
+app.include_router(subscription.router)
+app.include_router(mpesa.router)
+app.include_router(card_payment.router)
+app.include_router(chat.router)
+app.include_router(notification.router)
 
 # Add a health check endpoint
 @app.get("/health")
