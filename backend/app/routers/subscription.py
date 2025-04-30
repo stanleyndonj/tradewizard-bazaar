@@ -233,12 +233,12 @@ async def cancel_subscription(
 
 
 # Robot Request Endpoints
-@router.post("/robots", response_model=RobotResponse) # Example endpoint
+@router.post("/robots", response_model=dict) # Changed to dict response for this example endpoint
 async def create_robot_request(robot_request: RobotRequest, db: Session = Depends(get_db), user_id: str = Depends(get_user_from_token)):
     # Add logic to create a robot request associated with the user.  This requires additional model and schema definitions.
     pass # Placeholder - needs implementation
 
-@router.get("/robots", response_model=List[RobotResponse]) # Example endpoint
+@router.get("/robots", response_model=List[dict]) # Changed to dict response for this example endpoint
 async def get_user_robots(db: Session = Depends(get_db), user_id: str = Depends(get_user_from_token)):
     # Add logic to retrieve robots for the user.  This needs to consider the relationship between users and robots in the database.
     pass # Placeholder - needs implementation
