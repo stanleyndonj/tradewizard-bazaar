@@ -17,7 +17,8 @@ from ..schemas.subscription import (
     SubscriptionResponse,
     SubscriptionUpdate
 )
-from ..schemas.robot import RobotRequest, RobotResponse # Assuming Robot schemas exist
+from ..schemas.robot_request import RobotRequestResponse # Import from correct schema
+from ..schemas.robot import RobotResponse # Keep this if needed
 
 # Fixed router prefix to match the API endpoints needed by frontend
 router = APIRouter(prefix="/subscription", tags=["subscription"]) # Removed the "/api" prefix
