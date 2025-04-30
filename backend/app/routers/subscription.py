@@ -18,6 +18,7 @@ from ..schemas.subscription import (
     SubscriptionUpdate
 )
 from ..schemas.robot_request import RobotRequestResponse # Import from correct schema
+from ..models.robot_request import RobotRequest  # Add import for the RobotRequest model
 from ..schemas.robot import RobotResponse # Keep this if needed
 
 # Fixed router prefix to match the API endpoints needed by frontend
