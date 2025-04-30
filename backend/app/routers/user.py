@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
+from ..models.robot_request import RobotRequest
+from ..schemas.robot_request import RobotRequestResponse, Optional
 from datetime import datetime
 
 from ..database import get_db
@@ -17,6 +19,40 @@ from ..utils.auth import create_access_token
 from ..utils.hash_password import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/{user_id}/robot-requests", response_model=List[RobotRequestResponse])
+async def get_user_robot_requests(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_user_from_token)
+):
+    """Get all robot requests for a specific user"""
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+
+    # Check if the user exists
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if current user is the owner or an admin
+    if str(current_user_id) != user_id:
+        current_user = db.query(User).filter(User.id == current_user_id).first()
+        if not current_user or not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view these requests"
+            )
+
+    # Get the requests
+    requests = db.query(RobotRequest).filter(RobotRequest.user_id == user_id).all()
+    return requests
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
