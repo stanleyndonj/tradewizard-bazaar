@@ -157,9 +157,9 @@ const RobotMarketplace = () => {
                   {filteredRobots.map((robot) => (
                     <Card key={robot.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-gradient-card">
                       <div className="h-48 bg-gradient-to-br from-blue-900/30 to-purple-900/30 relative overflow-hidden">
-                        {robot.imageUrl ? (
+                        {robot.image_url || robot.imageUrl ? (
                           <img 
-                            src={robot.imageUrl} 
+                            src={robot.image_url || robot.imageUrl} 
                             alt={robot.name} 
                             className="w-full h-full object-cover"
                           />
@@ -249,9 +249,9 @@ const RobotMarketplace = () => {
                     <Card key={robot.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-gradient-card">
                       <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-1/4 h-48 md:h-auto bg-gradient-to-br from-blue-900/30 to-purple-900/30 relative">
-                          {robot.imageUrl ? (
+                          {robot.image_url || robot.imageUrl ? (
                             <img 
-                              src={robot.imageUrl} 
+                              src={robot.image_url || robot.imageUrl} 
                               alt={robot.name} 
                               className="w-full h-full object-cover"
                             />

@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +9,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   is_admin: boolean;
+  robots_delivered?: boolean; // Added property
 }
 
 export interface Robot {
@@ -17,6 +19,13 @@ export interface Robot {
   price: number;
   image_url: string;
   created_at: string;
+  type: string; // Added property
+  currency: string; // Added property
+  category: string; // Added property
+  features: string[]; // Added property
+  imageUrl?: string; // Added property as alternative to image_url
+  download_url?: string; // Added property
+  updated_at?: string; // Added property
 }
 
 export interface Purchase {
@@ -76,6 +85,7 @@ export interface SubscriptionPlan {
   interval: string;
   features: string[];
   created_at: string;
+  description?: string; // Added property
 }
 
 export interface ChatMessage {
@@ -110,9 +120,9 @@ export interface RobotRequestParams {
   exit_rules?: string;
   risk_management?: string;
   additional_parameters?: string;
-  trading_pairs?: string;
-  timeframe?: string;
-  risk_level?: string;
+  trading_pairs?: string; // Added property
+  timeframe?: string; // Added property
+  risk_level?: string; // Added property
   // Binary robot specific fields
   platform?: string;
   risk_per_trade?: string;
@@ -129,8 +139,10 @@ export interface RobotRequest {
   user_id: string;
   robot_type: string;
   created_at: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  // Add other fields as necessary
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'approved' | 'rejected' | 'delivered'; // Updated to include all possible statuses
+  trading_pairs?: string; // Added property
+  timeframe?: string; // Added property
+  notes?: string; // Added property
 }
 
 export interface Notification {

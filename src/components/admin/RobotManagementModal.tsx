@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -41,7 +40,7 @@ const RobotManagementModal = ({ open, onClose, robot, isEdit }: RobotManagementM
     if (robot && isEdit) {
       setRobotData(robot);
       setFeaturesInput(robot.features?.join(', ') || '');
-      setCategory(robot.category);
+      setCategory(robot.category || 'paid');
     } else {
       setRobotData(initialRobot);
       setFeaturesInput('');

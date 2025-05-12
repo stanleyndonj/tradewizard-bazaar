@@ -32,7 +32,7 @@ const RobotRequestManagement = () => {
     // Initial load is handled by AdminDashboard
   }, []);
 
-  const handleStatusChange = async (requestId: string, newStatus: "pending" | "in_progress" | "approved" | "rejected" | "delivered") => {
+  const handleStatusChange = async (requestId: string, newStatus: "pending" | "in_progress" | "completed" | "cancelled" | "approved" | "rejected" | "delivered") => {
     try {
       await updateRobotRequest(requestId, { status: newStatus });
       toast({
@@ -61,7 +61,7 @@ const RobotRequestManagement = () => {
     try {
       await updateRobotRequest(selectedRequest.id, { 
         notes: responseText,
-        status: "approved" // Use an allowed status value
+        status: "completed" // Use an allowed status value
       });
       
       toast({
@@ -98,14 +98,14 @@ const RobotRequestManagement = () => {
               <TableRow key={request.id}>
                 <TableCell>{request.id}</TableCell>
                 <TableCell>{request.user_id}</TableCell>
-                <TableCell>{request.trading_pairs} - {request.timeframe}</TableCell>
+                <TableCell>{request.trading_pairs || 'N/A'} - {request.timeframe || 'N/A'}</TableCell>
                 <TableCell>{request.status}</TableCell>
                 <TableCell>
                   <Button
                     variant="secondary"
-                    onClick={() => handleStatusChange(request.id, request.status === 'pending' ? 'approved' : 'pending')}
+                    onClick={() => handleStatusChange(request.id, request.status === 'pending' ? 'completed' : 'pending')}
                   >
-                    {request.status === 'pending' ? 'Approve' : 'Mark Pending'}
+                    {request.status === 'pending' ? 'Complete' : 'Mark Pending'}
                   </Button>
                   <Button
                     variant="outline"
