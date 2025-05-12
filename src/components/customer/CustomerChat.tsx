@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MessageSquare, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';

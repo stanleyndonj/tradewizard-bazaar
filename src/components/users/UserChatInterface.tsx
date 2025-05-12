@@ -1,5 +1,4 @@
 
-// src/components/users/UserChatInterface.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';

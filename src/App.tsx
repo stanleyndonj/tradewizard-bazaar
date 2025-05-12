@@ -2,6 +2,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { BackendProvider } from './context/BackendContext';
+import { SocketProvider } from './context/SocketContext';
 import './App.css';
 
 // Pages
@@ -14,8 +15,6 @@ import RobotConfiguration from './pages/RobotConfiguration';
 import AITradingSignals from './pages/AITradingSignals';
 import MessagesPage from './pages/MessagesPage';
 import NotFound from './pages/NotFound';
-
-import { SocketProvider } from './context/SocketContext';
 
 function App() {
   return (

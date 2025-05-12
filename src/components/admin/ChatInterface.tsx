@@ -80,9 +80,9 @@ const ChatInterface = () => {
       );
       if (selected) {
         setSelectedUser({
-          id: selected.userId || selected.user_id,
-          name: selected.userName || selected.user_name,
-          email: selected.userEmail || selected.user_email
+          id: selected.userId,
+          name: selected.userName,
+          email: selected.userEmail
         });
       }
     }
@@ -94,7 +94,7 @@ const ChatInterface = () => {
 
     try {
       setLoading(true);
-      await sendMessage(currentConversation.id, messageText, 'admin', user.id);
+      await sendMessage(currentConversation.id, messageText);
       setMessageText('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -106,9 +106,8 @@ const ChatInterface = () => {
   // Filter conversations based on search query
   const filteredConversations = searchQuery 
     ? conversations.filter(conv => 
-        (conv.user_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
-        (conv.userEmail?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (conv.user_email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+        (conv.userName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+        (conv.userEmail?.toLowerCase() || '').includes(searchQuery.toLowerCase())
       )
     : conversations;
 
@@ -153,15 +152,15 @@ const ChatInterface = () => {
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">
-                        {conversation.user_name || "User"}
+                        {conversation.userName || "User"}
                       </p>
                       <p className="text-sm text-gray-400 truncate">
-                        {conversation.last_message || "No messages yet"}
+                        {conversation.lastMessage || "No messages yet"}
                       </p>
                     </div>
-                    {conversation.unread_count > 0 && (
+                    {conversation.unreadCount > 0 && (
                       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                        {conversation.unread_count}
+                        {conversation.unreadCount}
                       </div>
                     )}
                   </div>

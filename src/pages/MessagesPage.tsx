@@ -1,5 +1,4 @@
 
-// src/pages/MessagesPage.tsx
 import React from 'react';
 import { useBackend } from '@/context/BackendContext';
 import AdminChatInterface from '@/components/admin/ChatInterface';
@@ -11,6 +10,7 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSocket } from '@/context/SocketContext';
 import { cn } from '@/lib/utils';
+import ParallaxContainer from '@/components/ui/parallax-container';
 
 const MessagesPage = () => {
   const { user, loadConversations } = useBackend();
@@ -73,8 +73,10 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col parallax-container">
-      <Navbar />
+    <ParallaxContainer className="min-h-screen flex flex-col">
+      <div className="fixed top-0 left-0 w-full z-50">
+        <Navbar />
+      </div>
       
       <main className="flex-grow pt-24 pb-10">
         <div className="container mx-auto max-w-7xl px-4">
@@ -124,7 +126,7 @@ const MessagesPage = () => {
       </main>
       
       <Footer />
-    </div>
+    </ParallaxContainer>
   );
 };
 
