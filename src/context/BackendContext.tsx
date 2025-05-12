@@ -92,7 +92,6 @@ interface BackendContextType {
   getMessages: (conversationId: string) => Promise<void>;
   sendMessage: (conversationId: string, text: string) => Promise<void>;
   markMessageAsRead: (messageId: string) => Promise<void>;
-  // Updated the return type to match the implementation
   createNewConversation: (userId: string, userName: string, userEmail: string) => Promise<Conversation>;
   createConversation: (userId: string, userName: string, userEmail: string) => Promise<Conversation>;
   getUnreadMessageCount: () => Promise<number>;
@@ -1042,3 +1041,5 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const getMessages = async (conversationId: string) => {
     try {
       const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
+        headers: getAuthHeaders(),
+      });

@@ -1,3 +1,4 @@
+
 // API endpoints configuration
 const API_BASE_URL = 'http://0.0.0.0:8000';
 
@@ -35,7 +36,7 @@ const API_ENDPOINTS = {
 
   // Payment endpoints
   MPESA_INITIATE: `${API_BASE_URL}/api/payments/mpesa/initiate`,
-  MPESA_VERIFY: `${API_BASE_BASE_URL}/api/payments/mpesa/verify/{transaction_id}`,
+  MPESA_VERIFY: `${API_BASE_URL}/api/payments/mpesa/verify/{transaction_id}`,
   CARD_PAYMENT_PROCESS: `${API_BASE_URL}/api/payments/card/process`,
   CARD_PAYMENT_VERIFY: `${API_BASE_URL}/api/payments/card/verify/{payment_id}`,
 
