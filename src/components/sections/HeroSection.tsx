@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import TradingBotVisual from '@/components/3d/TradingBotVisual';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -23,14 +24,14 @@ const HeroSection = () => {
   };
   
   return (
-    <section className="relative pb-20 pt-32 md:pb-32 md:pt-40">
-      {/* Background gradients */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+    <section className="relative pb-20 pt-32 md:pb-32 md:pt-40 parallax-container">
+      {/* Background gradients - parallax effect */}
+      <div className="absolute inset-0 -z-10 overflow-hidden parallax-layer parallax-layer-back">
         <div className="absolute top-0 left-[-20%] w-[600px] h-[600px] bg-trading-blue/5 rounded-full blur-3xl" />
         <div className="absolute top-[20%] right-[-10%] w-[600px] h-[600px] bg-trading-blue/10 rounded-full blur-3xl" />
       </div>
       
-      <div className="section-container">
+      <div className="section-container parallax-layer parallax-layer-base">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <div className="max-w-3xl">
             <Badge className="bg-trading-blue/10 text-trading-blue hover:bg-trading-blue/20 mb-5">
@@ -39,7 +40,7 @@ const HeroSection = () => {
             
             <h1 className="animate-fade-in text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               Custom Trading Robots <br/>
-              <span className="bg-gradient-to-r from-trading-blue to-trading-lightBlue bg-clip-text text-transparent">
+              <span className="text-gradient">
                 Built for Success
               </span>
             </h1>
@@ -51,7 +52,7 @@ const HeroSection = () => {
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                className="bg-trading-blue hover:bg-trading-darkBlue group"
+                className="bg-gradient-button hover:bg-trading-darkBlue group"
                 onClick={handleGetStarted}
               >
                 Get Started
@@ -61,7 +62,7 @@ const HeroSection = () => {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="group border-trading-blue/20 hover:border-trading-blue/50"
+                className="group border-gradient hover:border-trading-blue/50"
                 onClick={handleCustomRobot}
               >
                 Get Your Custom Robot
@@ -89,12 +90,11 @@ const HeroSection = () => {
             </div>
           </div>
           
-          <div className="relative p-4 lg:p-0">
-            <div className="glass-card overflow-hidden rounded-2xl">
-              <img
-                src="/placeholder.svg"
-                alt="Trading interface preview"
-                className="w-full object-cover aspect-[4/3]"
+          <div className="relative p-4 lg:p-0 parallax-layer-front">
+            <div className="glass-card overflow-hidden rounded-2xl card-3d">
+              <TradingBotVisual 
+                performance={{ winRate: 75, profit: 1240 }}
+                className="h-[300px] w-full"
               />
             </div>
             

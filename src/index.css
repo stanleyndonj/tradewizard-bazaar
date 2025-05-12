@@ -68,6 +68,30 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24;
   }
 
+  /* New gradient styles */
+  .text-gradient {
+    @apply bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-gold {
+    @apply bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500 bg-clip-text text-transparent;
+  }
+  
+  .bg-gradient-blue {
+    @apply bg-gradient-to-br from-blue-500 to-blue-700;
+  }
+  
+  .bg-gradient-gold {
+    @apply bg-gradient-to-br from-amber-300 to-amber-500;
+  }
+  
+  .border-gradient-blue {
+    @apply border-2 border-transparent bg-clip-border;
+    background-image: linear-gradient(to right, #0066cc, #00d4ff);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
   /* Animation classes */
   .animate-on-scroll {
     opacity: 0;
@@ -79,4 +103,50 @@
     opacity: 1;
     transform: translateY(0);
   }
+  
+  /* Parallax classes */
+  .parallax {
+    @apply relative will-change-transform;
+    transform-style: preserve-3d;
+  }
+  
+  .fixed-bg {
+    @apply fixed top-0 left-0 w-full h-full -z-10;
+    background-size: cover;
+    background-position: center;
+  }
 }
+
+/* Custom animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 5px 0 rgba(0, 102, 204, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(0, 102, 204, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 5px 0 rgba(0, 102, 204, 0.4);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s infinite;
+}
+
