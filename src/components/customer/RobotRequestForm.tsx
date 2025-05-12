@@ -9,14 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
 import { Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
+import { RobotRequestParams } from '@/lib/backend';
 
 export default function RobotRequestForm() {
   const { toast } = useToast();
   const { submitRobotRequest } = useBackend();
   const [isLoading, setIsLoading] = useState(false);
   const [robotType, setRobotType] = useState('mt5');
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   // MT5 Robot form state
   const [mt5Form, setMt5Form] = useState({
@@ -82,9 +83,38 @@ export default function RobotRequestForm() {
 
     try {
       // Determine which form data to submit based on robotType
-      const formData = robotType === 'mt5' ? 
-        { robot_type: 'mt5', ...mt5Form } : 
-        { robot_type: 'binary', ...binaryForm };
+      const formData: RobotRequestParams = robotType === 'mt5' ? 
+        { 
+          robot_type: 'mt5', 
+          trading_strategy: mt5Form.trading_strategy,
+          account_credentials: mt5Form.account_credentials,
+          volume: mt5Form.volume,
+          order_type: mt5Form.order_type,
+          stop_loss: mt5Form.stop_loss,
+          take_profit: mt5Form.take_profit,
+          entry_rules: mt5Form.entry_rules,
+          exit_rules: mt5Form.exit_rules,
+          risk_management: mt5Form.risk_management,
+          additional_parameters: mt5Form.additional_parameters,
+          trading_pairs: 'EURUSD', // Default values to satisfy the type
+          timeframe: 'H1',
+          risk_level: 'medium'
+        } : 
+        { 
+          robot_type: 'binary',
+          trading_strategy: binaryForm.trading_strategy,
+          platform: binaryForm.platform,
+          timeframe: binaryForm.timeframe,
+          risk_per_trade: binaryForm.risk_per_trade,
+          instrument_type: binaryForm.instrument_type,
+          specific_instruments: binaryForm.specific_instruments,
+          indicators: binaryForm.indicators,
+          exit_strategy: binaryForm.exit_strategy,
+          trading_hours: binaryForm.trading_hours,
+          additional_requirements: binaryForm.additional_requirements,
+          trading_pairs: binaryForm.specific_instruments || 'EURUSD', // Use specific instruments as trading pairs
+          risk_level: binaryForm.risk_per_trade ? 'custom' : 'medium' // Derive risk level from risk per trade
+        };
 
       // Submit request
       const response = await submitRobotRequest(formData);
@@ -93,7 +123,7 @@ export default function RobotRequestForm() {
         toast({
           title: "Request Submitted",
           description: "Your robot request has been submitted successfully! We'll get back to you soon.",
-          duration: 5000, // Added duration
+          duration: 5000,
         });
 
         // Reset form
@@ -124,7 +154,7 @@ export default function RobotRequestForm() {
             additional_requirements: ''
           });
         }
-        navigate('/dashboard'); // Redirect to dashboard
+        navigate('/dashboard');
       } else {
         throw new Error("Failed to submit request");
       }

@@ -6,18 +6,9 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { TradingLoader } from '@/components/ui/loader';
 import ParallaxContainer from '@/components/ui/parallax-container';
+import { TradingSignal } from '@/lib/backend';
 
-interface TradingSignal {
-  id: string;
-  market: string;
-  timeframe: string;
-  signal_type: string;
-  strength: number;
-  entry_price: number;
-  stop_loss: number;
-  take_profit: number;
-  created_at: string;
-}
+// Don't declare a duplicate TradingSignal interface here
 
 const AITradingSignals = () => {
   const { tab } = useParams<{ tab?: string }>();
@@ -78,6 +69,7 @@ const AITradingSignals = () => {
   };
 
   return (
+    // ... keep existing code (component UI structure)
     <ParallaxContainer className="min-h-screen flex flex-col">
       <div className="fixed top-0 left-0 w-full z-50">
         <Navbar />
@@ -135,8 +127,8 @@ const AITradingSignals = () => {
                 <TradingLoader text="Loading AI trading signals..." />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {tradingSignals.map((signal: TradingSignal) => (
-                    <div key={signal.id} className="bg-gradient-card rounded-lg shadow-md overflow-hidden p-4">
+                  {tradingSignals.map((signal: any, index: number) => (
+                    <div key={signal.id || index} className="bg-gradient-card rounded-lg shadow-md overflow-hidden p-4">
                       <h3 className="text-xl font-semibold mb-2">{signal.market} - {signal.timeframe}</h3>
                       <p className="text-gray-300">Type: {signal.signal_type}</p>
                       <p className="text-gray-300">Strength: {getSignalStrength(signal)}</p>

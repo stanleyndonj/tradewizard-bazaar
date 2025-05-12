@@ -1,370 +1,123 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { useBackend } from '@/context/BackendContext';
-import { FullPageLoader } from '@/components/ui/loader';
-import { toast } from '@/hooks/use-toast';
-
-// Login form validation schema
-const loginSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-});
-
-// Registration form validation schema
-const registerSchema = z.object({
-  name: z.string().min(3, { message: 'Name must be at least 3 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-  confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+import { Loader2 } from 'lucide-react';
+import ParallaxContainer from '@/components/ui/parallax-container';
+// Fix the import
+import TradingLoader from '@/components/ui/loader';
 
 const Auth = () => {
+  const [authType, setAuthType] = useState<'login' | 'register'>('login');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<string>('login');
-  const { user, login, register: registerUser, isLoading } = useBackend();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const { login, register, isLoading } = useBackend();
   
-  // Login form
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
+  const from = location.state?.from || "/dashboard";
 
-  // Registration form
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  useEffect(() => {
-    // Set page title
-    document.title = 'Sign In | TradeWizard';
-
-    // Create a flag in sessionStorage to prevent redirect loops
-    const redirectAttempted = sessionStorage.getItem('redirectAttempted');
-
-    // Redirect if already logged in and no redirect has been attempted yet
-    if (user && !redirectAttempted) {
-      console.log("Auth page: User authentication detected, redirecting...", user);
-      
-      // Set the flag to prevent multiple redirects
-      sessionStorage.setItem('redirectAttempted', 'true');
-      
-      // Redirect to admin dashboard if user is admin, otherwise to customer dashboard
-      if (user.is_admin) {
-        console.log("Auth page: Admin user, redirecting to admin dashboard");
-        navigate('/admin-dashboard', { replace: true });
+    try {
+      if (authType === 'login') {
+        await login(email, password);
+        toast({
+          title: "Login Successful",
+          description: "You have successfully logged in.",
+        });
+        navigate(from, { replace: true });
       } else {
-        console.log("Auth page: Regular user, redirecting to dashboard");
-        navigate('/dashboard', { replace: true });
+        await register(name, email, password);
+        toast({
+          title: "Registration Successful",
+          description: "You have successfully registered.",
+        });
+        navigate(from, { replace: true });
       }
-    }
-    
-    // Cleanup function to remove the flag when component unmounts or user logs out
-    return () => {
-      sessionStorage.removeItem('redirectAttempted');
-    };
-  }, [user, navigate]);
-
-  // Handle login form submission
-  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
-    setIsSubmitting(true);
-    try {
-      console.log("Attempting login with email:", values.email);
-      await login(values.email, values.password);
-      
-      // The redirect will happen in the useEffect when user state is updated
+    } catch (error) {
       toast({
-        title: "Login Successful",
-        description: "Welcome back! Redirecting to your dashboard...",
-        variant: "default",
-      });
-      
-      // We no longer need this timeout as the useEffect handles the redirect
-      // and we've fixed the loop issue there
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid email or password. Please try again.",
+        title: "Authentication Failed",
+        description: error instanceof Error ? error.message : "Failed to authenticate.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
-  // Handle registration form submission
-  const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
-    setIsSubmitting(true);
-    try {
-      await registerUser(values.name, values.email, values.password);
-      // The redirect will happen in the useEffect when user state is updated
-      toast({
-        title: "Registration Successful",
-        description: "Your account has been created! Redirecting to dashboard...",
-        variant: "default",
-      });
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      let errorMessage = "Registration failed. Please try again.";
-      
-      // Extract the most specific error message
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // Check for specific error patterns to provide friendly messages
-      if (errorMessage.toLowerCase().includes("email already registered")) {
-        errorMessage = "This email is already registered. Please log in or use a different email.";
-      } else if (errorMessage.toLowerCase().includes("all fields are required")) {
-        errorMessage = "Please fill out all required fields.";
-      } else if (errorMessage.toLowerCase().includes("password")) {
-        errorMessage = "Please check your password format.";
-      } else if (errorMessage.toLowerCase().includes("email")) {
-        errorMessage = "Please check your email format.";
-      }
-      
-      toast({
-        title: "Registration Failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <FullPageLoader text="Loading your account..." />
-      </div>
-    );
-  }
-  
-  if (user) {
-    return null; // Will redirect in useEffect
-  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow pt-24">
-        <div className="section-container py-16">
-          <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-8">
-            <h1 className="text-2xl font-bold text-center mb-6">
-              {activeTab === 'login' ? 'Sign In' : 'Create Account'}
-            </h1>
-            
-            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login" className="space-y-4">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="your@email.com" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Your password" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center justify-center">
-                          <span className="mr-2">Signing in</span>
-                          <div className="h-5 w-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                        </div>
-                      ) : 'Sign In'}
-                    </Button>
-                  </form>
-                </Form>
-                
-                <div className="text-center mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Don't have an account?{' '}
-                    <button 
-                      onClick={() => setActiveTab('register')}
-                      className="text-trading-blue hover:underline font-medium"
-                    >
-                      Create one
-                    </button>
-                  </p>
+    <ParallaxContainer className="min-h-screen flex flex-col">
+      <div className="flex-grow flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">{authType === 'login' ? 'Login' : 'Create Account'}</CardTitle>
+            <CardDescription className="text-center">
+              {authType === 'login' ? 'Enter your email and password to login' : 'Enter your details to create an account'}
+            </CardDescription>
+          </CardHeader>
+          <Tabs defaultValue={authType} className="px-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login" onClick={() => setAuthType('login')}>Login</TabsTrigger>
+              <TabsTrigger value="register" onClick={() => setAuthType('register')}>Register</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <CardContent className="grid gap-4">
+            <form onSubmit={handleSubmit}>
+              <TabsContent value="register">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required 
+                  />
                 </div>
               </TabsContent>
-              
-              <TabsContent value="register" className="space-y-4">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="John Doe" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="your@email.com" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Your password" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Confirm your password" 
-                              {...field} 
-                              className="transition-all duration-300 focus:ring-2 focus:ring-trading-blue" 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-trading-blue hover:bg-trading-darkBlue transition-all duration-300 hover:scale-105"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center justify-center">
-                          <span className="mr-2">Creating account</span>
-                          <div className="h-5 w-5 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
-                        </div>
-                      ) : 'Create Account'}
-                    </Button>
-                  </form>
-                </Form>
-                
-                <div className="text-center mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <button 
-                      onClick={() => setActiveTab('login')}
-                      className="text-trading-blue hover:underline font-medium"
-                    >
-                      Sign in
-                    </button>
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-      </main>
-      
-      <Footer />
-    </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+              </div>
+              <CardFooter className="flex justify-center mt-6">
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {authType === 'login' ? 'Logging in...' : 'Creating account...'}
+                    </>
+                  ) : (
+                    authType === 'login' ? 'Login' : 'Create Account'
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </ParallaxContainer>
   );
 };
 

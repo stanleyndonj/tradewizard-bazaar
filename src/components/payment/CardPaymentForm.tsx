@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,17 +87,15 @@ const CardPaymentForm = ({
         card_number: formattedCardNumber,
         card_holder: cardName,
         expiry: expiryDate,
-        cvv
-      };
-      
-      // Process card payment
-      const result = await processCardPayment(
-        cardDetails,
+        cvv,
         amount,
         currency,
         itemId,
         paymentType
-      );
+      };
+      
+      // Update this line to match the expected function signature
+      const result = await processCardPayment(cardDetails);
       
       if (result.success) {
         setPaymentStatus('success');

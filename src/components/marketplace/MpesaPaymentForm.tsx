@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,18 +60,23 @@ const MpesaPaymentForm = ({
       setIsLoading(true);
       setPaymentStatus('processing');
       if (onSubmitStateChange) onSubmitStateChange(true);
-      
-      // Initiate M-Pesa payment
-      const response = await initiateMpesaPayment(formattedPhone, amount, itemId, paymentType);
-      
+    
+      // Update this line to match the expected function signature
+      const response = await initiateMpesaPayment({
+        phoneNumber: formattedPhone,
+        amount,
+        itemId,
+        paymentType
+      });
+    
       if (response && response.transaction_id) {
         setTransactionId(response.transaction_id);
-        
+      
         toast({
           title: "Payment Initiated",
           description: "Please check your phone for the M-Pesa prompt and enter your PIN",
         });
-        
+      
         // Start checking payment status
         checkPaymentStatus(response.transaction_id);
       } else {

@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from '../lib/apiConfig';
-import { User, Robot, Purchase, TradingSignal, MarketAnalysis, SubscriptionPlan, ChatMessage, Conversation, RobotRequest, Notification, RobotRequestParams } from '../lib/backend';
+import { User, Robot, Purchase, TradingSignal, MarketAnalysis, SubscriptionPlan, ChatMessage, Conversation, RobotRequest, RobotRequestParams, Notification } from '../lib/backend';
 
 // Context interface
 interface BackendContextType {
@@ -72,7 +71,7 @@ interface BackendContextType {
   // Payment processing
   processCardPayment: (paymentDetails: any) => Promise<any>;
   verifyCardPayment: (paymentId: string) => Promise<any>;
-  initiateMpesaPayment: (phoneNumber: string, amount: number) => Promise<any>;
+  initiateMpesaPayment: (paymentDetails: any) => Promise<any>;
   verifyPayment: (transactionId: string) => Promise<any>;
   
   // Users management
@@ -881,13 +880,13 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const initiateMpesaPayment = async (phoneNumber: string, amount: number) => {
+  const initiateMpesaPayment = async (paymentDetails: any) => {
     try {
       setIsLoading(true);
       const response = await fetch(API_ENDPOINTS.MPESA_INITIATE, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ phone_number: phoneNumber, amount }),
+        body: JSON.stringify(paymentDetails),
       });
 
       if (!response.ok) {
@@ -1043,217 +1042,3 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
         headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-      }
-
-      const messages = await response.json();
-      const formattedMessages = messages.map((msg: any) => ({
-        id: msg.id,
-        conversationId: msg.conversation_id,
-        sender: msg.sender,
-        senderId: msg.sender_id,
-        text: msg.text,
-        timestamp: msg.timestamp,
-        read: msg.read
-      }));
-
-      setChatMessages(prevState => ({
-        ...prevState,
-        [conversationId]: formattedMessages
-      }));
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      throw error;
-    }
-  };
-
-  const sendMessage = async (conversationId: string, text: string) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
-        method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          sender: isAdmin ? 'admin' : 'user',
-          sender_id: user?.id || 'unknown'
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      // Reload messages after sending
-      await getMessages(conversationId);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    }
-  };
-
-  const markMessageAsRead = async (messageId: string) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.CHAT_MARK_READ(messageId), {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark message as read');
-      }
-    } catch (error) {
-      console.error('Error marking message as read:', error);
-    }
-  };
-
-  const createNewConversation = async (userId: string, userName: string, userEmail: string) => {
-    try {
-      const response = await fetch(API_ENDPOINTS.CHAT_CONVERSATIONS, {
-        method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          user_name: userName,
-          user_email: userEmail
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create conversation');
-      }
-
-      const newConversation = await response.json();
-      
-      // Update local state
-      await loadConversations();
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      throw error;
-    }
-  };
-  
-  // Alias for createNewConversation for naming consistency
-  const createConversation = createNewConversation;
-
-  const getUnreadMessageCount = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.CHAT_UNREAD_COUNT, {
-        headers: getAuthHeaders(),
-      });
-
-      if (!response.ok) {
-        return 0;
-      }
-
-      const data = await response.json();
-      return data.count || 0;
-    } catch (error) {
-      console.error('Error getting unread message count:', error);
-      return 0;
-    }
-  };
-
-  return (
-    <BackendContext.Provider
-      value={{
-        user,
-        isLoggedIn,
-        isAdmin,
-        isLoading,
-        robots,
-        purchases,
-        tradingSignals,
-        marketAnalyses,
-        subscriptionPlans,
-        robotRequests,
-        notifications,
-        unreadNotificationCount,
-        
-        // Authentication
-        signInWithEmailPassword,
-        signUpWithEmailPassword,
-        signOut,
-        login,
-        register,
-        logoutUser,
-        
-        // Robot functions
-        loadRobots,
-        getRobots,
-        getRobotById,
-        addRobot,
-        updateRobot,
-        deleteRobot,
-        purchaseRobot,
-        
-        // Purchase functions
-        loadPurchases,
-        getPurchases,
-        
-        // Robot requests
-        submitRobotRequest,
-        getUserRobotRequests,
-        fetchAllRobotRequests,
-        updateRobotRequest,
-        
-        // Trading and analysis
-        loadTradingSignals,
-        getTradingSignals,
-        loadMarketAnalyses,
-        analyzeMarket,
-        
-        // Subscription plans
-        loadSubscriptionPlans,
-        getSubscriptionPlans,
-        getSubscriptionPrices,
-        updateSubscriptionPrice,
-        updateSubscriptionPlanPrice,
-        createSubscription,
-        subscribeToPlan,
-        getUserSubscriptions,
-        getUserActiveSubscriptions,
-        checkSubscription,
-        cancelSubscription,
-        
-        // Payment processing
-        processCardPayment,
-        verifyCardPayment,
-        initiateMpesaPayment,
-        verifyPayment,
-        
-        // Users management
-        getUsers,
-        
-        // Notifications
-        loadNotifications,
-        markNotificationAsRead,
-        markAllNotificationsAsRead,
-        
-        // Chat-related
-        conversations,
-        chatMessages,
-        currentConversation,
-        setCurrentConversationId,
-        loadConversations,
-        getConversations,
-        getMessages,
-        sendMessage,
-        markMessageAsRead,
-        createNewConversation,
-        createConversation,
-        getUnreadMessageCount
-      }}
-    >
-      {children}
-    </BackendContext.Provider>
-  );
-};

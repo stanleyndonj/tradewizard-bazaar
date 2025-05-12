@@ -64,7 +64,14 @@ export const CardPaymentForm = ({
         cardHolderName
       };
       
-      const response = await processCardPayment(cardDetails, amount, 'USD', itemId, paymentType);
+      // Update this line to match the expected function signature
+      const response = await processCardPayment({
+        ...cardDetails,
+        amount,
+        currency: 'USD',
+        itemId,
+        paymentType
+      });
       
       if (response && response.payment_id) {
         setPaymentId(response.payment_id);
