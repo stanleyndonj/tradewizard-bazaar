@@ -119,4 +119,117 @@ The frontend will be available at `http://localhost:8080`
 ## Deployment
 
 For deployment instructions, visit: [Lovable Deployment Docs](https://docs.lovable.dev/deployment)
-```
+
+## TradeWizard Platform Features and Functionality
+
+### Core Features
+
+#### 1. Trading Robot Marketplace
+- Browse and purchase pre-built trading robots
+- Filter robots by strategy type, market, success rate, and price
+- Detailed robot specifications and performance metrics
+- Secure checkout with multiple payment options
+
+#### 2. Custom Robot Requests
+- Submit detailed requirements for custom-built trading robots
+- Consultation with robot developers
+- Track request progress through development stages
+- Receive and test final robot implementation
+
+#### 3. AI Trading Signals
+- Real-time market analysis and trading recommendations
+- Subscription-based access to premium signals
+- Historical performance data for signal accuracy
+- Market trend visualizations and predictions
+
+#### 4. Interactive Dashboard
+- Personalized user dashboard with performance metrics
+- Robot management interface
+- Subscription status and management
+- Market data widgets and news feed
+
+#### 5. Communication System
+- In-app messaging with support team and robot developers
+- Notification center for important updates
+- Real-time chat with AI trading assistant
+- Email alerts for critical events
+
+### Payment Systems
+
+- M-PESA integration for mobile payments
+- Credit/debit card processing
+- Subscription management and recurring billing
+- Payment history and invoice generation
+
+### User Roles and Permissions
+
+#### Regular User Capabilities
+- Purchase trading robots and signals
+- Request custom robots
+- Access personal dashboard
+- Manage subscriptions
+- Communicate with support
+
+#### Admin Privileges
+1. **User Management**
+   - View and manage all user accounts
+   - Edit user information and permissions
+   - Monitor user activity and engagement
+   - Disable or ban accounts if necessary
+
+2. **Robot Request Processing**
+   - Review incoming custom robot requests
+   - Assign requests to developers
+   - Update request status
+   - Communicate with clients about requirements
+
+3. **Robot Marketplace Management**
+   - Add, edit, or remove robots from the marketplace
+   - Update robot pricing and specifications
+   - Monitor sales performance
+   - Feature specific robots on the homepage
+
+4. **AI Trading Signals Administration**
+   - Manage signal generation parameters
+   - Create and edit subscription plans
+   - Control signal distribution
+   - Monitor signal performance metrics
+
+5. **Financial Administration**
+   - View all transactions across the platform
+   - Process refunds when necessary
+   - Generate financial reports
+   - Configure payment gateway settings
+
+6. **System Configuration**
+   - Access to backend settings
+   - Configure email notifications
+   - Manage site-wide announcements
+   - System maintenance tools
+
+### Technical Architecture
+
+- **Frontend**: React with TypeScript, Tailwind CSS for responsive design
+- **Backend**: Python FastAPI with SQLAlchemy ORM
+- **Database**: PostgreSQL for production (SQLite for development)
+- **Real-time Communication**: Socket.IO for live updates and chat
+- **Authentication**: JWT-based secure authentication system
+- **API Integrations**: Payment gateways, trading data providers
+
+### Subscription Tiers
+
+1. **Free Tier**
+   - Limited access to market data
+   - Basic robot marketplace browsing
+   - Ability to submit custom robot requests
+
+2. **Standard Subscription**
+   - Access to basic trading signals
+   - Discounted robot purchases
+   - Priority support
+
+3. **Premium Subscription**
+   - Full access to all trading signals
+   - AI trading assistant
+   - Advanced market analysis tools
+   - VIP support and consultations
