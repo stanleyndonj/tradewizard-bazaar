@@ -42,6 +42,7 @@ const API_ENDPOINTS = {
 
   // AI trading signals
   AI_TRADING_SIGNALS: `${API_BASE_URL}/api/trading-signals`,
+  AI_MARKET_ANALYSIS: `${API_BASE_URL}/api/market-analysis`,
   
   // Subscription endpoints
   SUBSCRIPTION_PLANS: `${API_BASE_URL}/api/subscription-plans`,
@@ -56,7 +57,13 @@ const API_ENDPOINTS = {
   CHAT_CONVERSATIONS: `${API_BASE_URL}/api/chat/conversations`,
   CHAT_MESSAGES: (conversationId: string) => `${API_BASE_URL}/api/chat/conversations/${conversationId}/messages`,
   CHAT_MARK_READ: (messageId: string) => `${API_BASE_URL}/api/chat/messages/${messageId}/mark-read`,
-  CHAT_UNREAD_COUNT: `${API_BASE_URL}/api/chat/messages/unread-count`
+  CHAT_UNREAD_COUNT: `${API_BASE_URL}/api/chat/messages/unread-count`,
+  
+  // Notifications
+  NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
+  NOTIFICATION_MARK_READ: (notificationId: string) => `${API_BASE_URL}/api/notifications/${notificationId}/mark-read`,
+  NOTIFICATIONS_MARK_ALL_READ: `${API_BASE_URL}/api/notifications/mark-all-read`,
+  NOTIFICATIONS_UNREAD_COUNT: `${API_BASE_URL}/api/notifications/unread-count`
 };
 
 export default API_ENDPOINTS;
