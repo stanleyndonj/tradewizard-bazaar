@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import API_ENDPOINTS, { getAuthHeaders, handleApiResponse } from '../lib/apiConfig';
-import { User, Robot, Purchase, TradingSignal, MarketAnalysis, SubscriptionPlan, ChatMessage, Conversation, RobotRequest, RobotRequestParams, Notification } from '../lib/backend';
+import { User, Robot, Purchase, TradingSignal, MarketAnalysis, SubscriptionPlan, ChatMessage, Conversation, RobotRequest, RobotRequestParams } from '../lib/backend';
 
 // Context interface
 interface BackendContextType {
@@ -17,7 +18,7 @@ interface BackendContextType {
   marketAnalyses: MarketAnalysis[];
   subscriptionPlans: SubscriptionPlan[];
   robotRequests: RobotRequest[];
-  notifications: Notification[];
+  notifications: any[];
   unreadNotificationCount: number;
   
   // Authentication
@@ -110,7 +111,7 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [marketAnalyses, setMarketAnalyses] = useState<MarketAnalysis[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [robotRequests, setRobotRequests] = useState<RobotRequest[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -579,7 +580,7 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const analyzeMarket = async (symbol: string, timeframe: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_ENDPOINTS.AI_MARKET_ANALYSIS}?symbol=${symbol}&timeframe=${timeframe}`, {
+      const response = await fetch(`${API_ENDPOINTS.AI_TRADING_SIGNALS}?symbol=${symbol}&timeframe=${timeframe}`, {
         headers: getAuthHeaders(),
       });
 
@@ -1042,3 +1043,203 @@ export const BackendProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const response = await fetch(API_ENDPOINTS.CHAT_MESSAGES(conversationId), {
         headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+      setChatMessages(prev => ({
+        ...prev,
+        [conversationId]: data
+      }));
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  const sendMessage = async (conversationId: string, text: string) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.CHAT_SEND_MESSAGE(conversationId), {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      // Fetch messages again to update the chat
+      await getMessages(conversationId);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.CHAT_MARK_READ(messageId), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark message as read');
+      }
+      
+      // We could update local state here but for simplicity let's just rely on subsequent getMessages calls
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  };
+
+  const createConversation = async (userId: string, userName: string, userEmail: string) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.CHAT_CREATE_CONVERSATION, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, user_name: userName, user_email: userEmail }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create conversation');
+      }
+
+      const newConversation = await response.json();
+      
+      // Update local conversations state
+      setConversations(prev => [
+        {
+          id: newConversation.id,
+          userId: userId,
+          userName: userName,
+          userEmail: userEmail,
+          lastMessage: '',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0
+        },
+        ...prev
+      ]);
+      
+      // Set as current conversation
+      setCurrentConversation({
+        id: newConversation.id,
+        userId: userId,
+        userName: userName,
+        userEmail: userEmail,
+        lastMessage: '',
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0
+      });
+      
+      return newConversation;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
+  };
+
+  // Alias for createConversation
+  const createNewConversation = createConversation;
+
+  const getUnreadMessageCount = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.CHAT_UNREAD_COUNT, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        return 0;
+      }
+
+      const data = await response.json();
+      return data.count || 0;
+    } catch (error) {
+      console.error('Error fetching unread message count:', error);
+      return 0;
+    }
+  };
+
+  // Context value
+  const contextValue: BackendContextType = {
+    user,
+    isLoggedIn,
+    isAdmin,
+    isLoading,
+    robots,
+    purchases,
+    tradingSignals,
+    marketAnalyses,
+    subscriptionPlans,
+    robotRequests,
+    notifications,
+    unreadNotificationCount,
+    signInWithEmailPassword,
+    signUpWithEmailPassword,
+    signOut,
+    login,
+    register,
+    logoutUser,
+    loadRobots,
+    getRobots,
+    getRobotById,
+    addRobot,
+    updateRobot,
+    deleteRobot,
+    purchaseRobot,
+    loadPurchases,
+    getPurchases,
+    submitRobotRequest,
+    getUserRobotRequests,
+    fetchAllRobotRequests,
+    updateRobotRequest,
+    loadTradingSignals,
+    getTradingSignals,
+    loadMarketAnalyses,
+    analyzeMarket,
+    getUsers,
+    loadSubscriptionPlans,
+    getSubscriptionPlans,
+    getSubscriptionPrices,
+    updateSubscriptionPrice,
+    updateSubscriptionPlanPrice,
+    createSubscription,
+    subscribeToPlan,
+    getUserSubscriptions,
+    getUserActiveSubscriptions,
+    checkSubscription,
+    cancelSubscription,
+    processCardPayment,
+    verifyCardPayment,
+    initiateMpesaPayment,
+    verifyPayment,
+    loadNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    conversations,
+    chatMessages,
+    currentConversation,
+    setCurrentConversationId,
+    loadConversations,
+    getConversations,
+    getMessages,
+    sendMessage,
+    markMessageAsRead,
+    createNewConversation,
+    createConversation,
+    getUnreadMessageCount,
+  };
+
+  return (
+    <BackendContext.Provider value={contextValue}>
+      {children}
+    </BackendContext.Provider>
+  );
+};
