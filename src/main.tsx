@@ -5,25 +5,25 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
+import { Toaster } from './components/ui/sonner';
 
-// Create a client
+// Create a client for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes - use gcTime instead of cacheTime
-      retry: 1,
       refetchOnWindowFocus: false,
+      retry: false,
     },
   },
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
         <App />
-      </QueryClientProvider>
-    </BrowserRouter>
+        <Toaster position="top-right" />
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>
 );
